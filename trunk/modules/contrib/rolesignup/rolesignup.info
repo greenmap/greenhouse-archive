@@ -1,0 +1,9 @@
+; $ID$
+name = rolesignup
+description = "Enable users to sign up for a role."
+version = "$Name: DRUPAL-5 $"
+
+; Information added by drupal.org packaging script on 2007-01-21
+version = "5.x-1.x-dev"
+project = "rolesignup"
+

@@ -1,0 +1,169 @@
+<?php
+/* $Id: georss.module,v 1.2.2.2 2007/01/22 19:22:20 geodan Exp $ */
+
+/**
+ * GeoRSS module
+ *
+ * @file
+ * Allows extraction of GeoRSS <http://georss.org> data from incoming RSS feeds and adds GeoRSS to outgoing feeds
+ * @author Dan Karran <dan@karran.net>, based on code from aggregator2_autotaxonomy.module and location.module
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function georss_help($section) {
+  switch ($section) {
+    case 'admin/modules#description':
+      return t('Allows extraction of GeoRSS data from incoming RSS feeds and adds GeoRSS to outgoing feeds');
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function georss_perm() {
+  return array('administer GeoRSS module');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function georss_menu($may_cache) {
+  $items = array();
+  if ($may_cache) {
+
+  }
+  else {
+    $items[] = array(
+      'path' => 'admin/settings/georss', 
+      'title' => t('georss'),
+      'callback' => 'georss_admin_settings',
+      'access' => user_access('administer GeoRSS module'),
+      'type' => MENU_NORMAL_ITEM
+     );
+  }
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_settings().
+ */
+function georss_admin_settings() {
+  return system_settings_form('georss_admin_settings', georss_admin_form());
+}
+
+/**
+ * Settings form
+ */
+function georss_admin_form() {
+  $form['incoming'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Incoming feeds')
+  );
+  $form['incoming']['georss_incoming_enabled'] = array(
+    '#type' => 'checkbox', 
+    '#title' => t('Enable extraction of geolocation information from incoming feeds'), 
+    '#default_value' => variable_get('georss_incoming_enabled', TRUE)
+  );
+
+  $form['outgoing'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Outgoing feeds')
+  );
+  $form['outgoing']['georss_outgoing_enabled'] = array(
+    '#type' => 'checkbox', 
+    '#title' => t('Enable insertion of geolocation information into outgoing feeds'), 
+    '#default_value' => variable_get('georss_outgoing_enabled', TRUE)
+  );
+  $form['outgoing']['georss_outgoing_format'] = array(
+    '#type' => 'radios', 
+    '#title' => t('GeoRSS encoding format'), 
+    '#options' => array('simple' => 'Simple (recommended)',
+                        'gml' => 'GML',
+                        'w3cgeo' => 'W3C Geo'),
+    '#default_value' => variable_get('georss_outgoing_format', 'simple'),
+    '#description' => t('Note: the <em>W3C Geo</em> format is currently also implemented by the location module itself, so will cause duplicate information in feeds if selected here.')
+  );
+
+  return $form;
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function georss_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  switch($op) {
+    case 'insert':
+    case 'update':
+      if (variable_get('georss_incoming_enabled', TRUE)) {
+        if(isset($node->rss_item_data)) { // aggregator2 module feeds
+          $point_coordinates = georss_extract($node->rss_item_data, 'aggregator2', 'point');
+        }
+        if ($point_coordinates['latitude'] && $point_coordinates['longitude']) {
+          $node->location['latitude'] = $point_coordinates['latitude'];
+          $node->location['longitude'] = $point_coordinates['longitude'];
+          $node->location['source'] = 3;  // LOCATION_LATLON_GEOCODED_EXACT from location.module
+        }
+      }
+      break;
+
+    case 'rss item':
+      if (!is_null($node->location['latitude'])
+          && !is_null($node->location['longitude'])
+          && variable_get('georss_outgoing_enabled', TRUE)) {
+        $items = array();
+        switch (variable_get('georss_outgoing_format', 'simple')) {
+          case 'simple' :
+            $items[] = array('key' => 'georss:point', 
+                             'value' => $node->location['latitude'] .' '. $node->location['longitude'], 
+                             'namespace' => array('georss' => 'xmlns:georss="http://www.georss.org/georss"'));
+            break;
+          case 'gml' :
+            $items[] = array('key' => 'georss:where', 
+                             'value' => array('gml:Point' => array('gml:pos' => $node->location['latitude'] .' '
+                                                                              . $node->location['longitude'])), 
+                             'namespace' => array('georss' => 'xmlns:georss="http://www.georss.org/georss"',
+                                                  'gml' => 'xmlns:gml="http://www.opengis.net/gml"'));
+            break;
+          case 'w3cgeo' :
+            $items[] = array('key' => 'geo:Point',
+                             'value' => array('geo:lat' => $node->location['lat'],
+                                              'geo:long' => $node->location['lon']),
+                             'namespace' => array('geo' => 'xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"'));
+
+            break;
+        }
+        return $items;
+      }
+      break;
+  }
+}
+
+/**
+ * Extract geographic information from feed item
+ */
+function georss_extract($data = array(), $module = 'aggregator2', $geometry = 'point') {
+  switch($geometry) {
+    case 'point':
+      switch($module) {
+        case 'aggregator2':
+          if ($data['GEO:LAT'][0]['VALUE']) { // W3C basic geo vocabulary
+            $latitude = $data['GEO:LAT'][0]['VALUE']; 
+          }
+          if ($data['GEO:LONG'][0]['VALUE']) { // W3C basic geo vocabulary
+            $longitude = $data['GEO:LONG'][0]['VALUE'];
+          }
+          if ($data['GEORSS:POINT'][0]['VALUE']) { // GeoRSS Simple
+            list($latitude, $longitude) = split(' ',trim($data['GEORSS:POINT'][0]['VALUE']));
+          }
+          if ($data['GEORSS:WHERE'][0]['GML:POINT'][0]['GML:POS'][0]['VALUE']) { // GeoRSS GML
+            list($latitude, $longitude) = split(' ',trim($data['GEORSS:WHERE'][0]['GML:POINT'][0]['GML:POS'][0]['VALUE']));
+          }
+          return array('latitude' => check_plain($latitude), 'longitude' => check_plain($longitude));
+      }
+    case 'line':
+    case 'polygon':
+  }
+}
