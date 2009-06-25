@@ -1,0 +1,7 @@
+create table masquerade (
+  sid varchar(32) NOT NULL default '',
+  uid_from int(10) NOT NULL default 0,
+  uid_as int(10) NOT NULL default 0,
+  key (sid, uid_from),
+  key (sid, uid_as)
+);

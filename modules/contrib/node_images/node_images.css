@@ -1,0 +1,34 @@
+#slideshow-table table {
+  margin: 0;
+  border: 0;
+}
+#slideshow-table td {
+  vertical-align: top;
+  padding-right: 10px;
+  text-align: center;
+  vertical-align: top;
+}
+#slideshow-table .header {
+  margin-bottom: 5px;
+}
+#slideshow-table p.description {
+  margin-top: 5px;
+  font-weight: bold;
+}
+#slideshow-table img.slideshow-thumb {
+  border: 0;
+}
+#slideshow-table img.active {
+  border: 2px solid #888;
+}
+#slideshow-table .thumb-description {
+  width: 120px;
+  white-space: wrap;
+  margin-bottom: 5px;
+}
+.polaroid {
+  padding: 15px 15px 55px 15px;
+  border: 1px solid #000;
+  background: #fff;
+  text-align: center;
+}

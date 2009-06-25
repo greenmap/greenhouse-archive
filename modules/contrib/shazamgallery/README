@@ -1,0 +1,17 @@
+Readme
+------
+Shazamgallery is a module and a placeholder.
+
+As module it offers you fancy features for image galleries. As a placeholder, it can help you with your advanced gallery needs. Just send in patches for new features, and as long as they do not break the module, or break the beghaviour, you have a big chance they are comiitted.
+
+As opposed to the built in gallery in image module, which should (and will) remain slim, lean and feature-less.
+
+Status
+------
+Alpha. Very alpha. Do not use for production sites, the APIs and behaviour might change drastically. And no updgrade paths will be written.
+But it works. So try it, and send me in patches of your own work you do to it!
+
+More
+------
+Example on newsphoto.nl
+Carpentered in the webschuur.com

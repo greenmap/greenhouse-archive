@@ -1,0 +1,100 @@
+<?php
+// $Id: adminblock.module,v 1.8.2.3 2006/08/24 07:33:24 frjo Exp $
+
+/**
+ * @file
+ * Author: Fredrik Jonsson fredrik at combonet dot se
+ * Enables admins to display a block with the comments approval queue, 
+ * the node moderation queue and the trackback queue.
+ *
+ * The block will only show for users with 
+ * "administer comments/nodes/trackback" privilages.
+ *
+ * If there are no comments to approve, no nodes to moderate 
+ * and no trackbacks to approve the block will not show.
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function adminblock_help($section) {
+  switch ($section) {
+    case 'admin/modules#description':
+      return t('Block that display the comments approval queue, the node moderation queue and the trackback queue.');
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_block().
+ *
+ * $nlimit sets the number of comments, nodes and trackbacks to display
+ */
+function adminblock_block($op = 'list', $delta = 0, $edit = array()) {
+  if ($op == 'list') {
+    $blocks[0]['info'] = t('Admin block');
+    return $blocks;
+  }
+  else if ($op == 'view') {
+    $nlimit = 10;
+
+    if (user_access('administer comments')) {
+      $result = db_query_range('SELECT c.timestamp, c.subject, c.cid, c.nid, n.title 
+        FROM {comments} c 
+        INNER JOIN {node} n ON c.nid = n.nid 
+        WHERE c.status = 1 
+        ORDER BY c.timestamp DESC ', 0, $nlimit);
+      $comment_count = db_num_rows($result);
+      $comment_count_display = $comment_count > $nlimit ? ' ('. $comment_count .')' : '';
+      $items = array();
+      while ($comment = db_fetch_object($result)) {
+        $items[] = check_plain($comment->subject) .' - '. format_date($comment->timestamp, 'medium') .'<br />['. l(t('node'), 'node/'. $comment->nid, array('title' => $comment->title), NULL, 'comment-'. $comment->cid) .']|['. l(t('edit'), 'comment/edit/'. $comment->cid) .']|['. l(t('delete'), 'comment/delete/'. $comment->cid) .']';
+      }
+    }
+
+    if (user_access('administer nodes')) {
+      $result2 = db_query_range('SELECT n.nid, n.title, n.changed, u.name, u.uid 
+        FROM {node} n 
+        INNER JOIN {users} u ON n.uid = u.uid 
+        WHERE n.status = 0 AND n.moderate = 1 
+        ORDER BY n.changed DESC', 0, $nlimit);
+      $node_count = db_num_rows($result2);
+      $node_count_display = $node_count > $nlimit ? ' ('. $node_count .')' : '';
+      $items2 = array();
+      while ($node = db_fetch_object($result2)) {
+        $items2[] = check_plain($node->title) .' - '. format_date($node->changed, 'medium') .'<br />['. l(t('By %user', array('%user' => $node->name)), 'user/'. $node->uid) .']|['. l(t('edit'), 'node/'. $node->nid .'/edit') .']|['. l(t('delete'), 'node/'. $node->nid .'/delete') .']';
+      }
+    }
+
+    if (module_exist('trackback') && user_access('administer trackbacks')) {
+      $result3 = db_query_range('SELECT t.created, t.subject, t.nid, t.trid, t.excerpt
+        FROM {trackback_received} t 
+        INNER JOIN {node} n ON t.nid = n.nid 
+        WHERE t.status = 0 
+        ORDER BY t.created DESC ', 0, $nlimit);
+      $trackback_count = db_num_rows($result3);
+      $trackback_count_display = $trackback_count > $nlimit ? ' ('. $trackback_count .')' : '';
+      $items3 = array();
+      while ($trackback = db_fetch_object($result3)) {
+        $items3[] = check_plain($trackback->subject) .' - '. format_date($trackback->created, 'medium') .'<br />['. l(t('edit'), 'admin/trackback/edit/'. $trackback->trid) .']|['. l(t('delete'), 'admin/trackback/delete/'. $trackback->trid) .']';
+      }
+    }
+
+    $block['subject'] = t('Admin block');
+    if ($items) {
+      $block['content'] = theme('item_list', $items, t('Comments queue') . $comment_count_display);
+      $block['content'] .= '<div class="more-link">'. l(t('more'), 'admin/comment/list/approval', array('title' => t('Administer the approval queue'))) .'</div>';
+    }
+    if ($items2) {
+      $block['content'] .= theme('item_list', $items2, t('Content queue') . $node_count_display);
+      $block['content'] .= '<div class="more-link">'. l(t('more'), 'admin/node', array('title' => t('Administer content'))) .'</div>';
+    }
+    if ($items3) {
+      $block['content'] .= theme('item_list', $items3, t('Trackback queue') . $trackback_count_display);
+      $block['content'] .= '<div class="more-link">'. l(t('more'), 'admin/trackback', array ('title' => t('Administer trackbacks'))) .'</div>';
+    }
+
+    return $block;
+  }
+}
+?>
