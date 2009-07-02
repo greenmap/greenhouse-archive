@@ -371,7 +371,8 @@ function _sync_users_sync(&$edit, &$account,$override_update_check = false){
 		if(!$ogm_user){
 //			$id = db_result(db_query("SELECT id FROM {sequences} WHERE name = '%s'", $name)) + 1;
 			
-			$q = "SELECT id FROM sequences WHERE name = 'users_uid'";
+			// $q = "SELECT id FROM sequences WHERE name = 'users_uid'"; // sequences is no longer valid in Drupal 6
+      $q = "SELECT max(uid) AS uid FROM {users}";
 			if(!$result = mysql_query($q,$link)) {
 				watchdog('error',t('Error U111: Database failure. Synchronisation with Open Green Map aborted.'));
 				drupal_set_message(t('Database failure. Synchronisation with Open Green Map aborted.'));
@@ -381,13 +382,13 @@ function _sync_users_sync(&$edit, &$account,$override_update_check = false){
 			$uid = db_fetch_object($result);
 			$ogm_user_uid = $uid->id + 1;
 			
-			$q = "REPLACE INTO sequences VALUES ('users_uid', '".$ogm_user_uid."')";
-			if(!mysql_query($q,$link)) {
+			// $q = "REPLACE INTO sequences VALUES ('users_uid', '".$ogm_user_uid."')"; // no longer necessary in Drupal 6 OGM
+			/*if(!mysql_query($q,$link)) {
 				watchdog('error',t('Error U113a: Unable to add data to the database. Synchronisation with Open Green Map aborted.'));
 				drupal_set_message(t('Unable to add data to the database. Synchronisation with Open Green Map aborted.'));
 				mysql_close($link); // close connect
 				return false;
-			}
+			} */
 				
 					
 			if(	!$name || !$pass || !$mail  || ! $ogm_user_uid){
@@ -402,7 +403,7 @@ function _sync_users_sync(&$edit, &$account,$override_update_check = false){
 			$timestamp = time();
 			$q = "INSERT INTO users (uid, name, pass,mail,status) VALUES ('$ogm_user_uid', '$name','$pass','$mail','1')";
 			if(!mysql_query($q,$link)) {
-				watchdog('error',t('Error U113: Unable to add data to the database. Synchronisation with Open Green Map aborted.'));
+				watchdog('error',t('Error U113: Unable to add data to the database. Synchronisation with Open Green Map aborted. Error: ' . db_error()));
 				drupal_set_message(t('Unable to add data to the database. Synchronisation with Open Green Map aborted.'));
 				mysql_close($link); // close connect
 				return false;
