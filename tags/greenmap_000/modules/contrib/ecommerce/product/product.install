@@ -1,0 +1,100 @@
+<?php
+// $Id: product.install,v 1.7.4.2 2007/01/19 02:27:46 sammys Exp $
+
+require_once(drupal_get_path('module', 'store') . '/store.deps.inc');
+
+/**
+ * E-Commerce product module schema
+ */
+function product_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {ec_product} (
+        nid int(10) unsigned NOT NULL default '0',
+        vid int(10) unsigned NOT NULL default '0',
+        pparent int(10) NOT NULL default '0',
+        sku varchar(75) default NULL,
+        price decimal(10,2) NOT NULL default '0.00',
+        ptype varchar(75) NOT NULL default '',
+        hide_cart_link int(2) unsigned NOT NULL default '0',
+        UNIQUE KEY vid (vid),
+        KEY ptype (ptype),
+        INDEX pparent (pparent)
+      ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      break;
+    case 'pgsql':
+      db_query("CREATE TABLE {ec_product} (
+        nid integer NOT NULL default '0',
+        vid integer NOT NULL default '0',
+        pparent integer NOT NULL default '0',
+        sku varchar(75) default NULL,
+        price decimal(10,2) NOT NULL default '0.00',
+        ptype varchar(75) NOT NULL default '',
+        hide_cart_link integer NOT NULL default '0',
+        UNIQUE (vid)
+      )");
+      db_query("CREATE INDEX {ec_product}_ptype ON {ec_product} (ptype)");
+      db_query("CREATE INDEX {ec_product}_pparent ON {ec_product} (pparent)");
+      break;
+  }
+}
+
+/**
+ * Updates to products
+ */
+function product_update_1() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql('ALTER TABLE {ec_product} ADD vid INT( 10 ) NOT NULL AFTER nid');
+      $ret[] = update_sql('ALTER TABLE {ec_product} DROP PRIMARY KEY');
+      $ret[] = update_sql('UPDATE {ec_product} p, {node} n SET p.vid = n.vid WHERE p.nid = n.nid');
+      $ret[] = update_sql('ALTER TABLE {ec_product} ADD PRIMARY KEY (vid)');
+      break;
+
+    case 'pgsql':
+      break;
+  }
+  return $ret;
+}
+
+function product_update_2() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql('ALTER TABLE {ec_product} ADD pparent INT(10) NOT NULL DEFAULT 0 AFTER vid');
+      $ret[] = update_sql('ALTER TABLE {ec_product} ADD INDEX (pparent)');
+      break;
+    case 'pgsql':
+      break;
+  }
+  return $ret;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Updates from this point are for EC 3.0
+
+/**
+ * Major update where recurring fields are removed. They should have been updated already
+ * by the ec_recurring module installation.
+ */
+function product_update_3() {
+  $ret = array();
+  $deps = array();
+  if (db_result(db_query("SELECT nid FROM {ec_product} WHERE is_recurring = 1 LIMIT 1"))) {
+    $deps[] = 'ec_recurring';
+  }
+  if (!store_deps_update($ret, 'product', $deps)) {
+    return $ret;
+  }
+  
+  // ec_product
+  $ret[] = update_sql("ALTER TABLE {ec_product} DROP is_recurring");
+  $ret[] = update_sql("ALTER TABLE {ec_product} DROP price_interval");
+  $ret[] = update_sql("ALTER TABLE {ec_product} DROP price_unit");
+  $ret[] = update_sql("ALTER TABLE {ec_product} DROP price_cycle");
+  $ret[] = update_sql("ALTER TABLE {ec_product} DROP auto_charge");
+  
+  return $ret;
+}
