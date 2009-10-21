@@ -181,7 +181,7 @@ background: #FFFFFF url(img/leftshadow.gif) repeat-y left;
 	float:right;
 	margin-left:10px;
 	height: 100%;
-	padding-right: 0px;
+	padding-right: 14px;
 	margin-right: -18px;
 }
 
@@ -527,28 +527,61 @@ display: inline;
 #leftside div.block H1, #rightside div.block H1 {
 	background-repeat: no-repeat;
 	color: #666666;
-	font: 1.1em Tahoma, Arial, sans-serif; 
+	font: 1.1em Arial, Tahoma, sans-serif; 
 	letter-spacing: 0.1em;
 	height: 19px;
-	padding-top: 3px;
-	
+	padding-top: 0px;
 }
 
+/*#leftside div.block-block, #rightside div.block-user,  #leftside div.block-user, #rightside div.block-block {
+	border: 2px solid #FFAC06;
+	border-color: #FFAC06;#8CC63F
+}*/
+
+#block-block-24 {
+	border: 2px solid #FFAC06;
+}
+
+#block-block-28 {
+	border: 2px solid #8CC63F;
+}
+
+
 #leftside div.block H1 {
-	background-image: url(img/text_bar_3.gif);
+	/*background-image: url(img/text_bar_3.gif);*/
 	padding-left: 20px;
 }
 
-#leftside #block-block-9 H1, #leftside #block-menu-112 H1, #leftside #block-menu-454 H1, #leftside #block-block-5 H1, #leftside #block-menu-315 H1, #leftside #block-menu-568 H1, #leftside #block-menu-643 H1, #leftside #block-block-7 H1, #leftside #block-block-6 H1, #leftside #block-blockcache-45 H1 {
-	background-image: url(img/text_bar3_darker.gif);
-	color: #fff;
-	margin-left: 1px;
+#rightside div.block H1 {
+	/*background-image: url(img/text_bar_3_right.gif);*/
+	text-align: left;
+	font-size: 1.2em; 
+	padding-left: 10px;
+	color: #8CC63F;
 }
 
-#rightside div.block H1 {
-	background-image: url(img/text_bar_3_right.gif);
-	padding-right: 20px;
-	text-align: right;
+#rightside #block-menu-669 H1,
+#rightside #block-block-33 H1,
+#rightside #block-block-24 H1,
+#rightside #block-block-32 H1,
+#rightside #block-block-20 H1 {
+	display: none;
+}
+
+
+#leftside #block-block-9 H1, 
+#leftside #block-menu-112 H1, 
+#leftside #block-menu-454 H1, 
+#leftside #block-block-5 H1, 
+#leftside #block-menu-315 H1, 
+#leftside #block-menu-568 H1, 
+#leftside #block-menu-643 H1, 
+#leftside #block-block-7 H1, 
+#leftside #block-block-6 H1, 
+#leftside #block-blockcache-45 H1 {
+	/*background-image: url(img/text_bar3_darker.gif);*/
+	color: #fff;
+	margin-left: 1px;
 }
 
 #leftside div.content {
@@ -1133,10 +1166,10 @@ margin-bottom: 1em;
 	color: #666666;
 	background-color: #f9fcf6;
 	font-family: Tahoma, Arial, Verdana, sans-serif;
-
 }
 
 #tagline {
+	display:none;
 	color: #CA006C;
 	font-size: 1.3em;
 	letter-spacing: 1px;
