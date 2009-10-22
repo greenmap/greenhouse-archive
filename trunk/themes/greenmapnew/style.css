@@ -78,8 +78,13 @@ font-weight: normal;
 display: inline;
 }
 
+/*
 #searchbox {
 float:right;
+}*/
+
+#ogmlink {
+	float:right;
 }
 
 #sitename {
@@ -542,7 +547,7 @@ display: inline;
 	border: 2px solid #FFAC06;
 }
 
-#block-block-28 {
+#block-block-28, #block-block-11, #block-simplenews-newsletter-142 {
 	border: 2px solid #8CC63F;
 }
 
