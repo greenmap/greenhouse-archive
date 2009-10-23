@@ -27,6 +27,14 @@ return;
 <body>
 	<div id="container">
 		<div id="preheader"><?php // top bar containing language links and search box ?>
+		<div id="ogmlink">
+<a href="http://www.opengreenmap.org/en/greenmap" title="<?php print t('Go to Open Green Map') ?>">
+<img src="<?php print $base_path ?>images/ogmlink.png" width="180px" alt="<?php print t('Open Green Map link') ?>" /></a>
+		</div>
+		<div id="toplogo">
+<a href="<?php print $base_path ?>/home" title="<?php print t('Home') ?>">
+<img src="<?php print $base_path ?>images/toplogo.png" width="160px" alt="<?php print t('Green Map Home') ?>" /></a>
+		</div>
 			<div id="languagelinks">
 				<?php print $languagebar; ?>
 			</div>
@@ -37,16 +45,20 @@ return;
 		
 		<div id="sitename">
 			<div id="sitelogo">
-				<a href="<?php print $base_path . $i18n_langpath ?>/home" title="<?php print t('Home') ?>">
-				<img src="<?php print $base_path ?>images/greenmap_logo.gif" width="170" height="107" alt="<?php print t('Home') ?>" /></a>
+				<img src="<?php print $base_path ?>images/greenmap_logo.gif" width="30" height="54" alt="<?php print t('Home') ?>" /></a>
 			</div>
+
 			<div id="mainmenu">
 				<?php if (isset($primary_links)) { ?><?php print theme('links', $primary_links) ?><?php } ?>
 			</div>
-			&nbsp;
+						<div id="mapsbutton">
+				<?php if (isset($primary_links)) { ?><?php print theme('links', $primary_links) ?><?php } ?>
+			</div>
 		</div>
 
-
+		</div>
+				
+			</div>
 
 		<div id="wrap">
 
@@ -55,15 +67,15 @@ return;
 	      print $sidebar_left;
 		    } ?>
 			</div>
-
-			<div id="rightside">
+			
+				<div id="rightside">
+			
+				
 				<?php if ($sidebar_right) {
 				print $sidebar_right;
 				} ?>
-				<div id="tagline">
-					<?php print t('Think Global,<br /> Map Local!'); ?>
 				</div>
-			</div>
+
 
 			<div id="content">
 				<?php
@@ -79,9 +91,8 @@ return;
 				<?php print $content; ?>
 			</div>
 
-			
 
-	</div>
+		
 </div>		
 
 	<div id="footer_gh">
