@@ -275,7 +275,7 @@ background: url(img/rightshadow.gif) repeat-y right;
 	position: abosolute;
 	z-index: -100;
 	padding-right: 45px;
-	min-height: 650px;
+	min-height: 625px;
 }
 
 #rightside span{
