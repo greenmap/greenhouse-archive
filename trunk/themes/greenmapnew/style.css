@@ -473,7 +473,7 @@ display: inline;
 }
 
 .block {
-	margin-bottom: 4px;
+	margin-bottom: 14px;
 }
 
 /***** Thomas Custom Styles *****/
@@ -974,6 +974,7 @@ a.cart_link {
 #ttnewsletter .newsletter {
 	float: right;
 	display: inline;
+	margin-left:0px;
 }
 
 #emailaddress {
