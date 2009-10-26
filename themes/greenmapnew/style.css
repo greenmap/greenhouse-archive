@@ -103,6 +103,7 @@ float:right;
 	margin-top: 52px;
 	margin-left: 5px;
 	margin-bottom: -8px;
+	min-width: 1049px;
 }
 
 #sitelogo {
@@ -240,6 +241,7 @@ text-decoration:none;
 height: auto;
 font-size:0.9em;
 min-height: 650px;
+min-width: 1070px;
 padding:0;
 margin:0;
 margin-left: 15px;
