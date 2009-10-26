@@ -47,6 +47,7 @@ return;
 			<div id="sitelogo">
 				<img src="<?php print $base_path ?>images/greenmap_logo.gif" width="30" height="54" alt="<?php print t('Home') ?>" /></a>
 			</div>
+			
 
 			<div id="mainmenu">
 				<?php if (isset($primary_links)) { ?><?php print theme('links', $primary_links) ?><?php } ?>
