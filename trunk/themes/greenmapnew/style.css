@@ -9,7 +9,7 @@ font:76% Verdana,Tahoma,Arial,sans-serif;
 margin:0;
 padding:0;
 text-align:center;
-min-width: 1000px;
+min-width: 950px;
 height:100%;
 }
 
@@ -47,7 +47,7 @@ background:#fbfdf8 url(img/topbar_icon_14.gif) no-repeat left top; /* pale green
 color:#303030;
 margin:0 41px 0px 15px;
 padding:0;
-min-width: 1000px;
+min-width: 907px;
 text-align:left;
 height:auto;
 }
@@ -236,7 +236,7 @@ text-decoration:none;
 /*** Content wrap ***/
 
 #wrap {
-height: 100%;
+height: auto;
 font-size:0.9em;
 min-height: 650px;
 padding:0;
@@ -253,6 +253,7 @@ background: #FFFFFF url(img/leftshadow.gif) repeat-y left;
 margin:-4px;
 padding:18px 10px 10px;
 max-width:165px;
+min-width:110px;
 }
 
 #leftside {
@@ -270,12 +271,12 @@ float: left;
 background: url(img/rightshadow.gif) repeat-y right;
 	float:right;
 	height: 100%;
-	padding-right: 40px;
 	margin-top: -220;
 	position: abosolute;
 	z-index: -100;
 	padding-right: 45px;
 	min-height: 625px;
+	padding-left:10px;
 }
 
 #rightside span{
@@ -359,11 +360,11 @@ ul.secondary a:hover {
 	height: auto;
 	font-size: 1.1em;
 	margin-left: 200px;
-	margin-top: -225px;
+	margin-top: 6px;
 	padding-top: 25px;
-	max-width:875px;
-	position: absolutes;
+	position: absolute;
 	width: 60%;
+	min-width: 600px;
 	float: left;
 }
 
@@ -694,8 +695,9 @@ list-style: none;
 position: absolute;
 background: none;
 bottom: auto;
+padding-right: -30px;
 margin-right: -50px;
-margin-top: 8%;
+margin-top: 5%;
 float: right
 }
 
@@ -718,20 +720,7 @@ padding-left: 40px;
 	margin-left: 1px;
 }
 
-/*styling for new maps, blogs, mapmakers boxes */
 
-#block-blockcache-70 h1{ display: block; text-align:center; background-color:#F2B935; color:white; padding:3px; font-size: 1.35em; }
-#block-blockcache-69 h1{ display: block; text-align:center; background-color:#8BC53E; color:white; padding:3px; font-size: 1.35em; }
-#block-blockcache-57 h1{ display: block; text-align:center; background-color:#C83970; color:white; padding:3px; font-size: 1.35em; }
-#block-blockcache-70 { float:right; width: 30%; margin-top: 20px;}
-#block-blockcache-57 { float:right;  width: 30%; margin-left: 15px; margin-right: 15px; margin-top: 20px; }
-#block-blockcache-69 { float:right;  width: 30%; padding-right: 5%; margin-top: 20px;  }
-.view-data-node-title a{ text-decoration: none;  font-weight: normal; }
-.view-data-usernode-users-name a{ text-decoration: none;  font-weight: normal; }
-.item-list ul li{ list-style-type: none; }
-div.more-link a{ font-weight: normal; padding-right: 80%; }
-div.more-link { text-align: right; }
-.links ul{ display: none; }
 
 #leftside div.content {
 	padding-left: 20px
