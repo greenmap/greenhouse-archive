@@ -657,9 +657,12 @@ display: inline;
 }*/
 
 #block-block-31 {
-	border: 2px solid #FFAC06;
+	border: 2px solid #8CC63F;
 }
 
+#block-block-24 {
+	border: 2px solid #FFAC06;
+}
 
 #block-block-28, #block-block-11, #block-simplenews-newsletter-142 {
 	border: 2px solid #8CC63F;
@@ -706,8 +709,13 @@ display: inline;
 #rightside #block-block-33 H1,
 #rightside #block-block-24 H1,
 #rightside #block-block-32 H1,
-#rightside #block-block-20 H1 {
+#rightside #block-block-20 H1, 
+#rightside #block-block-31 H1 {
 	display: none;
+}
+
+#block-menu-669 a {
+	color: #FFAC06;
 }
 
 #block-menu-669 ul li{
