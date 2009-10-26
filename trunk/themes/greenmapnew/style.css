@@ -142,7 +142,8 @@ background-color: transparent;
 	color:white;
 	display:block;
 	/* font: 0.8em Tahoma, Arial, sans-serif; */
-	font: 0.7em Tahoma, Arial, sans-serif; 
+	font: 0.7em Tahoma, Arial, sans-serif;
+	letter-spacing: 0.15em; 
 	height:47px;
 	width:130px; /* width of button image */
 	/* text-transform:uppercase;  */
@@ -667,7 +668,21 @@ display: inline;
 
 #leftside div.block H1 {
 	/*background-image: url(img/text_bar_3.gif);*/
-	padding-left: 20px;
+	text-align: center;
+	color: #82AF41;
+	font-weight: 800;
+	font: 1.15em Tahoma, Arial, sans-serif;
+	letter-spacing: 0.15em; 
+}
+
+#leftside div.block-menu H1 {
+	/*background-image: url(img/text_bar_3.gif);*/
+	text-align: center;
+	color: #82AF41;
+	font-weight: 800;
+	font: 1.15em Tahoma, Arial, sans-serif;
+	letter-spacing: 0.15em; 
+	padding-left: 9px;
 }
 
 #rightside div.block H1 {
@@ -715,7 +730,7 @@ float: right
 padding-left: 40px;
 }
 
-#leftside #block-block-9 H1, 
+/*#leftside #block-block-9 H1, 
 #leftside #block-menu-112 H1, 
 #leftside #block-menu-454 H1, 
 #leftside #block-block-5 H1, 
@@ -725,10 +740,10 @@ padding-left: 40px;
 #leftside #block-block-7 H1, 
 #leftside #block-block-6 H1, 
 #leftside #block-blockcache-45 H1 {
-	/*background-image: url(img/text_bar3_darker.gif);*/
+	background-image: url(img/text_bar3_darker.gif);
 	color: #666666;
 	margin-left: 1px;
-}
+}*/
 
 
 
@@ -744,6 +759,24 @@ padding-left: 40px;
 #leftside a.active, #rightside a.active {
 	color: #F78F1E;
 }
+
+/*styling for newest boxes on front, maps, and mapmakers pages */
+
+#block-blockcache-70 h1{ display: block; text-align:center; background-color:#F2B935; color:white; padding:3px; font-size: 1.15em; white-space:nowrap; padding-left:4px; padding-right:4px; }
+#block-blockcache-69 h1{ display: block; text-align:center; background-color:#8BC53E; color:white; padding:3px; font-size: 1.15em; white-space:nowrap; padding-left:4px; padding-right:4px; }
+#block-blockcache-57 h1{ display: block; text-align:center; background-color:#C83970; color:white; padding:3px; font-size: 1.15em; white-space:nowrap; padding-left:4px; padding-right:4px; }
+
+#block-blockcache-70 { float:left; width: 24%; min-width: 160px; position: relative; padding-left:10%; padding-top: 10px;}
+#block-blockcache-57 { float:left;  width: 25%; padding-right: 2%; padding-left:2%; min-width: 160px; position: relative; padding-top: 10px;}
+#block-blockcache-69 { float:left;  width: 26%; min-width: 160px; position: relative; padding-top: 10px;}
+
+#block-blockcache-70 a{ color: #666666; font-weight: 200; font-size: .95em; }
+#block-blockcache-57 a{ color: #666666; font-weight: 200; font-size: .95em; }
+#block-blockcache-69 a{ color: #666666; font-weight: 200; font-size: .95em; }
+
+#block-blockcache-70 div.item-list ul li { list-style-type: none; }
+#block-blockcache-57 div.item-list ul li { list-style-type: none; }
+#block-blockcache-69 div.item-list ul li { list-style-type: none; } 
 
 /***** TT - service links styles *****/
 #block-service_links-0 li {
@@ -1618,5 +1651,10 @@ fieldset p.calculator, div.faq p.calculator {
 div.wbx-gw-wrapper {
 	display: none;
 }
+
+/* hide breadcrumbs and page reads */
+
+div.breadcrumb { display: none; }
+.links ul{ display: none; }
 
 /*** End of file ***/
