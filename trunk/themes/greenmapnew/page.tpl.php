@@ -38,7 +38,7 @@ return;
 	<div id="container">
 		<div id="preheader"><?php // top bar containing language links and search box ?>
 		<div id="ogmlink">
-<a href="http://www.opengreenmap.org/en/greenmap" title="<?php print t('Go to Open Green Map') ?>">
+<a href="http://www.opengreenmap.org/home" title="<?php print t('Go to Open Green Map') ?>">
 <img src="<?php print $base_path ?>images/ogmlink2.png" width="180px" alt="<?php print t('Open Green Map link') ?>" /></a>
 		</div>
 		<div id="toplogo">
