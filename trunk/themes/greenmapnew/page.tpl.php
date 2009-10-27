@@ -26,7 +26,7 @@ return;
 
 <!--[if IE 6]>
 <style type="text/css">
-#content { margin: 100px; margin-top: 0px; margin-right: 0;}
+#content { margin: -380px; margin-top: 0px; margin-right: 0;}
 #rightside { width: 165px; }
 </style>
 <![endif]-->
