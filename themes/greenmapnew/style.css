@@ -281,6 +281,7 @@ margin:-4px;
 padding:18px 10px 10px;
 max-width:165px;
 min-width:110px;
+width: 165px;
 }
 
 #leftside {
@@ -398,6 +399,8 @@ ul.secondary a:hover {
 *:first-child+html #content {
 	margin-left:0px;
 	}
+
+
 
 
 
