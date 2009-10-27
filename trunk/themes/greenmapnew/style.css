@@ -22,22 +22,26 @@ a {
 	color:#505050;
 	font-weight:bold;
 	text-decoration:none;
+	outline:none;
 }
 
 #content p a, div.newsarticle a, #content div.data a {
 	color:#88966f;
 	font-weight: normal;
 	text-decoration: underline;
+	outline:none;
 }
 #content p a:hover {
 	color:#999;
 	font-weight: normal;
 	text-decoration: none;
+	outline:none
 }
 
 a:hover {
 color:#808080;
 text-decoration:underline;
+outline:none;
 }
 
 /*** Main container ***/
@@ -104,6 +108,8 @@ float:right;
 	margin-left: 5px;
 	margin-bottom: -8px;
 	min-width: 1049px;
+	overflow: hidden;
+background-color: transparent;
 }
 
 #sitelogo {
@@ -137,6 +143,7 @@ background-color: transparent;
 	list-style:none;
 	padding:0;
 	text-align: center;
+background-color: transparent;
 }
 
 #mainmenu a {
@@ -148,7 +155,8 @@ background-color: transparent;
 	height:47px;
 	width:130px; /* width of button image */
 	/* text-transform:uppercase;  */
-	background: url(img/menu_shadow_down_4.gif) no-repeat;
+	background: transparent url(img/menu_shadow_down_4.gif) no-repeat;
+background-color: transparent;
 	padding-top: 4px;
 	margin-left: -14px;
 	letter-spacing: 0.15em;
@@ -158,22 +166,27 @@ background-color: transparent;
  /* background:#f0f0f0 url(img/menuhover.jpg) top left repeat-x; */
 color:#FFFFFF;
 text-decoration:none;
-background: url(img/menu_shadow_up_4.gif) no-repeat;
+background: transparent url(img/menu_shadow_up_4.gif) no-repeat;
+background-color: transparent;
 }
 
 #mainmenu a.active {
  /* background:#f0f0f0 url(img/menuhover.jpg) top left repeat-x; */
 color:#FFFFFF;
 text-decoration:none;
-background: url(img/menu_shadow_up_4.gif) no-repeat;
+background: transparent url(img/menu_shadow_up_4.gif) no-repeat;
+background-color: transparent;
 }
 
 #mainmenu a.current {
-background:#f0f0f0 url(img/menuhover.jpg) top left repeat-x;
+background:#f0f0f0 transparent url(img/menuhover.jpg) top left repeat-x;
 color:#505050;
 text-decoration:none;
+background-color: transparent;
 }
 
+
+ 
 #mapsbutton {
 float: left;
 z-index: 10;
@@ -182,7 +195,7 @@ margin-top: 10px;
 margin-bottom: 0;
 position: absolute;
 width: 180px;
-max-height: 47px;
+height: 47px;
 background-color: transparent;
 overflow: hidden;
 }
@@ -190,6 +203,7 @@ overflow: hidden;
 #mapsbutton ul {
 font-size:19px;
 background-color: transparent;
+overflow: hidden;
 }
 
 #mapsbutton li {
@@ -197,6 +211,8 @@ background-color: transparent;
 	height:47px;
 	list-style:none;
 	padding:0;
+	overflow: hidden;
+background-color: transparent;
 	}
 
 #mapsbutton a {
@@ -211,6 +227,8 @@ background-color: transparent;
 	background: transparent url(img/menu_shadow_down_rounded.gif) no-repeat;
 	padding-top: 4px;
 	letter-spacing: 0.15em;
+	overflow: hidden;
+background-color: transparent;
 }
 
 #mapsbutton a:hover {
@@ -219,6 +237,8 @@ color:#FFFFFF;
 width:160px; /* width of button image */
 text-decoration:none;
 background: transparent url(img/menu_shadow_up_rounded.gif) no-repeat;
+overflow: hidden;
+background-color: transparent;
 }
 
 #mapsbutton a.active {
@@ -227,12 +247,16 @@ color:#FFFFFF;
 width:160px; /* width of button image */
 text-decoration:none;
 background: transparent url(img/menu_shadow_up_rounded.gif) no-repeat;
+overflow: hidden;
+background-color: transparent;
 }
 
 #mapsbutton a.current {
 background:#f0f0f0 url(img/menu_shadow_up_rounded.gif) top left repeat-x;
 color:#505050;
 text-decoration:none;
+overflow: hidden;
+background-color: transparent;
 }
 
 /*** Content wrap ***/
@@ -370,6 +394,12 @@ ul.secondary a:hover {
 	min-width: 600px;
 	float: left;
 }
+
+*:first-child+html #content {
+	margin-left:0px;
+	}
+
+
 
 #content h1, #content h2, #content h3 {
 margin:0 0 1em 0;
@@ -1666,5 +1696,6 @@ div.wbx-gw-wrapper {
 
 div.breadcrumb { display: none; }
 .links ul{ display: none; }
+
 
 /*** End of file ***/
