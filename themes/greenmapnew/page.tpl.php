@@ -15,6 +15,7 @@ return;
 "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
+
   <title><?php print $head_title ?></title>
   <?php print $head ?>
   <?php print $styles ?>
@@ -22,6 +23,15 @@ return;
   <script type="text/javascript"><?php /* Needed to avoid Flash of Unstyle Content in IE */ ?> </script>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
 <meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com / for http://www.greenmap.org" />
+
+<!--[if IE 6]>
+<style type="text/css">
+#content { margin: 100px; margin-top: 0px; margin-right: 0;}
+#rightside { width: 165px; }
+</style>
+<![endif]-->
+
+
 </head>
 
 <body>
