@@ -42,7 +42,7 @@ return;
 <img src="<?php print $base_path ?>images/ogmlink2.png" width="180px" alt="<?php print t('Open Green Map link') ?>" /></a>
 		</div>
 		<div id="toplogo">
-<a href="<?php print $base_path ?>/home" title="<?php print t('Home') ?>">
+<a href="<?php print $base_path ?>home" title="<?php print t('Home') ?>">
 <img src="<?php print $base_path ?>images/toplogo.png" width="160px" alt="<?php print t('Green Map Home') ?>" /></a>
 		</div>
 			<div id="languagelinks">
