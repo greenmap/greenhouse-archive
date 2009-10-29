@@ -1,0 +1,613 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Mapmaker Fee* Calculator</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+
+<script language="JavaScript">
+<!--
+//-- code by Thomas Turnbull www.thomasturnbull.com for Green Map System www.greenmap.org
+
+//-- multipliers for country income
+a = (1/3); //-- low income country
+b = (2/3); //-- low middle income
+c = (2/3); //-- high middle income
+d = 1; //-- high income
+
+//-- multipliers for years
+twoyears = 1.75 //-- save 25% on 2nd year
+threeyears = 2.4 //-- save 60% on 3rd year
+
+//-- get form objects from the parent window  - this allows the data to be passed back to the registration form
+parentFee = window.opener.document.getElementById("edit-profile_payment_fee");
+parentType = window.opener.document.getElementById("edit-profile_fees_organization_type");
+parentTerm = window.opener.document.getElementById("edit-profile_fees_term");
+parentDouble = window.opener.document.getElementById("edit-profile_fee_double");
+parentTreble = window.opener.document.getElementById("edit-profile_fee_treble");
+parentKit = window.opener.document.getElementById("edit-profile_fee_purchase_kit");
+parentDonate = window.opener.document.getElementById("edit-profile_admin_donate");
+parentTotal = window.opener.document.getElementById("edit-profile_fee_total");
+
+function unCheckDouble () {
+	document.fees.doubled.checked = false;
+}
+
+function checkNum () {
+ var oldstring = document.fees.donate.value; 
+ var newstring = parseFloat(oldstring).toString(); 
+ var InpValid=1; 
+ if (oldstring.length == newstring.length && newstring != "NaN") 
+ 	{  calculateFees(); } 
+ else { alert("Donation is not a number. Please remove any currency symbols. To donate $50 just enter 50 in the box."); InpValid=0; }
+}
+
+
+function calculateFees() {
+
+	//-- get entered data
+	basefee = document.fees.type.value;
+	var n = document.fees.type.selectedIndex;    // Which menu item is selected
+	var basefeeText = document.fees.type[n].text;        // Return string value of menu item
+	countrycategory = document.fees.country.value;
+	years = document.fees.years.value;
+	donate = document.fees.donate.value;
+	donate = Number(donate); // set as number
+	
+	//-- alert if no country set
+	if (basefee == "") {
+		alert ("Please select your type of organisation first");
+	}
+
+	//-- calculate multiplier for country
+	if (countrycategory == 'a') {
+		countrymultiplier = a;
+	}
+	else if (countrycategory == 'b') {
+		countrymultiplier = b;
+	}
+	else if (countrycategory == 'c') {
+		countrymultiplier = c;
+	}
+	else if (countrycategory == 'd') {
+		countrymultiplier = d;
+	}
+	else {
+		countrymultiplier = d;
+	}	
+	
+	//-- calculate multiplier for year
+	if (years == 2) {
+		yearmultiplier = twoyears;
+	}
+	else if (years ==3) {
+		yearmultiplier = threeyears;
+	}
+	else {
+		yearmultiplier = 1;
+		years = 1;
+	}
+	
+	// calculate multiplier if 'double me' is ticked
+	if (document.fees.doubled.checked) {
+		doubledmultiplier = 2;
+		parentDouble.checked = true;
+		document.fees.tripled.checked = false;
+		parentTreble.checked = false;
+	}
+	else if (document.fees.tripled.checked) {
+		doubledmultiplier = 3;
+		parentTreble.checked = true;
+		document.fees.doubled.checked = false; 
+		parentDouble.checked = false;
+	}
+	else {
+		doubledmultiplier = 1;
+		parentTreble.checked = false;
+		parentDouble.checked = false;
+	}
+	
+	// check if kit is to be added if box is ticked
+	if (document.fees.kit.checked) {
+		kitfee = 25;
+		document.fees.kitfee.value = "$" + kitfee;
+		parentKit.checked = true;
+	}
+	else {
+		kitfee = 0;
+		document.fees.kitfee.value = '';
+		parentKit.checked = false;
+	}
+	
+	//-- calculate fee
+	fee = (basefee * countrymultiplier * yearmultiplier * doubledmultiplier);
+	//-- round to nearest dollar
+	fee = Math.round(fee);
+	
+	//-- calculate total
+	total = fee + kitfee + donate;
+	
+	//-- update total
+	document.fees.fee.value = "$"+fee;
+	document.fees.total.value = "$" + total;
+	
+	//-- update parent
+	parentFee.value = "$"+fee;
+	parentType.value = basefeeText;
+	parentTerm.value = years;
+	parentTotal.value = "$" + total;
+	parentDonate.value = "$" + donate;
+
+}
+
+// -->
+</script>
+
+</head>
+
+<body>
+<h1>Mapmaker Service Support Fee Calculator</h1>
+<p>Why does Green Map System have Mapmaking Fees?</p>
+<p>Your Mapmaker Fees help support GMS's continual, inclusive development. All 
+  Green Map projects contribute. In return, you receive many services and use 
+  of GMS's "Mapmaking System" which includes Green Map's copyrighted icons, concept 
+  and mapmaking resources, outreach (online, press, exhibits, etc.), support network, 
+  trademark name use, goodwill and Greenhouse resources. </p>
+<p>This is your project's total fee - there are no more royalties! On your own 
+  project budget, you can describe this Fee as "overhead", "software", "communications", 
+  or "license" (GMS can provide invoices as needed).</p>
+<p>We do expect you to mail GMS copies of everything you create for the Archives, 
+  plus 1% (200 maximum) of the copies of your printed Green Maps (great for helping 
+  new Mapmakers get started, for our Store, press kits, etc.) And, as described 
+  in the Mapmakers Agreement, if you are creating a product other than a map, 
+  contact GMS in advance and share back on a case-by-case basis.</p>
+<p>Mapmaker Fees are calculated by type of organization (see the guidance at the 
+  <a href="#guidance">bottom of this page</a>) and your country&#8217;s average 
+  income based on the World Bank's list and the length of term you choose (multiple-year 
+  registrations are discounted). On the menu, choose the organization description 
+  that best describes the entity that will be credited as the lead organization 
+  on the Green Map and in the Mapmaker Registration.</p>
+<p>If necessary, you can provide a Exchange Service for all or part of this amount 
+  (please provide details on the Mapmaker Registration form after you have closed 
+  the Fee Calculator).</p>
+<p>See below for <a href="#guidance">guidance on organization types</a>. If you 
+  wish to compare the Mapmaker Fees for different types of organization, you can 
+  <a href="http://greenmap.org/greenhouse/files/Service_Support_Fee_Chart_EN.pdf" target="_blank">download 
+  a spreads heet of the Support Fees</a>. Return to this window to calculate your 
+  Service Support Fee.</p>
+<p>Rates are shown in US dollars.<a name="calculator"></a></p>
+
+<form action="" method="post" name="fees" id="fees">
+  <hr>
+  <table width="584" border="0" cellpadding="0" cellspacing="0">
+    <tr> 
+      <td width="410" align="left">&nbsp;</td>
+      <td width="30" align="right">&nbsp;</td>
+      <td width="144">&nbsp;</td>
+    </tr>
+    <tr> 
+      <td align="right"><select name="type" id="select" onChange="calculateFees()">
+          <option value="">Select organization</option>
+          <option value="">&nbsp;</option>
+          <option value="40">School - 1 class</option>
+          <option value="60">School - 1 school</option>
+          <option value="100">School program - up to 4 schools</option>
+          <option value="250">School district</option>
+          <option value="">&nbsp;</option>
+          <option value="40">University/college student(s)</option>
+          <option value="75">University/college class</option>
+          <option value="150">University/college department</option>
+          <option value="350">University/college</option>
+          <option value="">&nbsp;</option>
+          <option value="40">Youth Group - volunteer-run</option>
+          <option value="60">Youth Camp - volunteer-run</option>
+          <option value="100">Youth Group - paid staff</option>
+          <option value="150">Youth Camp - paid staff</option>
+          <option value="">&nbsp;</option>
+          <option value="60">Individual on voluntary basis</option>
+          <option value="100">Individual being paid</option>
+          <option value="">&nbsp;</option>
+          <option value="75">Community/grassroots group - volunteer-run</option>
+          <option value="150">Community/grassroots group - paid staff</option>
+          <option value="">&nbsp;</option>
+          <option value="75">Nonprofit organization - volunteer-run</option>
+          <option value="150">Nonprofit organization - up to 5 paid staff</option>
+          <option value="250">Nonprofit organization - more than 5 paid staff</option>
+		  <option value="350">Nonprofit Organization Umbrella Project mapping 1-5 locales</option>
+		  <option value="500">Nonprofit Organization Umbrella Project mapping 6-15 locales</option>
+		  <option value="750">Nonprofit Organization Umbrella Project mapping 16-30 locales</option>
+		  <option value="1000">Nonprofit Organization Umbrella Project mapping 31-50 locales</option>
+          <option value="">&nbsp;</option>
+          <option value="200">Governmental agency - small (under 10 staff)</option>
+          <option value="400">Governmental agency - medium (10 - 100 staff)</option>
+          <option value="600">Governmental agency - large (100 or more staff)</option>
+          <option value="">&nbsp;</option>
+          <option value="350">Tourism agency - public</option>
+          <option value="600">Tourism agency - private</option>
+          <option value="">&nbsp;</option>
+          <option value="300">Small business (under 10 staff) mapping 1 location</option>
+		  <option value="800">Small business (under 10 staff) mapping 2-5 locales</option>
+		  <option value="2000">Small business (under 10 staff) mapping 6-15 locales</option>
+          <option value="">&nbsp;</option>          
+		  <option value="500">Medium business (10 - 100 staff) mapping 1 location</option>
+		  <option value="1200">Medium business (10 - 100 staff) mapping 2-5 locales</option>
+		  <option value="3500">Medium business (10 - 100 staff) mapping 6-15 locales</option>
+		  <option value="">&nbsp;</option>          
+		  <option value="800">Large business (100+ staff) mapping 1 location</option>
+		  <option value="2000">Large business (100+ staff) mapping 2-5 locales</option>
+		  <option value="5000">Large business (100+ staff) mapping 6-15 locales</option>
+		  		  
+
+        </select> </td>
+      <td align="right">&nbsp;</td>
+      <td valign="top"><input name="fee" type="text" id="fee" disabled></td>
+    </tr>
+    <tr> 
+      <td align="right"><select name="country" onChange="calculateFees()">
+          <option value="d" selected>Select your country</option>
+          <option value="a">Afghanistan </option>
+          <option value="b">Albania </option>
+          <option value="b">Algeria </option>
+          <option value="c">American Samoa </option>
+          <option value="d">Andorra </option>
+          <option value="b">Angola </option>
+          <option value="d">Antigua and Barbuda </option>
+          <option value="c">Argentina </option>
+          <option value="b">Armenia </option>
+          <option value="d">Aruba </option>
+          <option value="d">Australia </option>
+          <option value="d">Austria </option>
+          <option value="b">Azerbaijan </option>
+          <option value="d">Bahamas, The </option>
+          <option value="d">Bahrain </option>
+          <option value="a">Bangladesh </option>
+          <option value="c">Barbados </option>
+          <option value="b">Belarus </option>
+          <option value="d">Belgium </option>
+          <option value="c">Belize </option>
+          <option value="a">Benin </option>
+          <option value="d">Bermuda </option>
+          <option value="a">Bhutan </option>
+          <option value="b">Bolivia </option>
+          <option value="b">Bosnia and Herzegovina </option>
+          <option value="c">Botswana </option>
+          <option value="b">Brazil </option>
+          <option value="d">Brunei Darussalam </option>
+          <option value="b">Bulgaria </option>
+          <option value="a">Burkina Faso </option>
+          <option value="a">Burundi </option>
+          <option value="a">Cambodia </option>
+          <option value="b">Cameroon </option>
+          <option value="d">Canada </option>
+          <option value="b">Cape Verde </option>
+          <option value="d">Cayman Islands </option>
+          <option value="a">Central African Republic </option>
+          <option value="a">Chad </option>
+          <option value="d">Channel Islands </option>
+          <option value="c">Chile </option>
+          <option value="b">China </option>
+          <option value="b">Colombia </option>
+          <option value="a">Comoros </option>
+          <option value="a">Congo, Dem. Rep. </option>
+          <option value="b">Congo, Rep. </option>
+          <option value="c">Costa Rica </option>
+          <option value="a">Côte d'Ivoire </option>
+          <option value="c">Croatia </option>
+          <option value="b">Cuba </option>
+          <option value="d">Cyprus </option>
+          <option value="c">Czech Republic </option>
+          <option value="d">Denmark </option>
+          <option value="b">Djibouti </option>
+          <option value="c">Dominica </option>
+          <option value="b">Dominican Republic </option>
+          <option value="b">Ecuador </option>
+          <option value="b">Egypt, Arab Rep. </option>
+          <option value="b">El Salvador </option>
+          <option value="c">Equatorial Guinea </option>
+          <option value="a">Eritrea </option>
+          <option value="c">Estonia </option>
+          <option value="a">Ethiopia </option>
+          <option value="d">Faeroe Islands </option>
+          <option value="b">Fiji </option>
+          <option value="d">Finland </option>
+          <option value="d">France </option>
+          <option value="d">French Polynesia </option>
+          <option value="c">Gabon </option>
+          <option value="a">Gambia, The </option>
+          <option value="b">Georgia </option>
+          <option value="d">Germany </option>
+          <option value="a">Ghana </option>
+          <option value="d">Greece </option>
+          <option value="d">Greenland </option>
+          <option value="c">Grenada </option>
+          <option value="d">Guam </option>
+          <option value="b">Guatemala </option>
+          <option value="a">Guinea </option>
+          <option value="a">Guinea-Bissau </option>
+          <option value="b">Guyana </option>
+          <option value="a">Haiti </option>
+          <option value="b">Honduras </option>
+          <option value="d">Hong Kong, China </option>
+          <option value="c">Hungary </option>
+          <option value="d">Iceland </option>
+          <option value="a">India </option>
+          <option value="b">Indonesia </option>
+          <option value="b">Iran, Islamic Rep. </option>
+          <option value="b">Iraq </option>
+          <option value="d">Ireland </option>
+          <option value="d">Isle of Man </option>
+          <option value="d">Israel </option>
+          <option value="d">Italy </option>
+          <option value="b">Jamaica </option>
+          <option value="d">Japan </option>
+          <option value="b">Jordan </option>
+          <option value="b">Kazakhstan </option>
+          <option value="a">Kenya </option>
+          <option value="b">Kiribati </option>
+          <option value="a">Korea, Dem. Rep. </option>
+          <option value="d">Korea, Rep. </option>
+          <option value="d">Kuwait </option>
+          <option value="a">Kyrgyz Republic </option>
+          <option value="a">Lao PDR </option>
+          <option value="c">Latvia </option>
+          <option value="c">Lebanon </option>
+          <option value="b">Lesotho </option>
+          <option value="a">Liberia </option>
+          <option value="c">Libya </option>
+          <option value="d">Liechtenstein </option>
+          <option value="c">Lithuania </option>
+          <option value="d">Luxembourg </option>
+          <option value="d">Macao, China </option>
+          <option value="b">Macedonia, FYR </option>
+          <option value="a">Madagascar </option>
+          <option value="a">Malawi </option>
+          <option value="c">Malaysia </option>
+          <option value="b">Maldives </option>
+          <option value="a">Mali </option>
+          <option value="d">Malta </option>
+          <option value="b">Marshall Islands </option>
+          <option value="a">Mauritania </option>
+          <option value="c">Mauritius </option>
+          <option value="c">Mayotte </option>
+          <option value="c">Mexico </option>
+          <option value="b">Micronesia, Fed. Sts. </option>
+          <option value="b">Moldova </option>
+          <option value="d">Monaco </option>
+          <option value="a">Mongolia </option>
+          <option value="b">Morocco </option>
+          <option value="a">Mozambique </option>
+          <option value="a">Myanmar </option>
+          <option value="b">Namibia </option>
+          <option value="a">Nepal </option>
+          <option value="d">Netherlands </option>
+          <option value="d">Netherlands Antilles </option>
+          <option value="d">New Caledonia </option>
+          <option value="d">New Zealand </option>
+          <option value="b">Nicaragua </option>
+          <option value="a">Niger </option>
+          <option value="a">Nigeria </option>
+          <option value="c">Northern Mariana Islands </option>
+          <option value="d">Norway </option>
+          <option value="c">Oman </option>
+          <option value="a">Pakistan </option>
+          <option value="c">Palau </option>
+          <option value="c">Panama </option>
+          <option value="a">Papua New Guinea </option>
+          <option value="b">Paraguay </option>
+          <option value="b">Peru </option>
+          <option value="b">Philippines </option>
+          <option value="c">Poland </option>
+          <option value="d">Portugal </option>
+          <option value="d">Puerto Rico </option>
+          <option value="d">Qatar </option>
+          <option value="c">Romania </option>
+          <option value="c">Russian Federation </option>
+          <option value="a">Rwanda </option>
+          <option value="b">Samoa </option>
+          <option value="d">San Marino </option>
+          <option value="a">São Tomé and Principe </option>
+          <option value="d">Saudi Arabia </option>
+          <option value="a">Senegal </option>
+          <option value="b">Serbia and Montenegro </option>
+          <option value="c">Seychelles </option>
+          <option value="a">Sierra Leone </option>
+          <option value="d">Singapore </option>
+          <option value="c">Slovak Republic </option>
+          <option value="d">Slovenia </option>
+          <option value="a">Solomon Islands </option>
+          <option value="a">Somalia </option>
+          <option value="c">South Africa </option>
+          <option value="d">Spain </option>
+          <option value="b">Sri Lanka </option>
+          <option value="c">St. Kitts and Nevis </option>
+          <option value="c">St. Lucia </option>
+          <option value="c">St. Vincent and the Grenadines </option>
+          <option value="a">Sudan </option>
+          <option value="b">Suriname </option>
+          <option value="b">Swaziland </option>
+          <option value="d">Sweden </option>
+          <option value="d">Switzerland </option>
+          <option value="b">Syrian Arab Republic </option>
+          <option value="a">Tajikistan </option>
+          <option value="a">Tanzania </option>
+		  <option value="b">Taiwan</option>
+          <option value="b">Thailand </option>
+          <option value="a">Timor-Leste </option>
+          <option value="a">Togo </option>
+          <option value="b">Tonga </option>
+          <option value="c">Trinidad and Tobago </option>
+          <option value="b">Tunisia </option>
+          <option value="c">Turkey </option>
+          <option value="b">Turkmenistan </option>
+          <option value="a">Uganda </option>
+          <option value="b">Ukraine </option>
+          <option value="d">United Arab Emirates </option>
+          <option value="d">United Kingdom </option>
+          <option value="d">United States </option>
+          <option value="c">Uruguay </option>
+          <option value="a">Uzbekistan </option>
+          <option value="b">Vanuatu </option>
+          <option value="c">Venezuela, RB </option>
+          <option value="a">Vietnam </option>
+          <option value="d">Virgin Islands (U.S.) </option>
+          <option value="b">West Bank and Gaza </option>
+          <option value="a">Yemen, Rep. </option>
+          <option value="a">Zambia </option>
+          <option value="a">Zimbabwe </option>
+        </select> <br></td>
+      <td align="right">&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr> 
+      <td align="right"><select name="years" id="select3" onChange="calculateFees()">
+          <option value="1">Term of Project</option>
+          <option value="1">1 year</option>
+          <option value="2">2 years</option>
+          <option value="3">3 years</option>
+        </select> <br /></td>
+      <td align="right">&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;</td>
+      <td align="right">&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr> 
+      <td><label for="label"> 
+        <input name="doubled" type="checkbox" id="label" value="doubled" onClick="calculateFees()">
+        Double your Fee! to become a Supporting Mapmaker </label>
+        and support Mapmakers in low-income communities and continual development 
+        of GMS&#8217;s shared resources. Your project will be listed as a Supporting 
+        Mapmaker online and in GMS&#8217;s annual Milestones newsletters.<br>
+        <br> 
+        <input name="tripled" type="checkbox" id="tripled" value="tripled" onClick="unCheckDouble(), calculateFees()">
+        Triple your Fee! to become a Sustaining Mapmaker. You will be doing even 
+        more to help develop GMS and include low-income communities in the movement! 
+        Your project will be listed as a Sustaining Mapmaker online and in GMS&#8217;s 
+        annual Milestones newsletters.<br> </td>
+      <td align="right">&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;</td>
+      <td align="right">&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr> 
+      <td>If you want to donate any other amount of money, please add it here:</td>
+      <td align="right">&nbsp;</td>
+      <td><input name="donate" type="text" id="donate" onChange="checkNum()" ></td>
+    </tr>
+    <tr> 
+      <td>&nbsp;</td>
+      <td align="right">&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr> 
+      <td><label for="kit"> 
+        <input name="kit" type="checkbox" id="kit" value="kit"  onClick="calculateFees()">
+        Check here to purchase a Mapmaker Kit that includes several sample Green 
+        Maps, printed materials, CD-Rom, balloons, press clips, etc. ($25 including 
+        postage &amp; handling). Otherwise, all tools are digital and you'll have 
+        access immediately to the online Tool Center. If you want a kit, but cannot 
+        afford $25, please tell us in the registration form once you have closed 
+        the Fee Calculator.</label></td>
+      <td align="right">&nbsp;</td>
+      <td valign="top"><input name="kitfee" type="text" id="kitfee" disabled></td>
+    </tr>
+    <tr> 
+      <td>&nbsp;</td>
+      <td align="right">&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr> 
+      <td align="right"><input type="button" name="Button" value="calculate total" onClick="calculateFees()"></td>
+      <td align="right">&nbsp;</td>
+      <td><input name="total" type="text" id="total" disabled></td>
+    </tr>
+    <tr> 
+      <td align="right">&nbsp;</td>
+      <td align="right">&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr> 
+      <td colspan="3">Thank you for your support!</td>
+    </tr>
+    <tr> 
+      <td align="right">&nbsp;</td>
+      <td align="right">&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr> 
+      <td colspan="3" align="left">Remember... <p>These details should automatically 
+          be copied into the Registration form. Check that this has been done, 
+          then close the Calculator window and complete the Registration form. 
+          If you have any problems, please contact <a href="http://greenmap.org/greenhouse/contact" target="_blank">Green 
+          Map System</a> </p></td>
+    </tr>
+    <tr> 
+      <td colspan="3" align="left">&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="3" align="left"><input name="close" type="button" id="close" value="Close Calculator" onClick="javascript:window.close();"></td>
+    </tr>
+  </table>
+
+  <hr>
+  <h2><a name="guidance"></a>Choosing the Correct Organizational Type</h2>
+  <p> School: Public or private, kindergarten through high school (includes home-schooled 
+    children). If you are a nonprofit organization working with several schools, 
+    please register as a nonprofit. Options: 1 class, 1 school, up to 4 schools, 
+    school district.</p>
+  <p>University/college: Includes 2 year, 4 year, graduate and doctoral programs. 
+    Includes continuing (adult) education programs, if based at a university or 
+    college. An Eco-Club should register as a department. If multiple departments 
+    are involved, register as a University/college. Options: student project, 
+    class project, department, school.</p>
+  <p>Youth Group: An out of school group that is not formally organized as a non-profit 
+    organization. Options: volunteer run or paid staff.</p>
+  <p>Youth Camp: Seasonal, formally organized program that serves a specific group 
+    of children. Options: volunteer run or paid staff.</p>
+  <p>Individual(s): One to three person team. (Interns or volunteers for a non-profit, 
+    school, business, or other agency should register in that category.) Options: 
+    volunteer run or paid staff.</p>
+  <p>Community/grassroots group: Informally organized group not registered/no 
+    official status with a governmental agency. Options: volunteer run or paid 
+    staff. </p>
+  <p>Nonprofit organization: formally organized group with registered charity/nonprofit 
+    status (or in the process of becoming an official nonprofit). If your group 
+    is being &#8216;fiscal sponsored&#8217; by a local non-profit organization 
+    for fundraising purposes, choose the category of Nonprofit that matches your 
+    Green Mapmaking team. Options: volunteer run, up to 5 paid staff, more than 
+    5 paid staff.</p>
+  <p>Nonprofit organization &#8211; Umbrella project: A nonprofit organization 
+    which serves as the central office for related Green Map projects (1) meant 
+    for an event or purpose or (2) where Mapmakers lack the technical or linguistic 
+    ability to register individually. In special cases, these may be registered 
+    under the &#8216;umbrella&#8217; of a larger non-profit organization, which 
+    is required to keep a Map Profile current for each of them. See special limitations 
+    in the Mapmakers Agreement. Options: mapping 1-5 locales, 6-15 locales. 16-30 
+    locales, 31-50 locales. </p>
+  <p>Governmental agency: Any level of governmental agency is included. Options: 
+    under 10 staff, 10-100 staff, 100 or more staff. </p>
+  <p>Tourism Agency: A tourism-based entity. Options: public or private. </p>
+  <p>Small Business: Less than 10 on staff (see below) <br>
+    Medium-size Business: 10-100 on staff (see below) <br>
+    Large Business: 100+ on staff (see below)<br>
+    Options: mapping 1 locale, 2-5 locales, 6-15 locales.</p>
+  <p>Any company, including GIS and consultant firms, should register in this 
+    category. <br>
+    Corporate campus, factory, store or indoor/outdoor Green Maps may be made 
+    by companies of their own facilities as part of corporate social responsibility 
+    (CSR) and/or sustainability programs, with the advice of a nonprofit organization 
+    (preferably with Green Mapmaking experience). May be created for specific 
+    small audiences. Business Green Map Projects are required to keep a Map Profile 
+    current for each of their projects. See special limitations in the Mapmakers 
+    Agreement. More on CSRs is in our Glossary.</p>
+  <p>Comments welcome. Green Map System may update this guidance from time to 
+    time. <br>
+  </p>
+  <p><a href="#calculator">Go back up to the calculator</a></p>
+</form>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<?php
+// $Id: nodefamily.install,v 1.2.2.1 2006/11/02 23:23:17 fago Exp $
+
+function nodefamily_install() {
+
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':     
+      db_query("CREATE TABLE if not exists {nodefamily} (
+        parent_nid int(10) unsigned NOT NULL,
+        child_nid int(10) unsigned NOT NULL,
+        PRIMARY KEY(parent_nid,child_nid)
+      ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      break;
+    case 'pgsql':
+      db_query("CREATE TABLE {nodefamily} (
+        parent_nid integer NOT NULL,
+        child_nid integer NOT NULL,
+        PRIMARY KEY(parent_nid,child_nid)
+      )");
+    default:
+      break;
+  }
+
+}

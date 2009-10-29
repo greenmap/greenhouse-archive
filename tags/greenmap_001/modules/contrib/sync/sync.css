@@ -1,0 +1,13 @@
+#terms {
+	overflow:auto;
+	height:500px;
+	margin: 15px 0px 15px 0px;
+	border: 1px solid #333333;
+	padding: 10px;
+}
+#attachments {
+	margin: 15px 0px 15px 0px;
+}
+#agree {
+	background-color:#ff55cc;
+}
