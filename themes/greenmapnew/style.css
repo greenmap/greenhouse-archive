@@ -1507,7 +1507,7 @@ fieldset.collapsed, fieldset.collapsible, fieldset.fakecollapsed, fieldset.fakec
 	}
 	
 html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
-	border: #b9cd91 1px solid;
+	border: none;
 }
 
 /*** Text format ***/
