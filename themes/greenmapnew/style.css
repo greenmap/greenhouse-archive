@@ -123,6 +123,8 @@ margin-left: -12px;
 
 #mainmenu {
 float: left;
+left: 0;
+margin-left: 20px;
 z-index: 5;
 margin-top: 10px;
 margin-bottom: 0;
@@ -188,9 +190,10 @@ background-color: transparent;
 
  
 #mapsbutton {
+margin-left: -5px;
+left: 0;
 float: left;
 z-index: 10;
-margin-left: -25px;
 margin-top: 10px;
 margin-bottom: 0;
 position: absolute;
@@ -1418,6 +1421,8 @@ background: url(img/bottomshadow.gif) repeat-x;
 clear:both;
 color:#d0d0d0;
 width: 100%;
+position: absolute;
+bottom: -120px;
 }
 
 #bottomleft {
