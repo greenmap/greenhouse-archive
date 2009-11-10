@@ -488,9 +488,9 @@ display: inline;
 #leftprofile{
 	float:left;
 	margin-right:10px;
-	margin-left: -160px;
+	margin-left: -158px;
+	margin-top: 10px;
 	width:500px;
-
 }
 
 #leftprofile img{
@@ -503,18 +503,22 @@ display: inline;
 
 #rightprofile{
 	margin-left: 160px;
+	margin-top: 10px;
 }
 
 
-
-
+#rightprofile #gmap {
+	width:200px;
+	height:120px;
+}
 /***** TT - map profile styles *****/
 
 #leftmap{
 	float:left;
 	margin-right:10px;
-	width:300px;
-
+	margin-left: -158px;
+	margin-top: 10px;
+	width:500px;
 }
 
 #leftmap img{
@@ -525,11 +529,9 @@ display: inline;
 	float:none;
 }
 
-#leftmap #gmap {
-	width:100%;
+#rightmap #gmap {
+	width:200px;
 	height:150px;
-	margin-top: 0px;
-	margin-bottom: 0px;
 }
 
 #albums a.img, #albums img {
@@ -544,7 +546,8 @@ display: inline;
 }
 
 #rightmap{
-	margin-left: 320px;
+	margin-left: 160px;
+	margin-top: 10px;
 }
 
 .item div label{
