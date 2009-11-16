@@ -22,22 +22,26 @@ a {
 	color:#505050;
 	font-weight:bold;
 	text-decoration:none;
+	outline:none;
 }
 
 #content p a, div.newsarticle a, #content div.data a {
 	color:#88966f;
 	font-weight: normal;
 	text-decoration: underline;
+	outline:none;
 }
 #content p a:hover {
 	color:#999;
 	font-weight: normal;
 	text-decoration: none;
+	outline:none
 }
 
 a:hover {
 color:#808080;
 text-decoration:underline;
+outline:none;
 }
 
 /*** Main container ***/
@@ -103,6 +107,9 @@ float:right;
 	margin-top: 52px;
 	margin-left: 5px;
 	margin-bottom: -8px;
+	min-width: 1049px;
+	overflow: hidden;
+background-color: transparent;
 }
 
 #sitelogo {
@@ -115,9 +122,9 @@ margin-left: -12px;
 /*** Horizontal menu ***/
 
 #mainmenu {
-float: left;
 left: 0;
 margin-left: 20px;
+float: left;
 z-index: 5;
 margin-top: 10px;
 margin-bottom: 0;
@@ -138,6 +145,7 @@ background-color: transparent;
 	list-style:none;
 	padding:0;
 	text-align: center;
+background-color: transparent;
 }
 
 #mainmenu a {
@@ -149,7 +157,8 @@ background-color: transparent;
 	height:47px;
 	width:130px; /* width of button image */
 	/* text-transform:uppercase;  */
-	background: url(img/menu_shadow_down_4.gif) no-repeat;
+	background: transparent url(img/menu_shadow_down_4.gif) no-repeat;
+background-color: transparent;
 	padding-top: 4px;
 	margin-left: -14px;
 	letter-spacing: 0.15em;
@@ -159,22 +168,27 @@ background-color: transparent;
  /* background:#f0f0f0 url(img/menuhover.jpg) top left repeat-x; */
 color:#FFFFFF;
 text-decoration:none;
-background: url(img/menu_shadow_up_4.gif) no-repeat;
+background: transparent url(img/menu_shadow_up_4.gif) no-repeat;
+background-color: transparent;
 }
 
 #mainmenu a.active {
  /* background:#f0f0f0 url(img/menuhover.jpg) top left repeat-x; */
 color:#FFFFFF;
 text-decoration:none;
-background: url(img/menu_shadow_up_4.gif) no-repeat;
+background: transparent url(img/menu_shadow_up_4.gif) no-repeat;
+background-color: transparent;
 }
 
 #mainmenu a.current {
-background:#f0f0f0 url(img/menuhover.jpg) top left repeat-x;
+background:#f0f0f0 transparent url(img/menuhover.jpg) top left repeat-x;
 color:#505050;
 text-decoration:none;
+background-color: transparent;
 }
 
+
+ 
 #mapsbutton {
 margin-left: -5px;
 left: 0;
@@ -184,7 +198,7 @@ margin-top: 10px;
 margin-bottom: 0;
 position: absolute;
 width: 180px;
-max-height: 47px;
+height: 47px;
 background-color: transparent;
 overflow: hidden;
 }
@@ -192,6 +206,7 @@ overflow: hidden;
 #mapsbutton ul {
 font-size:19px;
 background-color: transparent;
+overflow: hidden;
 }
 
 #mapsbutton li {
@@ -199,6 +214,8 @@ background-color: transparent;
 	height:47px;
 	list-style:none;
 	padding:0;
+	overflow: hidden;
+background-color: transparent;
 	}
 
 #mapsbutton a {
@@ -213,6 +230,8 @@ background-color: transparent;
 	background: transparent url(img/menu_shadow_down_rounded.gif) no-repeat;
 	padding-top: 4px;
 	letter-spacing: 0.15em;
+	overflow: hidden;
+background-color: transparent;
 }
 
 #mapsbutton a:hover {
@@ -221,6 +240,8 @@ color:#FFFFFF;
 width:160px; /* width of button image */
 text-decoration:none;
 background: transparent url(img/menu_shadow_up_rounded.gif) no-repeat;
+overflow: hidden;
+background-color: transparent;
 }
 
 #mapsbutton a.active {
@@ -229,12 +250,16 @@ color:#FFFFFF;
 width:160px; /* width of button image */
 text-decoration:none;
 background: transparent url(img/menu_shadow_up_rounded.gif) no-repeat;
+overflow: hidden;
+background-color: transparent;
 }
 
 #mapsbutton a.current {
 background:#f0f0f0 url(img/menu_shadow_up_rounded.gif) top left repeat-x;
 color:#505050;
 text-decoration:none;
+overflow: hidden;
+background-color: transparent;
 }
 
 /*** Content wrap ***/
@@ -243,6 +268,7 @@ text-decoration:none;
 height: auto;
 font-size:0.9em;
 min-height: 650px;
+min-width: 1070px;
 padding:0;
 margin:0;
 margin-left: 15px;
@@ -258,6 +284,7 @@ margin:-4px;
 padding:18px 10px 10px;
 max-width:165px;
 min-width:110px;
+width: 165px;
 }
 
 #leftside {
@@ -371,6 +398,14 @@ ul.secondary a:hover {
 	min-width: 600px;
 	float: left;
 }
+
+*:first-child+html #content {
+	margin-left:0px;
+	}
+
+
+
+
 
 #content h1, #content h2, #content h3 {
 margin:0 0 1em 0;
@@ -488,9 +523,8 @@ display: inline;
 #leftprofile{
 	float:left;
 	margin-right:10px;
-	margin-left: -158px;
-	margin-top: 10px;
-	width:500px;
+	width:140px;
+
 }
 
 #leftprofile img{
@@ -503,22 +537,18 @@ display: inline;
 
 #rightprofile{
 	margin-left: 160px;
-	margin-top: 10px;
 }
 
 
-#rightprofile #gmap {
-	width:200px;
-	height:120px;
-}
+
+
 /***** TT - map profile styles *****/
 
 #leftmap{
 	float:left;
 	margin-right:10px;
-	margin-left: -158px;
-	margin-top: 10px;
-	width:500px;
+	width:300px;
+
 }
 
 #leftmap img{
@@ -529,9 +559,11 @@ display: inline;
 	float:none;
 }
 
-#rightmap #gmap {
-	width:200px;
+#leftmap #gmap {
+	width:100%;
 	height:150px;
+	margin-top: 0px;
+	margin-bottom: 0px;
 }
 
 #albums a.img, #albums img {
@@ -546,8 +578,7 @@ display: inline;
 }
 
 #rightmap{
-	margin-left: 160px;
-	margin-top: 10px;
+	margin-left: 320px;
 }
 
 .item div label{
@@ -711,7 +742,7 @@ display: inline;
 	padding-left: 10px;
 	color: #FFAC06;
 }
-
+#rightside #block-block-34 H1,
 #rightside #block-menu-669 H1,
 #rightside #block-block-33 H1,
 #rightside #block-block-24 H1,
@@ -737,7 +768,7 @@ background: none;
 bottom: auto;
 padding-right: -30px;
 margin-right: -50px;
-margin-top: 3%;
+margin-top: -10px;
 float: right
 }
 
@@ -1076,6 +1107,7 @@ div#iconpage .old {
 	color: #999999;
 }
 
+
 div#iconpage div.greenicon {
 	display: inline;
 	border: 1px solid #ccc;
@@ -1093,6 +1125,7 @@ div#iconpage div.iconinfo {
 	float: left;
 	clear: both;
 }
+
 
 div#iconpage div.greenicon img {
 	float: none;
@@ -1510,7 +1543,7 @@ fieldset.collapsed, fieldset.collapsible, fieldset.fakecollapsed, fieldset.fakec
 	}
 	
 html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
-	border: none;
+	border: #b9cd91 1px solid;
 }
 
 /*** Text format ***/
@@ -1670,5 +1703,7 @@ div.wbx-gw-wrapper {
 /* hide breadcrumbs and page reads */
 
 div.breadcrumb { display: none; }
+.links ul{ display: none; }
+
 
 /*** End of file ***/
