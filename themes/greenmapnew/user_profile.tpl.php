@@ -1089,10 +1089,32 @@ else {
 
 
 <?php if($profile_organization_type || $allowed_editor) { ?>
+
+<?php print "asdf: $profile_organization_type" ?>
+
+<?php
+
+$dict = array( 
+ 'business' => '',
+ 'community/grass roots' => 'mapmakers/list/organization/community',
+ 'governmental agency' => '',
+ 'individual' => '',
+ 'non-profit' => '',
+ 'school' => '',
+ 'tourism agency' => '',
+ 'university/college' => '',
+ 'youth' => '',
+ 'other ' => '',
+);
+?>
+
 <div class="item <?php if (!$profile_organization_type && $allowed_editor) { print 'required'; } ?>">
 	<div><label><?php print t('Type'); ?>:</label></div>
 	<div class="data"> 
-		<?php print check_plain($profile_organization_type); ?>
+		<?php 
+     print l(check_plain(ucwords(check_plain($profile_organization_type))),
+           $dict[$profile_organization_type]); 
+    ?>
 		<?php if (!$profile_organization_type && $allowed_editor) { print l(t('Add your organization type*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
 	</div>
 </div>
