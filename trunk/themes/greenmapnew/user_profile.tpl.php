@@ -262,7 +262,9 @@ $attributes_mapmakers = array('class' => 'mapmakers');
 
 <?php if(($profile_project_area_english) || ($profile_project_area_local) ||($profile_state) || 
 	($profile_project_country) || ($profile_project_continent || $allowed_editor )) { ?>
+
 <div class="item <?php if ((!$profile_project_area_english || !$profile_state || !$profile_project_country || !$profile_project_continent ) && $allowed_editor) { print 'required'; } ?>">
+
 <div class="data">
 	<?php print check_plain($profile_project_area_english) ?>
 	<?php if (!$profile_project_area_english && $allowed_editor) { print l(t('Set your location*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
@@ -271,21 +273,55 @@ $attributes_mapmakers = array('class' => 'mapmakers');
 		(<?php print check_plain($profile_project_area_local) ?>
 		<?php if (!$profile_project_area_local && $allowed_editor) { print l(t('Set the local name of location if different '),'user/'. $user -> uid .'/edit/A.+Organization+details');  } ?>) 
 	<?php }?>
+	
+	
 	<?php if($profile_state || $allowed_editore) { ?>
 		- <?php print check_plain($profile_state) ?>
 		<?php if (!$profile_state && $allowed_editor) { print l(t('Set your state*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
 	<?php }?>
+	
+	
 	<?php if($profile_project_country || $allowed_editor) { ?>
 		- <?php print check_plain($profile_project_country) ?>
 		<?php if (!$profile_project_country && $allowed_editor) { print l(t('Set your country*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
 	<?php }?>
+	
+	
+	
 	<?php if($profile_project_continent || $allowed_editor) { ?>
-		- <?php print check_plain($profile_project_continent) ?>
-		<?php if (!$profile_project_continent && $allowed_editor) { print l(t('Set your continent*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
-	<?php }?>
+<?php
+$dictc = array( 
+ 'Africa' => 'maps/list/continent/africa',
+ 'Europe' => 'maps/list/continent/europe',
+ 'Latin America' => 'maps/list/continent/latin america',
+ 'North America' => 'maps/list/continent/north america',
+ 'Oceania' => 'maps/list/continent/oceania',
+ );
+?>
+
+<?php if (!$profile_project_continent && $allowed_editor) { print 'required'; } ?>
+		- <?php print l(check_plain(ucwords(check_plain($profile_project_continent))),
+           $dictc[$profile_project_continent]); 
+    	?>
+<?php }?>
+
+
+		
 </div></div>
 <?php }?>
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -629,9 +665,8 @@ $attributes_mapmakers = array('class' => 'mapmakers');
 	</div>
 </div>
 <?php }?>
-		
-
 <?php } ?>
+
 
 
 
@@ -1095,16 +1130,16 @@ else {
 <?php
 
 $dict = array( 
- 'business' => '',
+ 'business' => 'mapmakers/list/organization/business',
  'community/grass roots' => 'mapmakers/list/organization/community',
- 'governmental agency' => '',
- 'individual' => '',
- 'non-profit' => '',
- 'school' => '',
- 'tourism agency' => '',
- 'university/college' => '',
- 'youth' => '',
- 'other ' => '',
+ 'governmental agency' => 'mapmakers/list/organization/individual',
+ 'individual' => 'mapmakers/list/organization/individual',
+ 'non-profit' => 'mapmakers/list/organization/nonprofit',
+ 'school' => 'mapmakers/list/organization/school',
+ 'tourism agency' => 'mapmakers/list/organization/tourism',
+ 'university/college' => 'mapmakers/list/organization/university',
+ 'youth' => 'mapmakers/list/organization/youth',
+ 'other ' => 'mapmakers/list/organization/other',
 );
 ?>
 
@@ -1130,8 +1165,14 @@ $dict = array(
 <?php // Social Networks Fieldset in User profile?>
 <?php if( $profile_facebook || $profile_twitter || $profile_youtube || $profile_flickr || $profile_hi5 || $profile_othersocial1 || $profile_othersocial2 || $profile_othersocial3)
 	print t('<fieldset ><legend>Social Networks</legend>' ); ?>
+	
+
+	
 <?php if( $profile_facebook )
 	print t('<div><a href="'.$profile_facebook.'">Facebook</a></div>'); ?>
+	
+	
+	
 <?php if( $profile_twitter )
 	print t('<div><a href="'.$profile_twitter.'">Twitter</a></div>'); ?>
 <?php if( $profile_youtube )
