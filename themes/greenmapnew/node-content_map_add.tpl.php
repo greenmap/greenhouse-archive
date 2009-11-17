@@ -1,3 +1,4 @@
+<!--node-content_map_add.tpl.php-->
 <p>Step 1: Complete this form for each Green Map you create. It's the basic information needed to introduce your map to the public. </p>
 
 <p>Step 2: Provide more information about your Map. Once you have submitted this form just click 'Edit' at the top of the Map's page.  </p>
@@ -31,3 +32,4 @@
 <?php // print_r(array_values($form)) // uncomment this line if need to see all variables ?>
 
 <div id="hiddenbitsofform" class="hide"><?php print form_render($form); ?> </div>
+<!--/node-content_map_add.tpl.php-->

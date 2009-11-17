@@ -1,3 +1,4 @@
+<!--node-content_icon.tpl.php-->
 
 
 <?php
@@ -337,3 +338,4 @@ else { // if not teaser show full node for icon --------------------------------
 		
 		
 <?php } // end else showing full node ?>
+<!--/node-content_icon.tpl.php-->

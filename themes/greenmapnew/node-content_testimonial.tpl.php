@@ -1,3 +1,4 @@
+<!--node-content_testimonial.tpl.php-->
 
 
 <?php 
@@ -104,3 +105,4 @@ print '<br />';
 // end else, for showing full page view.
 }
 ?>
+<!--/node-content_testimonial.tpl.php-->

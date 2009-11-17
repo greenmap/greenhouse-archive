@@ -1,3 +1,4 @@
+<!--node-product.tpl.php-->
 <?php 
 // if viewing teaser show limited info.
 if ($teaser) {
@@ -35,3 +36,4 @@ else {
 // end else, for showing full page view.
 }
 ?>
+<!--/node-product.tpl.php-->

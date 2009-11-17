@@ -1,3 +1,4 @@
+<!--node-content_press_image.tpl.php-->
 
 
 <?php
@@ -68,3 +69,4 @@ $author = user_load(array('uid' => $node->uid));
 </fieldset>
 
 
+<!--/node-content_press_image.tpl.php-->

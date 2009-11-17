@@ -1,5 +1,4 @@
-
-
+<!--user_profile.tpl.php-->
 <?php
 drupal_add_js('misc/collapse.js');
 global $i18n_langpath; 
@@ -551,8 +550,19 @@ $dictc = array(
 <div class="item">
 	<div><label><?php print t('Website'); ?>:</label></div>
 	<div class="data"> 
-		<?php print t('<a href='.check_plain($profile_organization_website).'>'.check_plain($profile_organization_website).'</a>');  ?>
-		<?php if (!$profile_organization_website && $allowed_editor) { print l(t('Add your website'),'user/'. $user -> uid .'/edit/A.+Organization+details');  } ?>
+		<?php 
+    if ($profile_organization_website) {
+      $profile_organization_website = check_plain($profile_organization_website);
+      if (substr($profile_organization_website,0,7) != 'http://' &&
+          substr($profile_organization_website,0,8) != 'https://') {
+        $profile_organization_website = 'http://'. $profile_organization_website;
+      }
+      printf('<a href="%s">%s</a>', $profile_organization_website, $profile_organization_website);
+    }
+    else {
+      print l(t('Add your website'),'user/'. $user -> uid .'/edit/A.+Organization+details');
+    }
+    ?>
 	</div>
 </div>
 <?php }?>
@@ -1640,3 +1650,4 @@ ul.primary {
 }
 
 </style>
+<!--/user_profile.tpl.php-->

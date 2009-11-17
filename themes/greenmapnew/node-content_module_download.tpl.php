@@ -1,3 +1,4 @@
+<!--node-content_module_download.tpl.php-->
 
 
 <?php
@@ -31,3 +32,4 @@ if (count(array_intersect($GLOBALS['user']->roles, $approved_roles)) > 0 ) { ?>
 <?php }
 
 ?>
+<!--/node-content_module_download.tpl.php-->

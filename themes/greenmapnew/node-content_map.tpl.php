@@ -1,3 +1,4 @@
+<!--node-content_map.tpl.php-->
 
 
 <?php
@@ -139,7 +140,7 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
 <fieldset><legend><?php print t('Get this Map'); ?></legend>
 
 
-<?php if ($field_pdf_of_map[0]['fid'] > '') : ?>
+<?php if ($field_pdf_of_map[0]['fid']) : ?>
  <div class="item">
   <div>
       <label><?php print t('Download Here'); ?>:</label>
@@ -1192,3 +1193,4 @@ ul.primary {
 }
 
 </style>
+<!--/node-content_map.tpl.php-->

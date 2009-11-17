@@ -1,3 +1,4 @@
+<!--comment.tpl.php-->
   <div class="comment styledbox">
     <?php if ($picture) {
     print $picture;
@@ -8,3 +9,4 @@
     <div class="content"><?php print $content; ?></div>
     <div class="links"><?php print $links; ?></div>
   </div>
+<!--/comment.tpl.php-->

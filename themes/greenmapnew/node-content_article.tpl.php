@@ -1,5 +1,4 @@
-
-
+<!--node-content_article.tpl.php-->
 <?php 
 // if viewing teaser show limited info.
 if ($teaser) {
@@ -94,3 +93,4 @@ print '<br />';
 // end else, for showing full page view.
 }
 ?>
+<!--/node-content_article.tpl.php-->
