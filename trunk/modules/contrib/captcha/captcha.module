@@ -68,7 +68,6 @@ function captcha_settings() {
 
 
 function captcha_form_alter($formid, &$form) {
-
   global $user;
   $captcha_type = variable_get("captcha_type", NULL);
   
@@ -111,10 +110,10 @@ function captcha_submit() {
 
 
 function _captcha_validate($captcha_response) {
-
   if ($_SESSION['captcha_correct']) return TRUE;
   if (is_array($captcha_response)) $captcha_response = $captcha_response['#value'];
-  if (trim($captcha_response) == '') return FALSE;
+  // moved to captcha_captchavalidate() to make recaptcha work -- mvc
+  //if (trim($captcha_response) == '') return FALSE;
 
   global $user;
   $captcha_type = variable_get("captcha_type", NULL);
@@ -149,6 +148,7 @@ function captcha_captchachallenge(&$form, &$captcha) {
 }
 
 function captcha_captchavalidate(&$captcha_word, &$correct) {
+  if (trim($captcha_word) == '') return FALSE;
   $captcha_word = drupal_strtolower($captcha_word);
   if (($_SESSION['captcha'] != '') && ($captcha_word == $_SESSION['captcha'])) {
     $correct = TRUE;

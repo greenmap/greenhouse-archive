@@ -1700,10 +1700,8 @@ div.wbx-gw-wrapper {
 	display: none;
 }
 
-/* hide breadcrumbs and page reads */
+/* hide breadcrumbs */
 
 div.breadcrumb { display: none; }
-.links ul{ display: none; }
-
 
 /*** End of file ***/
