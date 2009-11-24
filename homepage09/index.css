@@ -68,6 +68,7 @@ div.gm {
   padding-top: -5px;
   padding-bottom: 0px;
   padding-left: 0px;
+  outline: none;
 }
  
 div.gm:hover {
@@ -79,6 +80,7 @@ div.gm:hover {
   padding-right: 0px;
   background:url("img2/gm_on.jpg") no-repeat center top;
   text-decoration: none;
+  outline: none;
 }
 
 h1 {
@@ -116,6 +118,7 @@ div.ogm {
   background:url("img2/ogm_off.png") center top no-repeat;
   padding-bottom: 0px;
   padding-left: 0px;
+  outline: none;
 }
  
 div.ogm:hover {
@@ -127,6 +130,11 @@ div.ogm:hover {
   padding-right: 0px;
   background:url("img2/ogm_on.png") no-repeat center top;
   text-decoration: none;
+  outline: none;
+}
+
+div.ogm:active {
+  outline: none;
 }
 
 h2 {
