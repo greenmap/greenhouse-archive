@@ -102,11 +102,7 @@ return;
 				<?php print $help ?>
 				<?php print $messages ?>
 				<?php print $content; ?>
-			</div>
-
-
-		
-</div>		
+			
 
 	<div id="footer_gh">
 		<div id="bottomleft">&nbsp;</div>
@@ -114,6 +110,10 @@ return;
 		<?php print $footerlinks; ?>
 		&nbsp;
 	</div>
+		</div>
+</div>		
+
+
 	
 
 	

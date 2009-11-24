@@ -122,6 +122,8 @@ margin-left: -12px;
 /*** Horizontal menu ***/
 
 #mainmenu {
+left: 0;
+margin-left: 20px;
 float: left;
 z-index: 5;
 margin-top: 10px;
@@ -188,9 +190,10 @@ background-color: transparent;
 
  
 #mapsbutton {
+margin-left: -5px;
+left: 0;
 float: left;
 z-index: 10;
-margin-left: -25px;
 margin-top: 10px;
 margin-bottom: 0;
 position: absolute;
@@ -739,7 +742,7 @@ display: inline;
 	padding-left: 10px;
 	color: #FFAC06;
 }
-
+#rightside #block-block-34 H1,
 #rightside #block-menu-669 H1,
 #rightside #block-block-33 H1,
 #rightside #block-block-24 H1,
@@ -765,7 +768,7 @@ background: none;
 bottom: auto;
 padding-right: -30px;
 margin-right: -50px;
-margin-top: 3%;
+margin-top: -10px;
 float: right
 }
 
@@ -1418,6 +1421,8 @@ background: url(img/bottomshadow.gif) repeat-x;
 clear:both;
 color:#d0d0d0;
 width: 100%;
+position: absolute;
+bottom: -120px;
 }
 
 #bottomleft {
