@@ -1,0 +1,53 @@
+<?php
+/** $Id: ec_roles.install,v 1.1.2.5 2007/01/20 12:27:15 sammys Exp $
+ * @author Sammy Spets thanks to Synerger Pty Ltd
+ */
+
+/**
+ * ec_roles_install()
+ * 
+ * Installs E-Commerce role module tables into the database
+ */
+function ec_roles_install() {
+  switch($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {ec_roles} (
+        vid int unsigned NOT NULL,
+        buy_add text NOT NULL,
+        buy_del text NOT NULL,
+        exp_add text NOT NULL,
+        exp_del text NOT NULL,
+        PRIMARY KEY (vid)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
+      break;
+    case 'pgsql':
+      db_query("CREATE TABLE {ec_roles} (
+        vid int NOT NULL CHECK (vid >= 0),
+        buy_add text NOT NULL,
+        buy_del text NOT NULL,
+        exp_add text NOT NULL,
+        exp_del text NOT NULL,
+        PRIMARY KEY (vid)
+      )");
+      break;
+  }
+  
+  // update what's in the on_payment_roles variable to apply to all products
+  $roles = drupal_map_assoc(array_keys(user_roles(1)));
+  $setting = variable_get('on_payment_roles', array());
+  if (count($setting)) {
+    $val = array_intersect_assoc($roles, $setting);
+  
+    $result = db_query("SELECT * FROM {ec_recurring_product} p, {node_revisions} n WHERE p.vid = n.vid");
+    while ($node = db_fetch_object($result)) {
+      $node->buy_add = $val;
+      $node->buy_del = array();
+      $node->exp_add = array();
+      $node->exp_del = array();
+      ec_roles_save($node);
+    }
+  }
+  variable_del('on_payment_roles');
+}
+

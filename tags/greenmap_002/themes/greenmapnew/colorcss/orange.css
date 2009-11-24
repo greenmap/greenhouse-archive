@@ -1,0 +1,20 @@
+#container{background:#f0f0f0 url(../img/bodybg-orange.jpg) repeat-x;}
+#mainmenu a:hover{background:#f0f0f0 url(../img/menuhover-orange.jpg) top left repeat-x;}
+#mainmenu a.current{background:#f0f0f0 url(../img/menuhover-orange.jpg) top left repeat-x;}
+.links li:before {
+	content: url("../img/square-orange.gif");
+	padding-right: 3px;
+}
+.styledbox {
+  border: 1px solid #C78B2C;
+  padding: .5em;
+  margin-bottom: 1em;
+	background-color: #F1E9DC;
+}
+.comment .new {
+  text-align: right;
+  font-weight: bold;
+  font-size: 0.9em;
+  float: right;
+  color: #C78B2C;
+}

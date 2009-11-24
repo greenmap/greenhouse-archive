@@ -1,0 +1,271 @@
+# translation of nl.po to
+# Dutch translation of Drupal (subscriptions.module)
+# Generated from file: subscriptions.module,v 1.38.2.3.2.16 2006/09/09 18:25:16 c0c0c0
+#
+# Pieter De Clercq <pieterdc@jeugdwerknet.be>, 2007.
+# Hendrik Eeckhaut <Hendrik.Eeckhaut@UGent.be>, 2007.
+msgid ""
+msgstr ""
+"Project-Id-Version: nl\n"
+"POT-Creation-Date: 2006-11-28 11:59+0100\n"
+"PO-Revision-Date: 2007-01-11 10:10+0100\n"
+"Last-Translator: Hendrik Eeckhaut <Hendrik.Eeckhaut@UGent.be>\n"
+"Language-Team:  <en@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: KBabel 1.11.4\n"
+
+#: subscriptions.module:10
+msgid "\n        <p>This module enables users to subscribe to be notified of changes to threads, categories and content types.\n        Once enabled, all nodes will have an additional link that allows the user to subscribe to them.\n        Additionally, all users will be given an account option to auto-subscribe to any thread to which they post.\n        No configuration is required for this module, although roles must be given permission to\n        use it.</p>\n        <p>While no configuration is required, administrators are offered a few configurable options:</p>\n        <p>\"<b>Omitted vocabularies</b>\" allows the admin to exclude certain node categories from this list of those\n        available for subscription.</p>\n        <p>\"<b>Omitted content types</b>\" allows the admin to exclude certain content types from this list of those\n        available for subscription.</p>\n        <p>\"<b>Notify poster of own posts</b>\" sends a notification to a node poster about their own posts. Useful principally during testing. Default is OFF.</p>\n        <p>\"<b>Use cron for notifications</b>\" allows you to postpone subscription\n        notifications until the next cron job is run.  Default behavior is to notify all subscribers immediately\n        upon content change.  This behavior is probably best for low volume sites, but high volume sites could\n        observe appreciable pauses upon node or comment insert, and should probably use the cron option.\n        <p>\"<b>Display watchdog entries for successful mailings</b>\" should also probably be disabled for high volume sites,\n        as a large number of mailings could completely fill the log.</p>\n        <p>\"<b>Test held posts prior to sending</b>\" tells Subscriptions to test if a node or comment\n        is still active\\published prior toi sending a notification.  This is mainly to avoid sending\n        notifications for for posts that have been deleted.  This will result in a small performance\n        hit, and only makes sense if you are delaying the notifications with \"Use cron for notifications\".</p>\n        <p>\"<b>Show Subscriptions users menu on main menu</b>\" tells Subscriptions to display the\n        Subscriptions user menu, used to manage one's own subscriptions, on the main menu.  The default\n        setting is OFF.</p>\n        <p>\"<b>Show Subscriptions users menu under 'my account'</b>\" tells Subscriptions to display the\n        Subscriptions user menu, used to manage one's own subscriptions, under the 'My Account' menu.  The default\n        setting is ON.</p>\n        <p>\"<b>Set all users to 'autosubscribe' by default</b>\" set's the default value of the 'autosubscribe'\n        option in each user's account to ON.  This value will not be set, however, until the user saves their\n        account preferences.  This, essentially, pre-checks the option associated with 'autosubscribe'. The\n        default value is OFF.</p>\n\n        "
+msgstr "\n        <p>Deze module laat gebruikers toe om in te schrijven om zo ingelicht te worden als er aanpassingen gebeuren aan onderwerpen, categorieën en inhoudstypes.\n        Eens ingeschakeld zullen alle nodes een bijkomende link hebben die gebruikers toelaat om erop in te schrijven.\n        Daarenboven zullen alle gebruikers een de mogelijkheid krijgen om automatisch in te schrijven op elk onderwerp dat ze indienen.\n        Deze module vereist geen configuratie. Rollen moeten wel rechten krijgen om het te gebruiken.</p>\n        <p>Beheerders krijgen een paar instelbare opties:</p>\n        <p>\"<b>Weggelaten woordenschatten</b>\" laten de beheerder toe om bepaalde categorieën uit te sluiten voor inschrijving.</p>\n        <p>\"<b>Weggelaten inhoudstypes</b>\" laten de beheerder toe om bepaalde inhoudstypes uit te sluiten voor inschrijving.</p>\n        <p>\"<b>Licht auteur in over eigen berichten</b>\" licht een auteur in over eigen berichten. Nuttig gedurende de testperiode. Standaard: afgevinkt.</p>\n        <p>\"<b>Gebruik cron voor inlichtingen</b>\" laat je toe om inlichtingen uit te stellen tot de volgende keer dat de cron loopt. Standaard worden alle ingeschrevenen direct ingelicht als er inhoud aangepast wordt. Dit is waarschijnlijk het best voor kleinere sites, maar grotere sites kunnen vertraging oplopen wanneer inhoud aangepast wordt. Zij gebruiken misschien beter de cron optie.\n        <p>\"<b>Toon watchdog meldingen van succesvolle verzendingen</b>\" wordt best ook uitgeschakeld bij grotere sites,\n        omdat een groot aantal inlichtingen het logboek zouden kunnen verstikken.</p>\n        <p>\"<b>Test alvorens inlichting te versturen</b>\" zorgt ervoor dat er een test gebeurt alvorens een inlichting te versturen. Er wordt getest of de node of commentaar nog altijd actief is om te voorkomen dat inlichtingen verstuurd worden voor berichten die reeds verwijderd zijn. Dit geeft een klein performantieverlies en is enkel nuttig als je inlichtingen uitstelt met \"Gebruik cron voor inlichtingen\".</p>\n        <p>\"<b>Toon inschrijvingen-gebruikersmenu in hoofdmenu</b>\" toont het inschrijvingen-gebruikersmenu, om iemands eigen inschrijvingen te beheren, in het hoofdmenu. Standaard: afgevinkt.</p>\n        <p>\"<b>Toon inschrijvingen-gebruikersmenu onder 'mijn account'</b>\" toont het inschrijvingen-gebruikersmenu, om iemands eigen inschrijvingen te beheren, onder 'Mijn account'. Standaard: aangevinkt.</p>\n        <p>\"<b>Zet alle gebruikers standaard op \"automatisch inschrijven\"</b>\" stelt alle gebruikers hun \"automatisch inschrijven\"-profielinstelling in op: AAN. Deze waarde wordt echter niet opgeslaan tot de gebruiker zijn/haar profiel opslaat. Dit vinkt dus standaard het aanvinkvakje van 'automatisch inschrijven' aan. Standaard: afgevinkt.</p>\n\n        "
+
+#: subscriptions.module:46
+msgid "Allows users to subscribe to nodes and taxonomy terms."
+msgstr "Laat gebruikers toe om in te schrijven op nodes en categorie-termen."
+
+#: subscriptions.module:64
+msgid "Subscription settings"
+msgstr "Inschrijvingsinstellingen"
+
+#: subscriptions.module:70
+msgid "Autosubscribe"
+msgstr "Automatisch inschrijven"
+
+#: subscriptions.module:72
+msgid "Checking this box allows you to be automatically subscribe to any thread you create or post a comment to."
+msgstr "Als je dit aanvinkt word je automatisch ingeschreven op elk bericht dat je indient of commentaar op geeft."
+
+#: subscriptions.module:97
+msgid "Omitted vocabularies"
+msgstr "Weggelaten woordenschatten"
+
+#: subscriptions.module:100
+msgid "Select vocabularies which should be <strong>omitted</strong> from subscription listings."
+msgstr "Selecteer de woordenschatten die <strong>weggelaten</strong> moeten worden van de inschrijvingslijsten."
+
+#: subscriptions.module:111
+msgid "Omitted content types"
+msgstr "Weggelaten inhoudstypes"
+
+#: subscriptions.module:114
+msgid "Select content types which should be <strong>omitted</strong> from subscription listings."
+msgstr "Selecteer inhoudstypes die <strong>weggelaten</strong> moeten worden van de inschrijvingslijsten."
+
+#: subscriptions.module:119
+msgid "Notify poster of own posts"
+msgstr "Licht auteur in over eigen berichten"
+
+#: subscriptions.module:121
+msgid "Notifies a node poster about their own posts.  Useful principally during testing.  Default is OFF."
+msgstr "Licht een auteur in over eigen berichten. Nuttig gedurende de testperiode. Standaard: afgevinkt."
+
+#: subscriptions.module:125
+msgid "Use cron for notifications"
+msgstr "Gebruik cron voor inlichtingen"
+
+#: subscriptions.module:127
+msgid "Sends subscription notification when cron module runs.  Default is to send upon node update.  <br /><em>Note:  Currently only tested with MySQL.</em>"
+msgstr "Verstuur inlichting als de cron module uitgevoerd wordt. Standaard: niet sturen bij updaten van node.<br /><em>Ps: Momenteel enkel getest met MySQL.</em>"
+
+#: subscriptions.module:131
+msgid "Display watchdog entries for successful mailings"
+msgstr "Toon watchdog meldingen van succesvolle verzendingen"
+
+#: subscriptions.module:133
+msgid "Inserts notification of successful mailings in the watchdog log.  Default is ON."
+msgstr "Voegt een melding toe aan de watchdog log van succesvolle verzendingen van inlichtingen. Standaard: aangevinkt."
+
+#: subscriptions.module:137
+msgid "Test held posts prior to sending"
+msgstr "Test alvorens inlichting te versturen"
+
+#: subscriptions.module:139
+msgid "Tests to see if a post about to be sent by cron is still active.  Adds a small amount of overhead.  Default is OFF."
+msgstr "Test of het bericht, waarvoor men een inlichting krijgt, nog actief is alvorens de cron de inlichting verstuurt. Brengt een klein performantieverlies met zich mee. Standaard: afgevinkt."
+
+#: subscriptions.module:143
+msgid "Show Subscriptions users menu on main menu"
+msgstr "Toon inschrijvingen-gebruikersmenu in hoofdmenu"
+
+#: subscriptions.module:145
+msgid "Displays the Subscriptions users menu on the main menu. Default is OFF."
+msgstr "Toon het inschrijvingen-gebruikersmenu in het hoofdmenu. Standaard: afgevinkt."
+
+#: subscriptions.module:149
+msgid "Show Subscriptions users menu under \"my account\""
+msgstr "Toon inschrijvingen-gebruikersmenu onder \"mijn account\""
+
+#: subscriptions.module:151
+msgid "Displays the Subscriptions users menu as a tab under \"my Account\". Default is ON."
+msgstr "Toon het inschrijvingen-gebruikersmenu als een tab onder \"mijn account\". Standaard: aangevinkt."
+
+#: subscriptions.module:155
+msgid "Set all users to \"autosubscribe\" by default"
+msgstr "Zet alle gebruikers standaard op \"automatisch inschrijven\""
+
+#: subscriptions.module:157
+msgid "Set's each users \"autosubscribe\" profile option. Default is OFF."
+msgstr "Stelt alle gebruikers hun \"automatisch inschrijven\"-profielinstelling in. Standaard: afgevinkt."
+
+#: subscriptions.module:170;196;223
+msgid "my subscriptions"
+msgstr "mijn inschrijvingen"
+
+#: subscriptions.module:179;205
+msgid "threads"
+msgstr "onderwerpen"
+
+#: subscriptions.module:208
+msgid "my content types"
+msgstr "mijn inhoudstypes"
+
+#: subscriptions.module:331
+msgid "subscription notification for "
+msgstr "inschrijvingsinlichting voor"
+
+#: subscriptions.module:335
+msgid "error mailing subscription notification: "
+msgstr "fout versturen inschrijvingsinlichting"
+
+#: subscriptions.module:379
+msgid "new blog for "
+msgstr "nieuwe blog voor "
+
+#: subscriptions.module:414
+msgid "[%site] %type subscription update for %name : %subject"
+msgstr "[%site] %type inschrijvingsupdate voor %name : %subject"
+
+#: subscriptions.module:415
+msgid "Greetings, %name.\n\nA %type to which you have subscribed has been updated.\n%title\n%teaser\nTo view the thread, navigate to %url \n\n--\nThis is an automatic message from %site.\nTo manage your subscriptions, browse to %manage-url"
+msgstr "Groeten, %name.\n\nEen %type, waarvoor je ingeschreven hebt, werd upgedatet.\n%title\n%teaser\nOm het onderwerp te zien, surf naar %url \n\n--\nDit is een automatisch bericht van %site.\nOm inschrijvingen te beheren, surf naar %manage-url"
+
+#: subscriptions.module:620
+msgid "Subscriptions"
+msgstr "Inschrijvingen"
+
+#: subscriptions.module:626
+msgid "Subscribe"
+msgstr "Inschrijven"
+
+#: subscriptions.module:627
+msgid "Receive notification of replies or comments to this node."
+msgstr "Ontvang een inlichting van antwoorden of commentaar op deze node."
+
+#: subscriptions.module:654
+msgid "unsubscribe blog"
+msgstr "blog uitschrijven"
+
+#: subscriptions.module:654
+msgid "Stop receiving an e-mail whenever a new entry is made to this person's blog."
+msgstr "Stop het ontvangen van een inlichtingsemail bij elk nieuw bericht op de blog van deze persoon."
+
+#: subscriptions.module:657
+msgid "subscribe blog"
+msgstr "blog inschrijven"
+
+#: subscriptions.module:657
+msgid "Receive an e-mail whenever a new entry is made to this person's blog."
+msgstr "Ontvang een inlichtingsemail bij elk nieuw bericht op de blog van deze persoon."
+
+#: subscriptions.module:661
+msgid "unsubscribe post"
+msgstr "bericht uitschrijven"
+
+#: subscriptions.module:661
+msgid "Stop receiving an e-mail whenever a new comment is posted to this %n."
+msgstr "Stop het ontvangen van een inlichtingsemail bij elk nieuw commentaar op deze %n."
+
+#: subscriptions.module:664
+msgid "subscribe post"
+msgstr "bericht inschrijven"
+
+#: subscriptions.module:664
+msgid "Receive an e-mail whenever a comment is posted to this %n."
+msgstr "Ontvang een inlichtingsemail bij elk nieuw commentaar op deze %n."
+
+#: subscriptions.module:702;712
+msgid "unsubscribe"
+msgstr "uitschrijven"
+
+#: subscriptions.module:702
+msgid "Unsubscribe from this category."
+msgstr "Uitschrijven uit deze categorie."
+
+#: subscriptions.module:705;715
+msgid "subscribe"
+msgstr "inschrijven"
+
+#: subscriptions.module:705
+msgid "Subscribe to this category."
+msgstr "Inschrijven op deze categorie."
+
+#: subscriptions.module:712
+msgid "Unsubscribe from this node type."
+msgstr "Uitschrijven van deze node type."
+
+#: subscriptions.module:715
+msgid "Subscribe to this node type."
+msgstr "Inschrijven op deze node type."
+
+#: subscriptions.module:762;797;845;892;958
+msgid "Your subscription was deactivated."
+msgstr "Uw inschrijving werd gedeactiveerd."
+
+#: subscriptions.module:849;896;951
+msgid "Your subscription was activated."
+msgstr "Uw inschrijving werd geactiveerd."
+
+#: subscriptions.module:968
+msgid "thread"
+msgstr "onderwerp"
+
+#: subscriptions.module:995
+msgid "content type"
+msgstr "inhoudstype"
+
+#: subscriptions.module:998
+msgid "subscribers"
+msgstr "inschrijvingen"
+
+#: subscriptions.module:1002
+msgid "<p>No threads or categories are currently subscribed.</p>"
+msgstr "<p>Momenteel niet ingeschreven op onderwerpen of categorieën.</p>"
+
+#: subscriptions.module:1007
+msgid "Subscriptions Summary"
+msgstr "Overzicht inschrijvingen"
+
+#: subscriptions.module:1030
+msgid "You are not currently subscribed to any active blogs"
+msgstr "U bent momenteel op geen enkel actieve blog ingeschreven"
+
+#: subscriptions.module:1038;1040
+msgid "There are no active categories."
+msgstr "Er zijn geen actieve categorieën."
+
+#: subscriptions.module:1047
+msgid "You are not currently subscribed to any active threads"
+msgstr "U bent momenteel op geen enkel actief onderwerp ingeschreven"
+
+#: subscriptions.module:1055
+msgid "There are no active content types."
+msgstr "Er zijn geen actieve inhoudstypes."
+
+#: subscriptions.module:1063;1096
+msgid "%name Subscriptions"
+msgstr "%name inschrijvingen"
+
+#: subscriptions.module:331
+msgid "regular"
+msgstr "regelmatig"
+
+#: subscriptions.module:53
+msgid "maintain subscriptions"
+msgstr "inschrijvingen onderhouden"
+
+#: subscriptions.module:0
+msgid "subscriptions"
+msgstr "inschrijvingen"
+
