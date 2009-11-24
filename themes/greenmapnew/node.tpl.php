@@ -1,4 +1,3 @@
-<!--node.tpl.php-->
   <div class="node<?php if ($sticky) { print " sticky"; } ?>">
     <?php if ($picture) {
       print $picture;
@@ -21,4 +20,3 @@
 	    print '</div>';
 	    } ?>
 	 </div>
-<!--/node.tpl.php-->

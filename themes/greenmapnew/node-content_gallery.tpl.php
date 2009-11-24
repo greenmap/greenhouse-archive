@@ -1,4 +1,3 @@
-<!--node-content_gallery.tpl.php-->
 
 
 <?php
@@ -167,4 +166,3 @@ if($allowed_editor) {
 // end else, for showing full page view.
 }
 ?>
-<!--/node-content_gallery.tpl.php-->

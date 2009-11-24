@@ -1,4 +1,3 @@
-<!--node-content_articles.tpl.php-->
 
 
 
@@ -57,4 +56,3 @@ print '<br />';
 
 
 
-<!--/node-content_articles.tpl.php-->

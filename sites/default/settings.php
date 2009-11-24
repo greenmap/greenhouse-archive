@@ -1,12 +1,9 @@
 <?php
+
 /**
  * @file
  * This file stores basic but essential Drupal site-specific settings. 
  */
-
-// include instance-specific drupal configuration information from
-// settings.inc.php (which is ignored by svn)
-require_once('settings.inc.php');
 
 #
 # Instructions:
@@ -35,10 +32,12 @@ require_once('settings.inc.php');
 #   variables with the 'default' element used until otherwise requested.
 #
 #   To set the value of the variable, please fill in a value:
+$db_url['default'] = 'mysql://greenma2:q2n7yGEm@localhost/greenma2_greenhouse';
+// $db_url['civicrm'] = 
+'mysql://greenmap_12:p9A5zCGm@localhost/greenmap_greenhouse';
 
-
-// $db_url['default'] set in settings.inc.php
-
+// $db_url['default'] = 'mysql://greenmap_12:p9A5zCGm@db82a.pair.com/greenmap_greenhouse';
+// $db_url['civicrm'] = 'mysql://greenmap_12:p9A5zCGm@db82a.pair.com/greenmap_greenhouse';
 
 #   Optional: If you would like to prefix the database tables used for this 
 #   Drupal site, you may specify an alphanumeric prefix string. This setting
@@ -61,8 +60,8 @@ $db_prefix = '';
 #   Some examples are:
 #   $base_url = 'http://www.hostname.org';
 #   $base_url = 'http://www.hostname.com/drupalsite';
-
-// $base_url set in settings.inc.php
+# $base_url = 'http://www.greenmap.org/greenhouse';
+#    $base_url = 'http://qs1844.pair.com/greenma2/greenhouse';
 
 #
 # 3. Advanced PHP settings:
@@ -83,4 +82,8 @@ ini_set('memory_limit', '128M');
 # ini_set('session.use_only_cookies',1);
 # ini_set('session.use_trans_sid', 0);
 
-$conf['site_offline'] = "0";
+$conf = array(
+#   'site_offline' => 's:1:"1";',
+);
+
+?>
