@@ -7,7 +7,6 @@ global $i18n_langpath; ?>
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
 "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-<!--page-simple.tpl.php-->
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
   <title><?php print $head_title ?></title>
@@ -33,4 +32,3 @@ global $i18n_langpath; ?>
 	<?php print $closure ?>
 </body>
 </html>
-<!--/page-simple.tpl.php-->

@@ -1,4 +1,3 @@
-<!--node-content_faq.tpl.php-->
 
 
 <?php 
@@ -54,4 +53,3 @@ else {
 <?php // end else, for showing full page view.
 }
 ?>
-<!--/node-content_faq.tpl.php-->

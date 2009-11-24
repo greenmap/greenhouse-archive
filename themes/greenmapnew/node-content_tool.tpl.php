@@ -1,4 +1,3 @@
-<!--node-content_tool.tpl.php-->
 
 
 <?php
@@ -104,4 +103,3 @@ if (count(array_intersect($GLOBALS['user']->roles, $approved_roles)) > 0 ) {
 // end else, for showing full page view.
 }
 ?>
-<!--/node-content_tool.tpl.php-->

@@ -54,6 +54,4 @@ RewriteRule ^(.*)$ http://www.greenmap.org/greenhouse/$1 [L,R=301]
   RewriteRule ^(.*)$ index.php?q=$1 [L,QSA]
 </IfModule>
 
-
-
 # $Id: .htaccess,v 1.73 2006/04/14 09:08:26 killes Exp $

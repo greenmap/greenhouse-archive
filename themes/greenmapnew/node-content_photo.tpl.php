@@ -1,4 +1,3 @@
-<!--node-content_photo.tpl.php-->
 
 
 <?php
@@ -139,4 +138,3 @@ if($allowed_editor) {
 // end else, for showing full page view.
 }
 ?>
-<!--/node-content_photo.tpl.php-->
