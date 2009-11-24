@@ -1,0 +1,2135 @@
+<?php
+
+// $Id: ec_recurring.module,v 1.1.2.27 2007/02/27 07:29:36 sammys Exp $
+
+/**
+ * Functions are split into the following categories (in order):
+ *   Drupal hook implementations
+ *   Recurring hook functions
+ *   Schedule functions
+ *   Reminder functions
+ *   Product functions
+ *   Expiration functions
+ *   Cron functions
+ *   E-commerce hook functions
+ *   Store UI functions
+ *   Helper functions
+ *   Token hook implementations
+ *   Mail hook implementations
+ */
+
+/*
+ * List of TODO items for integrating this module into the system
+ * 
+ * TODO: Test that renewals in the old system are entered correctly during the upgrade
+ * TODO: Add support for GET parameters for expiry date and workflow status into ec_recurring_ui_products_active().
+ * TODO: Add more UI code to the system.
+ */
+
+/*
+TODO: Combine the numunits and unit form elements into one element (type=time_interval).
+TODO: Create a hook for calculation of the start_time and improve ec_recurring_start_time()
+TODO: Provide some way for administrators to change the product vid of an item in the
+ec_transaction_product table. User's subscription page displays a list for limiting display
+to All, Expired, Renewed, Active. Admin user can see all that plus click an edit link.
+Through that interface the admin can change the vid and possibly set an expiry date.
+*/
+
+/**
+ * Enables recurring product support in Drupal E-Commerce.
+ * @author Sammy Spets (thanks to Synerger Pty Ltd, Australia)
+ */
+
+/*************************** IMPORTANT ***************************************
+  DON'T CHANGE THESE UNLESS YOU KNOW WHAT YOU'RE DOING
+ ****************************************************************************/
+define('ECRECURRING_NAMELEN',     255);
+define('ECRECURRING_MAXINTERVAL',  31);     // highest numunits displayed in forms
+define('ECRECURRING_MAXCYCLES',    50);     // highest cycles displayed in forms
+
+define('ECRECURRING_UNLIMITED',   0);
+define('ECRECURRING_NORENEWAL',   1);
+define('ECRECURRING_LAST_CYCLE', -1);       // value stored in ec_r_e.rid for last cycle
+
+define('ECRECURRING_EXPIRY_HOUR', 4);       // default value for hour when expiries are processed
+
+define('ECRECURRING_ATEXPIRY_NUMUNITS', 0); // numunits used for reminders at expiry
+define('ECRECURRING_ATEXPIRY_UNITS', '0');  // unit value for reminders at expiry
+
+// query IDs for ec_recurring_expiration_map()
+define('ECRECURRING_MAP_PRODUCT_BY_SID',    0);
+define('ECRECURRING_MAP_REMINDER_BY_RID',   1);
+define('ECRECURRING_MAP_PRODUCTS_TO_EXPIRE',  2);
+define('ECRECURRING_MAP_REMINDERS_TO_EXPIRE', 3);
+define('ECRECURRING_MAP_PRODUCTS_ACTIVE',   4);
+
+// values stored in the status field of ec_recurring_expiration
+define('ECRECURRING_STATUS_EXPIRED', 1);
+define('ECRECURRING_STATUS_ACTIVE',  0);
+define('ECRECURRING_STATUS_RENEWED', 2);
+
+define('ECMAIL_TYPE_REMINDER', 'ec_recurring reminder');
+
+define('ECMAIL_VAR_DEBUG', 'ec_recurring_debugging');
+
+/////////////////////////////////////////////////////////////////////////////////
+// Drupal hook implementations
+
+/**
+ * Implementation of hook_cron().
+ */
+function ec_recurring_cron() {
+  if (variable_get(ECRECURRING_VAR_DEBUG, FALSE) && isset($_REQUEST['crontime']) && $_REQUEST['crontime']) {
+    ec_recurring_process_expiries($_REQUEST['crontime']);
+  } else {
+    $hour = variable_get('ec_recurring_expiry_hour', ECRECURRING_EXPIRY_HOUR);
+    if ($hour == (int) date('H')) {
+      ec_recurring_process_expiries();
+    }
+  }
+}
+
+/**
+ * Implementation of hook_help().
+ */
+function ec_recurring_help($section) {
+  switch ($section) {
+    case 'admin/modules#description':
+      return '<b>EC:</b> '.t('Enables recurring payments');
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function ec_recurring_perm() {
+  return array('administer expiry schedules');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function ec_recurring_menu($may_cache) {
+  global $user;
+  $items = array();
+
+  $access = user_access('administer expiry schedules');
+
+  if ($may_cache) {
+    $items[] = array(
+      'path' => 'admin/store/settings/schedule', 
+      'title' => t('schedules'),
+      'callback' => 'ec_recurring_table',
+      'access' => $access,
+    );
+    $items[] = array(
+      'path' => 'admin/store/settings/schedule/list', 
+      'title' => t('schedules'),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'callback' => 'ec_recurring_table',
+      'access' => $access,
+      'weight' => 0,
+    );
+    $items[] = array(
+      'path' => 'admin/store/settings/schedule/add', 
+      'title' => t('add expiry schedule'),
+      'type' => MENU_LOCAL_TASK,
+      'callback' => 'ec_recurring_schedule_form',
+      'access' => $access,
+      'weight' => 1,
+    );
+    $items[] = array(
+      'path' => 'admin/store/settings/schedule/cron', 
+      'title' => t('cron settings'),
+      'type' => MENU_LOCAL_TASK,
+      'callback' => 'ec_recurring_cron_settings',
+      'access' => $access,
+      'weight' => 2,
+    );
+    $items[] = array(
+      'path' => 'admin/store/recurring',
+      'title' => t('recurring products'),
+      'callback' => 'ec_recurring_ui_products',
+      'access' => $access,
+    );
+    $items[] = array(
+      'path' => 'store/recurring/products/active',
+      'title' => t('active recurring products'),
+      'type' => MENU_CALLBACK,
+      'callback' => 'ec_recurring_ui_products_active',
+      'access' => $access,
+    );
+  } else {
+    $items[] = array(
+      'path' => 'store/subscriptions',
+      'title' => t('order history'),
+      'callback' => 'ec_recurring_user_subscriptions',
+      'access' => (is_numeric(arg(2)) && arg(2) ? $access : ($user->uid > 0)),
+      'type' => MENU_CALLBACK,
+    );
+    $items[] = array(
+      'path' => 'store/renew',
+      'title' => t('renew item'),
+      'type' => MENU_CALLBACK,
+      'callback' => 'ec_recurring_renew_item',
+      'access' => 1,
+    );
+    
+    if (arg(0) == 'admin' && arg(1) == 'store' && arg(2) == 'settings' && arg(3) == 'schedule' && arg(4)) {
+      $id = arg(4);
+      if (is_numeric($id)) {
+        $items[] = array(
+          'path' => "admin/store/settings/schedule/$id",
+          'title' => t('edit expiry schedule'),
+          'type' => MENU_CALLBACK,
+          'callback' => 'ec_recurring_schedule_form',
+          'access' => $access,
+        );
+        $items[] = array(
+          'path' => "admin/store/settings/schedule/$id/edit",
+          'title' => t('edit expiry schedule'),
+          'type' => MENU_DEFAULT_LOCAL_TASK,
+          'callback' => 'ec_recurring_schedule_form',
+          'access' => $access,
+          'weight' => 0,
+        );
+        $items[] = array(
+          'path' => "admin/store/settings/schedule/$id/addreminder",
+          'title' => t('add reminder'),
+          'type' => MENU_LOCAL_TASK,
+          'callback' => 'ec_recurring_reminder_form',
+          'access' => $access,
+          'weight' => 1,
+        );
+        $items[] = array(
+          'path' => "admin/store/settings/schedule/$id/delreminder",
+          'title' => t('delete reminder'),
+          'type' => MENU_CALLBACK,
+          'callback' => 'ec_recurring_reminder_delete',
+          'access' => $access,
+        );
+        $items[] = array(
+          'path' => "admin/store/settings/schedule/$id/editreminder",
+          'title' => t('edit reminder'),
+          'type' => MENU_CALLBACK,
+          'callback' => 'ec_recurring_reminder_form',
+          'access' => $access,
+        );
+      }
+    }
+  }
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_user().
+ */
+function ec_recurring_user($type, &$edit, &$user) {
+  // Only display the link for the user who owns it.
+  if ($type == 'view' && $GLOBALS['user']->uid == $user->uid) {
+    $items[] = array('title' => t('Subscriptions'),
+      'value' => l(t('View your subscriptions'), 'store/subscriptions'),
+      'class' => 'subscriptions',
+    );
+    return array(t('History') => $items);
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function ec_recurring_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  if ($node->type != 'product') {
+    return;
+  }
+
+  switch ($op) {
+    case 'validate':
+      ec_recurring_product_validate($node);
+      break;
+    case 'update':
+    case 'insert':
+      ec_recurring_product_save($node);
+      break;
+    case 'load':
+      ec_recurring_load_schedule_node($node);
+      break;
+    case 'delete':
+      // TODO
+      break;
+    case 'view':
+      if (is_array($node->schedule)) {
+        $node->schedule['string'] = theme('recurring_schedule', $node->schedule);
+      }
+  }
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function ec_recurring_form_alter($form_id, &$form) {
+  if (product_form_is_product($form_id, $form)) {
+    $preset = is_array($form['product']['recurring']['sid']) ? $form['product']['recurring']['sid'] : array();
+    $allow_renewals = isset($preset['#allow_renewals']) ? $preset['#allow_renewals'] : TRUE;
+    
+    $form['product']['recurring'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Recurring products'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#weight' => -15,
+    );
+
+    $slist = array_merge(array(0 => '--'), ec_recurring_get_list($allow_renewals));
+    $form['product']['recurring']['sid'] = array(
+      '#type' => 'select',
+      '#title' => t('Renewal schedule'),
+      '#default_value' => $form['#node']->schedule['sid'],
+      '#description' => t('Select the renewal schedule to be used for this product. %link. NOTE: save your changes to this product first.', array('%link' => l(t('Add another schedule'), 'admin/store/settings/schedule/add'))),
+      '#options' => $slist,
+      '#weight' => -1
+    );
+    
+    $fields = array('#title', '#description');
+    foreach ($fields as $key) {
+      if (isset($preset[$key])) {
+        $form['product']['recurring']['sid'][$key] = $preset[$key];
+      }
+    }
+  }
+}
+
+// End Drupal hook implementations
+/////////////////////////////////////////////////////////////////////////////////
+// Recurring hook functions
+
+/**
+ * Implementation of hook_recurringapi().
+ *
+ * @param $op Event the hook is reacting to
+ *    'on expiry': called when a product has expired
+ *    'on purchase': called when a product is purchased
+ *    'get previous purchase': called so modules can set the 
+ *          $node->recurring['prevpurchase'] value and override the system default
+ *          WARNING: Do this with great caution and ensure the format of the value
+ *          matches that of the default or you'll break the system!
+ *    'expiry schedule changed': called when a product schedule has changed
+ *    'cron report': called so modules can implement their own reporting code utilizing
+ *          values in $GLOBALS['expirations']
+ * @param $obj Reference to data specific to the event
+ *    'on expiry': Node of the expired product. In addition to the node fields
+ *          a $node->expired_schedule member is set to be the row from the
+ *          ec_recurring_expiration table. NOTE: you must be careful to check the status
+ *          field of this row before performing operations. The product may be renewed
+ *          (i.e have a value of ECRECURRING_STATUS_RENEWED) and may not need any
+ *          additional processing other than setting the status to expired. The system
+ *          does that automatically.
+ *    'on purchase': Transaction
+ *    'get previous purchase': Node for the current purchase
+ *    'expiry schedule changed': Product node with $node->oldsid set to the previous
+ *          schedule ID
+ *    'cron report': $GLOBALS['expirations'] containing values collected during
+ *          expiration processing
+ * @param $val1: First extra value specific to the event
+ *    'on expiry': The expiry timestamp
+ *    'on purchase': The node ID for the purchased product
+ *    'get previous purchase': User ID of the customer
+ *    'expiry schedule changed': NULL
+ *    'cron report': NULL
+ * @param $val2: Second extra value specific to the event
+ *    'on expiry': NULL
+ *    'on purchase': TRUE if this is a renewal of the product
+ *    'get previous purchase': NULL
+ *    'expiry schedule changed': NULL
+ *    'cron report': NULL 
+ */
+function ec_recurring_recurringapi($op, &$obj, $val1 = NULL, $val2 = NULL) {
+  switch ($op) {
+    case 'on expiry':
+      ec_recurring_on_expiry($obj, $val1);
+      break;
+    case 'on purchase':
+      break;
+    case 'get previous purchase':
+      break;
+    case 'expiry schedule changed':
+      break;
+    case 'cron report':
+      // This is intended for use in the cron mail
+      print t("Processed %nprocessed expired products\n%nauto automated payments processed\n\n", array('%nprocessed' => $obj['products_processed'], '%nauto' => $obj['autopay']));
+      print t("Processed %nprocessed expired reminders\nSent %nsent reminders\n%nfailed reminders failed\n\n", array('%nprocessed' => $obj['reminders_processed'], '%nsent' => $obj['reminders_sent'], '%nfailed' => $obj['reminders_failed']));
+      break;
+  }
+}
+
+/**
+ * Processes a product expiration for the product node given. This function
+ * expects the ec_recurring_expiration row to be in the expired_schedule member
+ * of the given node.
+ *
+ * @param $node Product node to expire with expired_schedule member containing
+ *    a valid row from ec_recurring_expiration.
+ * @param $expiry_time Time of expiry
+ */
+function ec_recurring_on_expiry(&$node, $expiry_time) {
+  global $expirations;
+  
+  if (module_exist('ec_autopay') 
+        && $node->expired_schedule['status'] == ECRECURRING_STATUS_ACTIVE) {
+    
+    if (ec_autopay_renew_product($node, $expiry_time)) {
+      $expirations['autopay']++;
+    }
+  }
+
+  $node->expired_schedule['status'] = ECRECURRING_STATUS_EXPIRED;
+  ec_recurring_update_expiration($node->expired_schedule);
+  $expirations['products_processed']++;
+
+  watchdog('product_expiry', t('Product expiry processed.'), WATCHDOG_NOTICE, l(t('view transaction'), 'store/transactions/view/'.$node->expired_schedule['txnid']));
+}
+
+// End Recurring hook functions
+/////////////////////////////////////////////////////////////////////////////////
+// Schedule functions
+
+/**
+ * Form API code for displaying the schedule add/update form.
+ *
+ * @param $sid ID of the schedule being edited. If this is not supplied
+ * a schedule add form will be displayed.
+ * @return HTML of the schedule add/update form
+ */
+function ec_recurring_schedule_form($sid = '') {
+  if (empty($sid)) {
+    $sid = arg(4);
+  }
+  if (!empty($sid) && is_numeric($sid)) {
+    $s = ec_recurring_load_schedule($sid);
+  } else {
+    $s = NULL;
+  }
+
+  $mail_list = array();
+  if ($s) {
+    foreach ($s['reminders'] as $r) {
+      $links = array();
+      $links[] = l(t('edit'), "admin/store/settings/schedule/{$s['sid']}/editreminder/{$r['rid']}");
+      $links[] = l(t('delete'), "admin/store/settings/schedule/{$s['sid']}/delreminder/{$r['rid']}");
+      $mail_list[] = array(l($r['name'], "admin/store/settings/ec_mail/{$r['mid']}"), theme('recurring_schedule', $r), theme('recurring_date', $r['expiry']), theme('links', $links));
+    }
+  }
+  $units = ec_recurring_get_units();
+
+  $readonly = ($s && ec_recurring_schedule_has_unexpired($s['sid']) ? TRUE : FALSE);
+  $attribs = ($readonly ? array('disabled' => TRUE) : array());
+
+  if (!isset($_POST['op']) && $readonly) {
+    $date = db_result(db_query("SELECT expiry FROM {ec_recurring_expiration} e, {ec_recurring_product} p WHERE e.vid = p.vid AND sid = %d AND rid <= %d AND status <> %d ORDER BY expiry DESC LIMIT 1", $sid, ECRECURRING_UNLIMITED, ECRECURRING_STATUS_EXPIRED));
+    $date = theme('recurring_date', $date);
+    drupal_set_message(t('<b>WARNING:</b> Some unexpired products exist that use this schedule. Only name changes are possible until %date', array('%date' => $date)));
+  }
+  
+  $form['sid'] = array(
+    '#type' => 'value',
+    '#value' => ($s ? $s['sid'] : '')
+  );
+  $form['readonly'] = array(
+    '#type' => 'value',
+    '#value' => $readonly
+  );
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Name'),
+    '#maxlength' => ECRECURRING_NAMELEN,
+    '#default_value' => ($s ? $s['name'] : '')
+  );
+  $numunitss = ec_recurring_get_numunits();
+  $form['numunits'] = array(
+    '#type' => ($readonly ? 'textfield' : 'select'),
+    '#title' => t('Number of units'),
+    '#default_value' => ec_recurring_get_default_value($s, 'numunits', $readonly, $numunitss),
+    '#options' => $numunitss,
+    '#attributes' => $attribs
+  );
+
+  $form['unit'] = array(
+    '#type' => ($readonly ? 'textfield' : 'select'),
+    '#title' => t('Unit'),
+    '#default_value' => ec_recurring_get_default_value($s, 'unit', $readonly, $units),
+    '#options' => $units,
+    '#attributes' => $attribs
+  );
+  $cycles = ec_recurring_get_cycles();
+  $form['cycles'] = array(
+    '#type' => ($readonly ? 'textfield' : 'select'),
+    '#title' => t('Number of renewals'),
+    '#default_value' => ec_recurring_get_default_value($s, 'cycles', $readonly, $cycles),
+    '#description' => t('Select the number of renewals this schedule has.'),
+    '#options' => $cycles,
+    '#attributes' => $attribs
+  );
+
+  if ($s) {
+    $form['expiry'] = array(
+      '#type' => 'item',
+      '#title' => t('example expiry date'),
+      '#value' => ($s ? date('Y-m-d', $s['expiry']) : '')
+    );
+
+    $form['mlist'] = array(
+      '#type' => 'item',
+      '#title' => t('Reminder mails'),
+      '#value' => (empty($mail_list) ? t('No reminders added to schedule. <a href="%url">Add one</a>.', array('%url' => url("admin/store/settings/schedule/{$s['sid']}/addreminder"))) : theme('table', array(t('name'), t('schedule'), t('example date'), t('op')), $mail_list))
+    );
+    $form['reminders'] = array(
+      '#type' => 'value',
+      '#value' => $s['reminders']
+    );
+  }
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => ($s ? t('Update schedule') : t('Add schedule'))
+  );
+
+  return drupal_get_form('ec_recurring_schedule', $form);
+}
+
+/**
+ * Validates the schedule add/edit form.
+ *
+ * @param $form_id Text ID of the form
+ * @param $fv Reference to the values supplied by the user
+ */
+function ec_recurring_schedule_validate($form_id, &$fv) {
+  if (strlen($fv['name']) > ECMAIL_NAMELEN) {
+    form_set_error('name', t('Name is too long'));
+  }
+  
+  if (!$fv['readonly']) {
+    $units = array_keys(ec_recurring_get_units());
+    array_shift($units);
+    if (!in_array($fv['unit'], $units)) {
+      form_set_error('unit', t('Please select a unit'));
+    }
+  }
+
+  // Check reminder validity. Ensure they are between purchase and
+  // expiry
+  for ($i = 0; $i < count($fv['reminders']); $i++) {
+    $r =& $fv['reminders'][$i];
+    if ($r['expiry'] < $fv['expiry']) {
+      form_set_error('unit', t('Unit selected is too small for the reminder schedules to be valid'));
+    }
+  }
+}
+
+/**
+ * Commits schedule fields supplied by the user.
+ *
+ * @param $form_id Text ID of the form
+ * @param $fv Reference to the values supplied by the user
+ * @return URL to which the user is redirected once data is committed
+ */
+function ec_recurring_schedule_submit($form_id, &$fv) {
+  $extramsg = ec_recurring_save_schedule($fv);
+
+  $msg = (empty($fv['sid']) ? t('Schedule added') : t('Schedule updated')) . ": {$fv['name']}";
+  $msg .= ". $extramsg";
+  watchdog('ec_recurring', $msg, WATCHDOG_NOTICE, l(t('edit'), "admin/store/settings/schedule/$sid/edit"));
+  drupal_set_message($msg);
+  return "admin/store/settings/schedule/$sid/edit";
+}
+
+/**
+ * Saves the given schedule to ec_recurring schedule table.
+ */
+function ec_recurring_save_schedule(&$schedule) {
+  if (!empty($schedule['sid'])) {
+    $sid = $schedule['sid'];
+    if (!isset($schedule['readonly']) || !$schedule['readonly']) {
+      db_query("UPDATE {ec_recurring_schedule} SET name = '%s', numunits = '%d', unit = '%s', cycles = '%d' WHERE sid = %d", $schedule['name'], $schedule['numunits'], $schedule['unit'], $schedule['cycles'], $sid);
+    } else {
+      db_query("UPDATE {ec_recurring_schedule} SET name = '%s' WHERE sid = %d", $schedule['name'], $sid);
+    }
+
+    // update all entries in the ec_recurring_expiration table
+    if (ec_recurring_update_all_expirations($sid)) {
+      $msg = t('All unexpired events have been updated also');
+    }
+  } else {
+    $schedule['sid'] = db_next_id('{ec_recurring_schedule}_sid');
+    db_query("INSERT INTO {ec_recurring_schedule} (sid, name, numunits, unit, cycles) VALUES (%d, '%s', %d, '%s', %d)", $schedule['sid'], $schedule['name'], $schedule['numunits'], $schedule['unit'], $schedule['cycles']);
+    $msg = '';
+  }
+  
+  return $msg;
+}
+
+/**
+ * Loads the given schedule from the database. This function returns reminder email
+ * schedules as well. The function returns 'expiry' timestamps for the schedule and
+ * reminder email schedules.
+ *
+ * @param $sid ID of the schedule to be loaded.
+ * @param $expiry Current expiry timestamp to apply to this schedule
+ * @param $extend To calculate the renewed schedule this parameter must be TRUE
+ * @return Array containing the fields of the schedule record stored in
+ * the database or FALSE if the schedule does not exist.
+ */
+function ec_recurring_load_schedule($sid, $expiry = FALSE, $extend = TRUE) {
+  if (!$expiry) {
+    $expiry = ec_recurring_default_expiry_time();
+  }
+
+  $schedule = db_fetch_array(db_query("SELECT * FROM {ec_recurring_schedule} WHERE sid = %d", $sid));
+  
+  if ($schedule) {
+    $schedule['expiry'] = ($extend ? ec_recurring_calc_expiry($schedule, $expiry) : $expiry);
+    $schedule['reminders'] = array();
+    $result = db_query("SELECT * FROM {ec_recurring_reminder} sm, {ec_mail} m WHERE sm.sid = %d AND sm.mid = m.mid ORDER BY m.name", $sid);
+    while ($row = db_fetch_array($result)) {
+      $row['expiry'] = ec_recurring_calc_reminder_time($row, $schedule['expiry']);
+      $schedule['reminders'][] = $row;
+    }
+  }
+
+  return $schedule;
+}
+
+/**
+ * Populates the schedule member of the node object given. If a schedule is not found
+ * for the given node's version the schedule member remains unset.
+ *
+ * @param $node Reference to the node for which the schedule is desired.
+ */
+function ec_recurring_load_schedule_node(&$node) {
+  // get the expiry date if the product has been purchased before. if not, the system
+  // will calculate all the expiry dates according to the current date
+  if (isset($node->txnid) && $node->txnid && $node->vid) {
+    $expiry = ec_recurring_product_get_expiry($node->txnid, $node->vid);
+    $extend = FALSE;
+  }
+  
+  if (!$expiry) {
+    $expiry = FALSE;
+    $extend = TRUE;
+  }
+
+  if ($node->vid) {
+    $schedule = ec_recurring_load_schedule_vid($node->vid, $expiry, $extend);
+    if (is_array($schedule)) {
+      $node->schedule = $schedule;
+      $node->is_recurring = TRUE; // for backward compatibility
+    }
+  }
+}
+
+/**
+ * Loads the expiry schedule attached to the product with version ID $vid.
+ * 
+ * @param $vid Product version ID
+ * @param $expiry Current expiry timestamp to apply to this schedule
+ * @param $extend To calculate the renewed schedule this parameter must be TRUE
+ * @return Array containing the fields of the schedule record stored in
+ * the database or FALSE if the schedule does not exist. 
+ */
+function ec_recurring_load_schedule_vid($vid, $expiry = FALSE, $extend = TRUE) {
+  $sid = ec_recurring_get_sid($vid);
+  if ($sid) {
+    $schedule = ec_recurring_load_schedule($sid, $expiry, $extend);
+    if (is_array($schedule) && isset($schedule['sid'])) {
+      return $schedule;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Returns an array of all recurring schedules ready for use 
+ * in a select form element.
+ *
+ * @param $show_renewable Set to TRUE if renewable schedules can be included
+ * in the returned list; otherwise FALSE.
+ * @return Array of all schedules ready for use in a select form element.
+ */
+function ec_recurring_get_list($show_renewable = TRUE) {
+  $where = $show_renewable ? '' : ' WHERE cycles = '.ECRECURRING_NORENEWAL;
+  $result = db_query("SELECT * FROM {ec_recurring_schedule}$where ORDER BY name");
+  $list = array();
+  while ($row = db_fetch_array($result)) {
+    $list[$row['sid']] = $row['name'].': '.theme('recurring_schedule', $row);
+  }
+  return $list;
+}
+
+/**
+ * Displays a table of schedules currently stored in the system.
+ *
+ * @return HTML of the table containing list of schedules stored in the system.
+ */
+function ec_recurring_table() {
+  $output = '';
+  // show table of currently stored schedules.
+  $table = ec_recurring_get_table('ec_recurring_schedule', 'ec_recurring_rowFn_schedules', 'name');
+  if (count($table)) {
+    $output .= theme_table(array(t('name'), t('schedule'), t('op')), $table);
+  } else {
+    $output .= t('No schedules were found');
+  }
+
+  return $output;
+}
+
+function ec_recurring_rowFn_schedules(&$row) {
+  return array($row['name'], theme('recurring_schedule', $row), l(t('edit'), "admin/store/settings/schedule/{$row['sid']}/edit"));
+}
+
+// End Schedule functions
+/////////////////////////////////////////////////////////////////////////////////
+// Reminder functions
+
+function ec_recurring_reminder_form($rid = '') {
+  $s = ec_recurring_load_schedule(arg(4));
+  if (!$s) {
+    return drupal_not_found();
+  }
+  
+  $r = NULL;
+  if (is_numeric($rid) && $rid) {  
+    for ($i = 0; $i < count($s['reminders']); $i++) {
+      if ($s['reminders'][$i]['rid'] == $rid) {
+        $r =& $s['reminders'][$i];
+        break;
+      }
+    }
+    if (is_null($r)) {
+      return drupal_not_found();
+    }
+  }
+      
+  $form['rid'] = array(
+    '#type' => 'value',
+    '#value' => $r['rid']
+  );
+  $form['prodexpiry'] = array(
+    '#type' => 'item',
+    '#title' => t('product expiry time'),
+    '#value' => theme('recurring_schedule', $s)
+  );
+  $form['sid'] = array(
+    '#type' => 'value',
+    '#value' => $s['sid']
+  );
+  $default_mid = isset($r['mid']) ? $r['mid'] : '';
+  $form[] = ec_mail_selection_form(ECMAIL_TYPE_REMINDER, t('Reminder mail to use'), 'mid', $default_mid);
+
+  $numunits = ec_recurring_get_numunits();
+  $numunits[ECRECURRING_ATEXPIRY_NUMUNITS] = t('at product expiry');
+  $form['numunits'] = array(
+    '#type' => 'select',
+    '#title' => t('numunits'),
+    '#options' => $numunits,
+    '#default_value' => ($r ? $r['numunits'] : ''),
+    '#description' => t('Number of units before expiry of the product. Select <b>at expiry</b> if you want the mail sent when the product expires. You can select any unit for mails sent at expiry.') 
+  );
+  $form['unit'] = array(
+    '#type' => 'select',
+    '#title' => t('unit'),
+    '#options' => ec_recurring_get_units(),
+    '#default_value' => ($r ? $r['unit'] : '')
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => (is_null($r) ? t('add reminder') : t('update reminder'))
+  );
+
+  return drupal_get_form('ec_recurring_reminder', $form);
+}
+
+function ec_recurring_reminder_validate($form_id, &$fv) {
+  if (!is_numeric($fv['numunits'])) {
+    form_set_error('numunits', t('Please select an numunits'));
+  }
+ 
+  if ($fv['numunits'] != ECRECURRING_ATEXPIRY_NUMUNITS) {
+    $units = array_keys(ec_recurring_get_units());
+    array_shift($units);
+    if (!in_array($fv['unit'], $units)) {
+      form_set_error('unit', t('Please select a unit'));
+    }
+  } else {
+    $fv['unit'] = ECRECURRING_ATEXPIRY_UNITS;
+  }
+}
+
+function ec_recurring_reminder_submit($form_id, &$fv) {
+  $msg = '';
+  $rid = ec_recurring_save_reminder($fv, $msg);
+  
+  $op = (empty($fv['rid']) ? t('added') : t('updated'));
+  $msg = t('Reminder email %op. ', array('%op' => $op)).$msg;
+  drupal_set_message($msg);
+  watchdog('ec_recurring', $msg, WATCHDOG_NOTICE, l(t('edit'), "admin/store/settings/schedule/{$fv['sid']}/editreminder/$rid"));
+
+  if (!empty($fv['rid'])) {
+    return "admin/store/settings/schedule/{$fv['sid']}/edit";
+  }
+}
+
+function ec_recurring_save_reminder($r, &$msg) {
+  if (empty($r['rid'])) {
+    $rid = db_next_id('{ec_recurring_reminder}_rid');
+    db_query("INSERT INTO {ec_recurring_reminder} (rid, sid, mid, numunits, unit) VALUES (%d, %d, %d, %d, '%s')", $rid, $r['sid'], $r['mid'], $r['numunits'], $r['unit']);
+    ec_mail_addref($r['mid']);
+    if (ec_recurring_expiration_insert_reminders($r['sid'], $rid, $r['numunits'], $r['unit'])) {
+      $msg .= t('The new reminder has been added to all unexpired products.');
+    }
+  } else {
+    $rid = $r['rid'];
+    db_query("UPDATE {ec_recurring_reminder} SET mid = %d, numunits = %d, unit = '%s' WHERE rid = %d", $r['mid'], $r['numunits'], $r['unit'], $rid);
+    if (ec_recurring_update_all_reminders($rid, $r['numunits'], $r['unit'])) {
+      $msg .= t('The reminder has been updated for all unexpired products.');
+    }
+  }
+  
+  return $rid;
+}
+
+/**
+ * Deletes the reminder given by rid. This function expects the correct
+ * schedule id to be at arg(4). Also deletes reminders already scheduled
+ * in ec_reminder_schedule including those that have expired (been sent).
+ *
+ * @param $rid Reminder ID to delete.
+ */
+function ec_recurring_reminder_delete($rid = '') {
+  $sid = arg(4);
+  if (empty($rid) || !is_numeric($rid) || $rid <= 0) {
+    return drupal_not_found();
+  }
+
+  // remove the reminder from the system
+  $mid = ec_recurring_get_mid($rid);
+  db_query("DELETE FROM {ec_recurring_reminder} WHERE rid = %d", $rid);
+  ec_mail_delref($mid);
+
+  // also remove the entries in ec_r_schedule
+  db_query("DELETE FROM {ec_recurring_expiration} WHERE rid = %d", $rid);
+
+  drupal_goto("admin/store/settings/schedule/$sid/edit");
+}
+
+// End Reminder functions
+/////////////////////////////////////////////////////////////////////////////////
+// Product functions
+
+/**
+ * Validates the node given. If errors are encountered they are
+ * flagged via form_set_error().
+ *
+ *@param $node Product node to validate
+ */
+function ec_recurring_product_validate(&$node) {
+  // schedule changes to the same node version are only allowed
+  // when there are no unexpired products of that version
+  $oldsid = ec_recurring_get_sid($node->vid);
+
+  if ($oldsid && $node->sid != $oldsid) {
+    // version hasn't changed so ensure there are no unexpired
+    // products with this vid
+    if (ec_recurring_product_has_unexpired($node->vid) && !$node->revision) {
+      form_set_error('sid', t('To change the expiry schedule of a product with unexpired purchases, you must create another version of the product.'));
+    }
+  }
+}
+
+/**
+ * Updates an association between a product version and a recurring schedule
+ *
+ * @param $node Product node. Must have both vid and schedule set.
+ * @return Number of rows affected. Is 1 when successful and 0 when it fails.
+ */
+function ec_recurring_product_save(&$node) {
+  $affected = 0;
+
+  $node->oldsid = ec_recurring_get_sid($node->vid);
+
+  if (ec_recurring_is_schedule_selected($node)) {
+    // update the current version entry with the new schedule ID
+    if ($node->oldsid) {
+      $affected = db_affected_rows(db_query("UPDATE {ec_recurring_product} SET sid = %d WHERE vid = %d", $node->sid, $node->vid));
+    }
+    if (!$node->oldsid || !$affected) { // old entry doesn't exist or it's a version change so insert
+      $affected = db_affected_rows(db_query("INSERT INTO {ec_recurring_product} (sid, vid, nid) VALUES (%d, %d, %d)", $node->sid, $node->vid, $node->nid));
+
+      // get the old sid and see if it's a version change
+      $node->oldsid = db_result(db_query("SELECT sid FROM {ec_recurring_product} WHERE vid < %d AND nid = %d ORDER BY vid DESC LIMIT 1", $node->vid, $node->nid));
+      if ($node->oldsid) {
+        ; // TODO: fire a version changed hook here?
+      }
+    }
+  
+    // ensure oldsid value matches possible sid values before comparing
+    if (is_null($node->oldsid)) {
+      $node->oldsid = 0;
+    }
+    if ($node->oldsid != $node->sid) {
+      module_invoke_all('recurringapi', 'expiry schedule changed', $node); 
+    }
+  } else if ($node->oldsid) {
+    ec_recurring_product_delete($node);
+  }
+
+  return $affected;
+}
+
+// End Product functions
+/////////////////////////////////////////////////////////////////////////////////
+// Expiration functions
+
+/**
+ * Adds both the product and reminder values that are used in the expirations table to
+ * the given node as $node->recurring['expiration_entries']. This function also sets
+ * the $node->recurring['prevpurchase'] to the schedule entry for the product being
+ * renewed. If the product is not a renewal the prevpurchase entry will be FALSE.
+ * This function expects that the $node->sid is set to the correct value for the vid.
+ * Ensure calling code checks that.
+ *
+ * @param $txn Transaction array
+ * @param $node Product node for which the entries are to be created
+ * @param $start_time Time from which product expiry is to be calculated. If this is NULL
+ *   and the product is not a renewal the expiry in $node->schedule['expiry'] will remain
+ *   unchanged. If this is a renewal $node->schedule['expiry'] will be adjusted
+ *   using the renewal date as the start_time. Otherwise the value of $start_time will be
+ *   used to calculate $node->schedule['expiry']. 
+ */
+function ec_recurring_build_entry(&$txn, &$node, $start_time = NULL) {
+  $schedule =& $node->schedule;
+  
+  // need to find previous purchases so we can adjust $start_time and $rid
+  // rid <= 0 means it's the product entry in the schedule table. See the
+  // ec_recurring_install() comment for more details.
+  $node->recurring['prevpurchase'] = db_fetch_array(db_query("SELECT e.* FROM {ec_recurring_expiration} e, {ec_transaction_product} p, {ec_transaction} t WHERE t.txnid = p.txnid AND p.txnid = e.txnid AND uid = %d AND p.nid = %d AND rid <= 0 AND e.status <> %d ORDER BY expiry DESC LIMIT 1", $txn['uid'], $node->nid, ECRECURRING_STATUS_EXPIRED));
+
+  // fire the 'get previous purchase' hook so modules can override this value
+  module_invoke_all('recurringapi', 'get previous purchase', $node, $txn['uid']);
+  $prevpurchase =& $node->recurring['prevpurchase'];
+
+  $renewing = is_array($prevpurchase);
+
+  if ($renewing) {
+    // call function here to calculate the start_time value
+    $start_time = ec_recurring_start_time($prevpurchase);
+  } else if (is_null($start_time) || $start_time === FALSE) {
+    // adjust the schedule's expiry date if necessary
+    $start_time = ec_recurring_default_expiry_time();
+  }
+  
+  $schedule['expiry'] = ec_recurring_calc_expiry($schedule, $start_time);
+  
+  // adjust cycles if the schedule isn't unlimited 
+  if ($renewing) {
+    ec_recurring_adjust_cycle($prevpurchase, $schedule);
+  } else {
+    ec_recurring_set_cycle($schedule);
+  }
+
+  $entry = array();
+  $entry['product'] = array(
+    'txnid' => $node->txnid,
+    'start_time' => $start_time,
+    'vid' => $node->vid,
+    'rid' => $schedule['rid'],
+    'expiry' => $schedule['expiry']
+  );
+
+  $entry['reminders'] = array();
+  ec_recurring_build_reminder_entries($entry['reminders'], $entry['product'], $schedule, $schedule['expiry']);
+
+  if ($renewing) {
+    db_query("UPDATE {ec_recurring_expiration} SET status = %d WHERE txnid = %d AND vid = %d", ECRECURRING_STATUS_RENEWED, $prevpurchase['txnid'], $prevpurchase['vid']);
+  }
+
+  $node->recurring = array();
+  $node->recurring['prevpurchase'] = ($renewing ? $prevpurchase : FALSE);
+  $node->recurring['expiration_entries'] = $entry;
+}
+
+/**
+ * Populates an array with reminder entries suitable for direct insertion into or update of
+ * the ec_recurring_expiration table.
+ *
+ * @param $entries Array into which the entries are added. Their index corresponds to the
+ *   index in the given schedule
+ * @param $pentry Product entry that will be inserted/updated in ec_recurring_expiration
+ * @param $schedule Schedule upon which the entries are calculated
+ * @param $start_time Time from which reminder expiries are calculated (i.e time at which 
+ * the product entry expires)
+ */
+function ec_recurring_build_reminder_entries(&$entries, &$pentry, &$schedule, $start_time) {
+  $r =& $schedule['reminders'];
+  for ($i = 0; $i < count($r); $i++) {
+    $entries[$i] = $pentry; // copy the structure
+    $entries[$i]['start_time'] = $start_time;
+    $entries[$i]['rid'] = $r[$i]['rid'];
+    $entries[$i]['expiry'] = $r[$i]['expiry'];
+  }
+}
+
+/**
+ * Inserts the given entry into the ec_recurring_expiration table
+ *
+ * @param $entry Array containing txnid, start_time, vid, rid, expiry
+ *   and optionally, the status (defaults to ECRECURRING_STATUS_ACTIVE)
+ */
+function ec_recurring_expiration_insert(&$entry) {
+  ec_recurring_expiration_entry_validate($entry, __FUNCTION__);
+  
+  return db_affected_rows(db_query("INSERT INTO {ec_recurring_expiration} (txnid, start_time, vid, rid, expiry, status) VALUES (%d, %d, %d, %d, %d, %d)", $entry['txnid'], $entry['start_time'], $entry['vid'], $entry['rid'], $entry['expiry'], $entry['status']));
+}
+
+/**
+ * Updates the given entry into the ec_recurring_expiration table
+ *
+ * @param $entry Array containing txnid, start_time, vid, rid, expiry
+ *   and optionally, the status (defaults to ECRECURRING_STATUS_ACTIVE)
+ */
+function ec_recurring_update_expiration(&$entry, $update_status = TRUE) {
+  ec_recurring_expiration_entry_validate($entry, __FUNCTION__);
+  
+  if ($update_status) {
+    return db_affected_rows(db_query("UPDATE {ec_recurring_expiration} SET start_time = %d, expiry = %d, status = %d WHERE txnid = %d AND vid = %d AND rid = %d", $entry['start_time'], $entry['expiry'], $entry['status'], $entry['txnid'], $entry['vid'], $entry['rid']));
+  } else {
+    return db_affected_rows(db_query("UPDATE {ec_recurring_expiration} SET start_time = %d, expiry = %d WHERE txnid = %d AND vid = %d AND rid = %d", $entry['start_time'], $entry['expiry'], $entry['txnid'], $entry['vid'], $entry['rid']));
+  }
+}
+
+/**
+ * Validates the entry given to ensure all fields are supplied and non-zero
+ * (except the status field, of course). If this function finds an error
+ * exit() is called. The purpose of this function is to prevent programmatic
+ * errors. Don't use this function for any other purpose.
+ *
+ * @param $entry Array containing txnid, start_time, vid, rid, expiry
+ *   and optionally, the status (defaults to ECRECURRING_STATUS_ACTIVE).
+ */
+function ec_recurring_expiration_entry_validate(&$entry, $callingfn) {
+  $fields = array('txnid', 'start_time', 'vid', 'rid', 'expiry');
+
+  // check for programmatic errors
+  foreach ($fields as $f) {
+    if (!is_numeric($entry[$f]) || ($f != 'rid' && !$entry[$f])) {
+      echo "$callingfn() ERROR: Required field is invalid or not found: $f";
+      print_r($entry); // this statement must stay here!
+      exit(1);
+    }
+  }
+  
+  if (!isset($entry['status'])) {
+    $entry['status'] = ECRECURRING_STATUS_ACTIVE;
+  }
+}
+
+/**
+ * Inserts reminder entries into the ec_recurring_expiration table. Corresponding
+ * product entries are found using the supplied schedule id. Returns the number
+ * of records changed.
+ *
+ * @param $sid ID of the schedule that has changed
+ * @param $rid ID of the new reminder added to the schedule
+ * @param $numunits Number of units
+ * @param $unit Units used to calculate the reminder expiry time
+ * @return Number of records changed
+ */
+function ec_recurring_expiration_insert_reminders($sid, $rid, $numunits, $unit) {
+  $s = array('rid' => $rid, 'numunits' => $numunits, 'unit' => $unit);
+  return ec_recurring_expiration_map($sid, 'ec_recurring_expiration_mapfn_insert_reminder', ECRECURRING_MAP_PRODUCT_BY_SID, $s);
+}
+
+/**
+ * Implementation of a schedule map function
+ */
+function ec_recurring_expiration_mapfn_insert_reminder(&$row, &$data) {
+  $row['start_time'] = $row['expiry'];
+  $row['rid'] = $data['rid'];
+  $row['expiry'] = ec_recurring_calc_reminder_time($data, $row['expiry']);
+  ec_recurring_expiration_insert($row);
+}
+
+/**
+ * Implementation of a schedule map function
+ */
+function ec_recurring_expiration_mapfn_update_reminder(&$row, &$data) {
+  $row['expiry'] = ec_recurring_calc_reminder_time($data, $row['start_time']);
+  db_query("UPDATE {ec_recurring_expiration} SET expiry = %d WHERE txnid = %d AND vid = %d AND rid = %d", $row['expiry'], $row['txnid'], $row['vid'], $row['rid']);
+}
+
+/**
+ * Updates all reminders with the new schedule. Returns the number of reminders
+ * modified.
+ *
+ * @param $rid Reminder ID
+ * @param $numunits New numunits
+ * @param $unit New unit
+ * @return Number of reminders modified.
+ */
+function ec_recurring_update_all_reminders($rid, $numunits, $unit) {
+  $s = array('numunits' => $numunits, 'unit' => $unit);
+  return ec_recurring_expiration_map($rid, 'ec_recurring_expiration_mapfn_update_reminder', ECRECURRING_MAP_REMINDER_BY_RID, $s);
+}
+
+/**
+ * Executes the given function (map function) on each row of the query result
+ * of the selected query. The query to perform is identified by $mapid. This can
+ * either be one of the queries implemented in this function or one specified by
+ * the caller. In that case, $mapid is a function taking just the $val parameter.
+ * Each row and $data is passed to the map function. The queries are to match on
+ * a single field value. Returns the number of rows on which the map function
+ * was called.
+ *
+ * Currently implemented queries are (ID, field):
+ *    ECRECURRING_MAP_PRODUCT_BY_SID, sid: maps through all unexpired products
+ *      matching the given sid
+ *    ECRECURRING_MAP_REMINDER_BY_RID, rid: maps through all unexpired reminders
+ *      matching the given rid
+ *    ECRECURRING_MAP_PRODUCTS_TO_EXPIRE, expiry: maps through all unexpired
+ *      products that should have expired on or before the given expiry timestamp
+ *    ECRECURRING_MAP_REMINDERS_TO_EXPIRE, expiry: maps through all unexpired
+ *      reminders that should have expired on or before the given expiry timestamp
+ *    ECRECURRING_MAP_PRODUCTS_ACTIVE, expiry: maps through all products that will
+ *       be active on or after the given expiry timestamp
+ *
+ * @param $val Value on which the query is to match.
+ * @param $mapfn Map function to call. mapfn(&$row, &$data)
+ * @param $mapid Query ID or function
+ * @param $data Array of data to pass to the map function.
+ * @return Number of rows mapped.
+ */
+function ec_recurring_expiration_map($val, $mapfn, $mapid, &$data) {
+  $nvisited = 0;
+  
+  if (!function_exists($mapfn)) {
+    return 0;
+  }
+  if (!is_numeric($mapid) && function_exists($mapid)) {
+    $result = $mapid($val);
+  } else {
+    switch ($mapid) {
+      case ECRECURRING_MAP_PRODUCT_BY_SID:
+        $result = db_query("SELECT e.* FROM {ec_recurring_expiration} e, {ec_recurring_product} p WHERE e.vid = p.vid AND p.sid = %d AND rid <= %d AND status = %d", $val, ECRECURRING_UNLIMITED, ECRECURRING_STATUS_ACTIVE);
+        break;
+      case ECRECURRING_MAP_REMINDER_BY_RID:
+        $result = db_query("SELECT e.* FROM {ec_recurring_expiration} e WHERE rid = %d AND status <> %d", $val, ECRECURRING_STATUS_EXPIRED);
+        break;
+      case ECRECURRING_MAP_PRODUCTS_TO_EXPIRE:
+        $result = db_query("SELECT * FROM {ec_recurring_expiration} e, {ec_recurring_product} p, {ec_transaction} t WHERE e.vid = p.vid AND e.txnid = t.txnid AND rid <= %d AND status <> %d AND expiry <= %d", ECRECURRING_UNLIMITED, ECRECURRING_STATUS_EXPIRED, $val);
+        break;
+      case ECRECURRING_MAP_REMINDERS_TO_EXPIRE:
+        $result = db_query("SELECT * FROM {ec_recurring_expiration} e, {ec_recurring_product} p WHERE e.vid = p.vid AND rid > %d AND status <> %d AND expiry <= %d", ECRECURRING_UNLIMITED, ECRECURRING_STATUS_EXPIRED, $val);
+        break;
+      case ECRECURRING_MAP_PRODUCTS_ACTIVE:
+        $result = db_query("SELECT * FROM {ec_recurring_expiration} e, {ec_recurring_product} p, {node_revisions} v, {ec_transaction} t LEFT JOIN {users} u ON (t.uid = u.uid) WHERE e.vid = p.vid AND e.txnid = t.txnid AND p.vid = v.vid AND rid <= %d AND e.status = %d AND expiry >= %d", ECRECURRING_UNLIMITED, ECRECURRING_STATUS_ACTIVE, $val);
+        break;
+      default:
+        echo __FUNCTION__."() ERROR: map ID [$mapid] not found";
+        return 0;
+    }
+  }
+  
+  while ($row = db_fetch_array($result)) {
+    $mapfn($row, $data);
+    $nvisited++;
+  }
+    
+  return $nvisited;
+}
+
+/**
+ * Returns human readable text for expiration status stored in
+ * ec_recurring_expiration.
+ *
+ * @param $status A status value from ec_recurring_expiration
+ * @return Human readable status text
+ */
+function theme_recurring_status($status) {
+  switch ($status) {
+    case ECRECURRING_STATUS_ACTIVE:
+      return t('ACTIVE');
+    case ECRECURRING_STATUS_EXPIRED:
+      return t('EXPIRED');
+    case ECRECURRING_STATUS_RENEWED:
+      return t('RENEWED');
+    default:
+      return t('UNKNOWN');
+  }
+}
+
+/**
+ * Updates all entries in ec_recurring_expiration with the given schedule ID.
+ *
+ * @param $sid Schedule ID for which updates are to be performed.
+ */
+function ec_recurring_update_all_expirations($sid) {
+  $schedule = ec_recurring_load_schedule($sid);
+  return ec_recurring_expiration_map($sid, 'ec_recurring_mapfn_schedule_update_all', ECRECURRING_MAP_PRODUCT_BY_SID, $schedule);
+}
+
+// End Expiration functions
+/////////////////////////////////////////////////////////////////////////////////
+// Cron functions
+
+/**
+ * Processes expiry of entries in the ec_recurring_expiration table.
+ *
+ * DO NOT EXPOSE email addresses through cron.php unless you have implemented
+ * some form of security lockdown of who can execute cron.php. I.e you need to
+ * setup your .htaccess file properly to prevent access to the world otherwise
+ * your customer's email addresses will be exposed.
+ *
+ * E.g. from Scott Reynolds on http://drupal.org/cron
+ *  <Location cron.php>
+ *    Order deny,allow
+ *    Deny from all
+ *    Allow from 127.0.0.1
+ *  </Location>
+ *
+ * DO NOT TAKE THIS LIGHTLY! The author of this code is not responsible for your
+ * actions.
+ */
+function ec_recurring_process_expiries($time = NULL) {
+  global $expirations;
+
+  if (!is_array($expirations)) {
+    $expirations = array(
+      'products_processed' => 0,
+      'reminders_processed' => 0,
+      'reminders_sent' => 0,
+      'reminders_failed' => 0,
+      'autopay' => 0,
+      'reminder_addresses' => array(),   // DO NOT EXPOSE. see function comment
+      'reminder_badaddresses' => array() // DO NOT EXPOSE. see function comment
+    );
+  }
+
+  if (is_null($time)) {
+    $time = time();
+  }
+
+  // get start timestamp.
+  $start = time();
+
+  // have to process products and reminders separately. An automated
+  // payment may be invoked during product expiry processing with a
+  // renewal resulting. In that case, reminder mails (of the expiry
+  // species) should not be sent.
+  $data = array('expiry_time' => $time);
+  $expirations['products_processed'] = ec_recurring_expiration_map($time, 'ec_recurring_mapfn_expire_product', ECRECURRING_MAP_PRODUCTS_TO_EXPIRE, $data);
+
+  $expirations['reminders_processed'] = ec_recurring_expiration_map($time, 'ec_recurring_mapfn_expire_reminder', ECRECURRING_MAP_REMINDERS_TO_EXPIRE, $data);
+
+  module_invoke_all('recurringapi', 'cron report', $expirations);
+  
+  $time_taken = format_interval(time() - $start);
+  
+  watchdog('expirations', t("Expirations have been processed. Processing took %time.", array('%time' => $time_taken)), WATCHDOG_NOTICE);
+}
+
+/**
+ * Implementation of a expiration map function to expire a product row.
+ * Be sure that only a product row is passed to this function!
+ */
+function ec_recurring_mapfn_expire_product(&$row, &$data) {
+  static $products;
+
+  if ($row['rid'] > ECRECURRING_UNLIMITED) {
+    return;
+  }
+
+  if (!is_array($products)) {
+    $products = array();
+  }
+  
+  if (!isset($products[$row['vid']])) {
+    $n = node_load(array('nid' => $row['nid']), $row['vid']);
+    $n->txnid = $row['txnid'];
+    $n->uid = $row['uid'];
+    $products[$row['vid']] = $n;
+  }
+  
+  $products[$row['vid']]->expired_schedule = $row;
+  
+  module_invoke_all('recurringapi', 'on expiry', $products[$row['vid']], $data['expiry_time']);
+
+  // watchdog is done in the hook implementation rather than here :)
+}
+
+/**
+ * Implementation of a expiration map function to expire a reminder row.
+ * Be sure that only a reminder row is passed to this function!
+ */
+function ec_recurring_mapfn_expire_reminder(&$row, &$data) {
+  global $expirations;
+
+  if ($row['rid'] <= ECRECURRING_UNLIMITED) {
+    return;
+  }
+
+  if ($row['status'] == ECRECURRING_STATUS_ACTIVE) {
+    // send the mail
+    $address = ec_mail_get_transaction_address($row['txnid']);
+    $mid = ec_recurring_get_mid($row['rid']);
+    if (!empty($address) && ec_mail_send_mid($mid, $address, $row)) {
+      watchdog('reminder_sent', t('Reminder mail sent.'), WATCHDOG_NOTICE, l(t('view reminder'), 'store/transactions/view/'.$row['txnid']));
+      $expirations['reminders_sent']++;
+      $expirations['reminder_addresses'][] = $address;
+    } else {
+      $expirations['reminders_failed']++;
+      $expirations['reminder_badaddresses'][] = (empty($address) ? "txnid: {$row['txnid']}" : $address);
+    }
+  }
+
+  $row['status'] = ECRECURRING_STATUS_EXPIRED;
+  ec_recurring_update_expiration($row);
+}
+
+// End Cron functions
+/////////////////////////////////////////////////////////////////////////////////
+// E-commerce hook functions
+
+/**
+ * Implementation of hook_ec_transactionapi()
+ */
+function ec_recurring_ec_transactionapi(&$txn, $op, $a3 = NULL, $a4 = NULL) {
+  switch ($op) {
+    case 'load':
+      for ($i = 0; $i < count($txn->items); $i++) {
+        ec_recurring_load_schedule_node($txn->items[$i]);
+      }
+      break;
+    case 'delete':
+      db_query("DELETE FROM {ec_recurring_expiration} WHERE txnid = %d", $txn->txnid);
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_ecommerceapi.
+ */
+function ec_recurring_ecommerceapi(&$txn, $op) {
+  if (!is_array($txn)) {
+    return;
+  }
+
+  switch ($op) {
+    case 'on payment completion':
+      // Go through each of the products purchased
+      for ($i = 0; $i < count($txn['items']); $i++) {
+        // Only process payment when the product has a schedule
+        $node =& $txn['items'][$i];
+        $node->sid = ec_recurring_get_sid($node->vid);
+        if ($node->sid) {
+          ec_recurring_product_payment($txn, $node);
+        }
+      }
+      break;
+  }
+}
+
+/**
+ * Creates expiration entries for the product and reminders. This
+ * function must be called only when the payment status is set
+ * to paid. Usually this is called in an 'on payment completion'
+ * handler.
+ *
+ * @param $txn Transaction for the purchase
+ * @param $node Product purchased
+ * @param $payment_date Date product was purchased. If NULL, uses the current
+ *   date.
+ */
+function ec_recurring_product_payment(&$txn, &$node, $payment_date = NULL) {
+  ec_recurring_build_entry($txn, $node, $payment_date);
+  $entry =& $node->recurring['expiration_entries'];
+
+  // insert the product entry
+  ec_recurring_expiration_insert($entry['product']);
+  
+  // insert the reminder entries
+  foreach ($entry['reminders'] as $r) {
+    ec_recurring_expiration_insert($r);
+  }
+
+  // fire the 'on purchase' event
+  module_invoke_all('recurringapi', 'on purchase', $txn, $node->nid, is_array($node->recurring['prevpurchase']));
+}
+
+/**
+ * Implementation of E-Commerce hook_productapi()
+ */
+function ec_recurring_productapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
+  global $user;
+
+  switch ($op) {
+    case 'allowed in cart':
+      if (is_array($node->schedule)) {
+        return ec_recurring_product_allowed_in_cart($node, $user->uid);
+      } else {
+        return TRUE;
+      }
+      break;
+  }
+}
+
+/**
+ * Returns TRUE if the given node can be added to the cart for the given
+ * uid. This function assumes the product node given is a recurring
+ * product. Check that $node->schedule is an array before calling this
+ * function.
+ *
+ * This function checks that it is the first entry of that product being
+ * added to the cart. It'll return FALSE if the product has already been
+ * added.
+ *
+ * @param $node Product being added to the cart
+ * @param $uid User ID of the user adding the product
+ * @return TRUE if the given product can be added or FALSE if it can't.
+ */
+function ec_recurring_product_allowed_in_cart(&$node, $uid) {
+  // has the same product already been added?
+  if (db_result(db_query("SELECT nid FROM {ec_cart} WHERE nid = %d AND cookie_id = %d", $node->nid, $uid))) {
+    drupal_set_message(t('Only one entry of this product can be added to the cart'));
+    return FALSE;
+  }
+
+  // does the node currently have limited cycles? if so, check
+  // we aren't at the limit
+  if ($node->schedule['cycles'] != ECRECURRING_UNLIMITED) {
+    $rid = db_result(db_query("SELECT rid FROM {ec_recurring_expiration} e, {ec_transaction} t, {ec_recurring_product} p WHERE e.vid = p.vid AND t.txnid = e.txnid AND p.nid = %d AND uid = %d AND rid < %d ORDER BY rid DESC LIMIT 1", $node->nid, $uid, ECRECURRING_UNLIMITED));
+
+    if ($rid === FALSE || $rid != ECRECURRING_LAST_CYCLE) {
+      return TRUE;
+    } else {
+      drupal_set_message(t('You have reached the limit of renewals for this product'));
+      return FALSE;
+    }
+  }
+}
+
+// End E-commerce hook functions
+/////////////////////////////////////////////////////////////////////////////////
+// Store UI functions
+
+function ec_recurring_ui_products() {
+  // display the list of recurring products on the system and include
+  // links to manipulate them
+  $rows = ec_recurring_get_table('', 'ec_recurring_mapfn_product_display', 'r.title', "SELECT * FROM {ec_recurring_product} p, {node_revisions} r, {ec_recurring_schedule} s WHERE p.vid = r.vid AND p.sid = s.sid");
+  $header = array(t('title'), '', '');
+  return theme('table', $header, $rows);
+}
+
+function ec_recurring_mapfn_product_display(&$row) {
+  return array(
+    $row['title'],
+    l(t('view'), "node/{$row['nid']}"),
+    l(t('edit'), "node/{$row['nid']}/edit"),
+  );
+}
+
+function ec_recurring_ui_products_active() {
+  $rows = array();
+  ec_recurring_expiration_map(time(), 'ec_recurring_mapfn_active_product_display', ECRECURRING_MAP_PRODUCTS_ACTIVE, $rows);
+  $header = array(t('Username'), t('Product'), t('Expiry'));
+  return theme('table', $header, $rows);
+}
+
+function ec_recurring_mapfn_active_product_display(&$row, &$data) {
+  $username = ($row['name'] ? l($row['name'], 'user/'.$row['uid']) : l(t('Anonymous'), 'store/anontxn/'.$row['token']));
+  $data[] = array(
+    $username,
+    $row['title'],
+    format_date($row['expiry']),
+  );
+}
+
+// End Store UI functions
+/////////////////////////////////////////////////////////////////////////////////
+// Helper functions
+
+/**
+ * Returns the mail ID for the given reminder ID. This function
+ * caches the mail IDs found to speed up processing for cron jobs.
+ *
+ * @param $rid Reminder ID
+ * @return Mail ID for the given reminder ID
+ */
+function ec_recurring_get_mid($rid) {
+  static $midlist;
+
+  if (!isset($midlist)) {
+    $midlist = array();
+  }
+
+  if (!$midlist[$rid]) {
+    $midlist[$rid] = db_result(db_query("SELECT mid FROM {ec_recurring_reminder} WHERE rid = %d", $rid));
+  }
+
+  return $midlist[$rid];
+}
+
+/**
+ * The correct format for renewal links is:
+ *   cart/renew/nid/txnid
+ */
+function ec_recurring_user_subscriptions($uid = '') {
+  global $user;
+
+  if ($uid == '') {
+    $uid = $user->uid;
+    $name = $user->name;
+  } else {
+    $name = db_result(db_query('SELECT name FROM {users} WHERE uid = %d', $uid));
+    if ($name === FALSE) {
+      return drupal_not_found();
+    }
+  }
+
+  $title = t('%username\'s subscriptions', array('%username' => $name));
+
+  $items = ec_recurring_get_active_for_user($uid);
+  $cart = cart_get_items();
+
+  $header = array(t('name'), t('price'), t('expiry date'), t('time to expiry'), t('renewals remaining'), t('operations'));
+  foreach ($items as $item) {
+    $item_name = $item['title']. '<br>('. theme('recurring_schedule', $item). ')';
+    $links = array();
+
+    $renewals = ec_recurring_renewals_remaining($item['rid']);
+    
+    if ($renewals) {
+      $renew = t('This item is in <a href="%cart_view">your shopping cart</a>.', array('%cart_view' => url('cart/view')));
+    
+      if (!$cart[$item['nid']]->qty) {
+        $uidbit = ($uid != $user->uid ? "/$uid" : '');
+        $links[] = l(t('renew'), "store/renew/{$item['nid']}$uidbit");
+      }
+
+      $links = array_merge($links, module_invoke_all('recurringapi', 'renewal links', $item));
+    }
+   
+    $rows[] = array($item_name, payment_format($item['price']), date('Y-m-d', $item['expiry']), format_interval($item['expiry'] - time()), $renewals, theme('links', $links));
+  }
+
+  if ($rows) {
+    $output = theme('table', $header, $rows);
+  }
+  else {
+    $output = t('<p>You have no active subscriptions.</p>');
+  }
+
+  drupal_set_title($title);
+  return $output;
+}
+
+function ec_recurring_renewals_remaining($rid) {
+  return ($rid == ECRECURRING_UNLIMITED ? t('Unlimited') : -$rid - 1);
+}
+
+function ec_recurring_get_active_for_user($uid) {
+  $result = db_query("SELECT * FROM {ec_recurring_expiration} e, {ec_recurring_schedule} r, {ec_recurring_product} p, {ec_transaction} t, {node_revisions} n, {ec_transaction_product} etp WHERE e.txnid = t.txnid AND n.vid = e.vid AND r.sid = p.sid AND p.vid = e.vid AND p.vid = etp.vid AND e.txnid = etp.txnid AND t.uid = %d AND e.status = %d AND rid <= %d", $uid, ECRECURRING_STATUS_ACTIVE, ECRECURRING_UNLIMITED);
+  $active = array();
+  while ($row = db_fetch_array($result)) {
+    $active[] = $row;
+  }
+  return $active;
+}
+
+function ec_recurring_int_to_hour($val) {
+  if ($val < 10) {
+    $val = "0$val";
+  }
+
+  return "$val:00";
+}
+
+function ec_recurring_cron_settings() {
+  $hours = drupal_map_assoc(range(0, 23), 'ec_recurring_int_to_hour');
+
+  $form['ec_recurring_expiry_hour'] = array(
+    '#type' => 'select',
+    '#title' => t('Hour of expiry'),
+    '#default_value' => variable_get('ec_recurring_expiry_hour', ECRECURRING_EXPIRY_HOUR),
+    '#options' => $hours,
+    '#description' => t('Select the hour of the day at which the cron system will expire products. NOTE: This only works if you have setup a cron task.')
+  );
+
+  return system_settings_form('ec_recurring_ec_settings_form', $form);
+}
+
+function ec_recurring_debugging() {
+  $entries = array();
+  $result = db_query("SELECT p.title, e.* FROM {ec_recurring_expiration} e, {node_revisions} p WHERE e.vid = p.vid ORDER BY txnid, expiry");
+  while ($row = db_fetch_array($result)) {
+    $title = ($row['rid'] <= 0 ? $row['title'] : '');
+    $entries[] = array($title, date('Y-m-d', $row['start_time']), date('Y-m-d', $row['expiry']), $row['txnid'], $row['rid'], theme('recurring_status', $row['status']));
+  }
+
+  $debug = variable_get(ECRECURRING_VAR_DEBUG, FALSE);
+  
+  $form[ECRECURRING_VAR_DEBUG] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable debugging for ec_recurring'),
+    '#default_value' => $debug,
+  );
+
+  if ($debug) {
+    $rows = array();
+    $rows[] = array(l(t('debug expirations'), 'admin/store/settings/ec_recurring_debug/expirations'));
+    $form['output'] = array('#value' => theme('table', array(t('links')), $rows));
+  }
+
+  return system_settings_form('ec_recurring_debugging_form', $form);
+}
+
+function ec_recurring_debug_expirations() {
+  $entries = array();
+  $result = db_query("SELECT p.title, e.* FROM {ec_recurring_expiration} e, {node_revisions} p WHERE e.vid = p.vid ORDER BY txnid, expiry");
+  while ($row = db_fetch_array($result)) {
+    $title = ($row['rid'] <= 0 ? $row['title'] : '');
+    $entries[] = array($title, date('Y-m-d', $row['start_time']), date('Y-m-d', $row['expiry']), $row['txnid'], $row['rid'], theme('recurring_status', $row['status']));
+  }
+  
+  return theme('table', array('title', 'start time', 'expiry', 'txnid', 'rid', 'status'), $entries);
+}
+function ec_recurring_is_schedule_selected(&$node) {
+  return (isset($node->sid) && $node->sid);
+}
+
+function ec_recurring_product_delete(&$node) {
+  return db_affected_rows(db_query("DELETE FROM {ec_recurring_product} WHERE vid = %d", $node->vid));
+}
+
+/**
+ * Returns the number of unexpired products for the given node version.
+ *
+ * @param $vid Version ID of the product
+ * @return Number of unexpired products in the system for the given product version.
+ */
+function ec_recurring_product_has_unexpired($vid) {
+  return db_result(db_query("SELECT * FROM {ec_recurring_expiration} WHERE vid = %d AND rid <= %d AND status <> %d", $vid, ECRECURRING_UNLIMITED, ECRECURRING_STATUS_EXPIRED));
+}
+
+/**
+ * Returns the number of active product expiration entries in the system.
+ * 
+ * @return Number of active product expiration entries in the system.
+ */
+function ec_recurring_num_product_active() {
+  return db_result(db_query("SELECT COUNT(*) FROM {ec_recurring_expiration} WHERE rid <= %d AND status = %d", ECRECURRING_UNLIMITED, ECRECURRING_STATUS_ACTIVE));
+}
+
+/**
+ * Returns the number of unexpired products for the given schedule.
+ *
+ * @param $sid ID of the schedule in question.
+ * @return Number of unexpired products in the system for the given schedule.
+ */
+function ec_recurring_schedule_has_unexpired($sid) {
+  return db_result(db_query("SELECT COUNT(e.vid) FROM {ec_recurring_expiration} e, {ec_recurring_product} p WHERE e.vid = p.vid AND rid <= 0 AND status <> %d", ECRECURRING_STATUS_EXPIRED));
+}
+
+/**
+ * Returns the expiry date for the given product version and transaction.
+ *
+ * @param $txnid Transaction in which the product version was purchased
+ * @param $vid Product version for which expiry date is sought.
+ * @return Expiry date (local timestamp) for the given product version
+ *   purchased as part of the transaction given.
+ */
+function ec_recurring_product_get_expiry($txnid, $vid) {
+  return db_result(db_query("SELECT expiry FROM {ec_recurring_expiration} WHERE txnid = %d AND vid = %d AND rid <= 0 ORDER BY expiry DESC LIMIT 1", $txnid, $vid));
+}
+
+/**
+ * Returns the schedule ID for the product version given.
+ * 
+ * @param $vid Product version for which the schedule ID is sought.
+ * @return Schedule ID for the given product version.
+ */
+function ec_recurring_get_sid($vid) {
+  return db_result(db_query("SELECT sid FROM {ec_recurring_product} WHERE vid = %d", $vid));
+}
+
+/**
+ * This function returns the start_time for a renewed entry.
+ *
+ * @param $entry An entry from the ec_recurring_expiration table
+ * @return Timestamp value for as the start_time for a renewal.
+ */
+function ec_recurring_start_time(&$entry) {
+  return $entry['expiry'];
+}
+
+/**
+ * Adjusts the cycles on a cycle-limited expiration entry. This function should be
+ * used rather than hard-coding in case the encoding method changes.
+ *
+ * @param $old Expiration entry that is either active or expired.
+ * @param $new Expiration entry that will be saved with the purchase.
+ */
+function ec_recurring_adjust_cycle(&$old, &$new) {
+  if ($new['cycles'] != ECRECURRING_UNLIMITED) {
+    $new['rid'] = $old['rid'] + 1;
+
+    // catch programmer error
+    if ($new['cycles'] == ECRECURRING_UNLIMITED) {
+      echo __FUNCTION__."(): ERROR - rid value has become unlimited and the expiration entry has a limit";
+      exit(1);
+    }
+  } else {
+    $new['rid'] = $new['cycles'];
+  }
+}
+
+/**
+ * Sets the correct value for the cycle.
+ *
+ * @param $s Expiration entry in which the cycle needs to be set.
+ */
+function ec_recurring_set_cycle(&$s) {
+  if ($s['cycles'] != ECRECURRING_UNLIMITED) {
+    $s['rid'] = -$s['cycles'];
+  } else {
+    $s['rid'] = $s['cycles'];
+  }
+}
+
+/**
+ * Returns the HTML representation of the recurring schedule supplied.
+ * This function distinguishes between an expiry schedule and reminder
+ * schedule by the presence of the 'cycles' key. Expiry schedules have
+ * a cycles key and reminder schedules do not.
+ *
+ * Override this function in your theme if you want a different
+ * representation.
+ *
+ * @param $s Schedule to be themed
+ * @return HTML representation of the given schedule
+ */
+function theme_recurring_schedule(&$s) {
+  $output = ec_recurring_unit_string($s['unit'], $s['numunits'], TRUE);
+  
+  $cycles = ec_recurring_get_cycles();
+  if (isset($s['cycles'])) {
+    $output .= ' '.ec_recurring_cycle_string($s['cycles']);
+  } else if ($s['numunits']) {
+    $output .= ' '.t('before expiry');
+  }
+  
+  return $output;
+}
+
+/**
+ * Themes the timestamp to give a human readable date.
+ *
+ * @param $timestamp Timestamp to theme
+ * @return Human readable date string
+ */
+function theme_recurring_date($timestamp) {
+  if (!is_numeric($timestamp)) {
+    return 'Invalid timestamp';
+  } else {
+    return date('Y-m-d', $timestamp);
+  }
+}
+
+function ec_recurring_get_units() {
+  return array(0 => t('--'), 'D' => t('Day(s)'), 'W' => t('Week(s)'), 'M' => t('Month(s)'), 'Y' => t('Year(s)'));
+}
+
+/**
+ * Returns the string representation of the given unit. The return value is
+ * localized. Providing the count is optional with the default to be one.
+ * The count is only returned in the string when $showNumber is TRUE.
+ *
+ * @param $unit Units to consider. Currently this function accepts D (day),
+ *   W (week), M (month), Y (year). Case insensitive.
+ * @param $count Number of units.
+ * @param $showNumber Returns the number in the string when TRUE.
+ * @return Localized string representation of the given unit.
+ */
+function ec_recurring_unit_string($unit, $count = 1, $showNumber = FALSE) {
+  if ($unit == ECRECURRING_ATEXPIRY_UNITS) {
+    return t('at product expiry');
+  }
+  $unit = strtoupper($unit);
+
+  $ulist = array('D' => t('day'), 'W' => t('week'), 'M' => t('month'), 'Y' => t('year'));
+ 
+  // should never reach this case
+  if (empty($ulist[$unit])) {
+    return t('Unit undefined');
+  }
+  
+  $str = ($showNumber ? '%count ' : '').$ulist[$unit];
+
+  return format_plural($count, $str, "{$str}s");
+}
+
+/**
+ * Returns a list of cycle values ready for use in a select form element.
+ * IMPORTANT NOTE: This system stores the number of cycles for an expiration
+ * and not the number of renewals. E.g An expiration with one cycle has no
+ * renewals whereas an expiration with two cycles has one renewal and so on.
+ *
+ * @return Array of cycle values for use in a select form element.
+ */
+function ec_recurring_get_cycles() {
+  static $cycles;
+  if (!$cycles) {
+    $cycles[ECRECURRING_UNLIMITED] = t('unlimited');
+    $cycles[ECRECURRING_NORENEWAL] = t('no renewals');
+    $cycles[2] = t('1 renewal');
+    for ($i = 2; $i <= ECRECURRING_MAXCYCLES; $i++) {
+      $cycles[$i+1] = t('%i renewals', array('%i' => $i));
+    }
+  }
+  return $cycles;
+}
+
+function ec_recurring_cycle_string($cycles) {
+  switch ($cycles) {
+    case ECRECURRING_UNLIMITED:
+      $output .= t('with unlimited renewals');
+      break;
+    case ECRECURRING_NORENEWAL:
+      $output .= t('with no option to renew');
+      break;
+    default:
+      $output .= t('with %ncycles renewals', array('%ncycles' => ($cycles - 1)));
+  }
+
+  return $output;
+}
+
+/**
+ * Returns an array of numunits suitable for use in a form.
+ *
+ * @return Array containing numunits => numunits pairs.
+ */
+function ec_recurring_get_numunits() {
+  static $numunits;
+  if (!$numunits) {
+    $numunits = drupal_map_assoc(range(0, ECRECURRING_MAXINTERVAL));
+    $numunits[0] = '--';
+  }
+  return $numunits;
+}
+
+/**
+ * Returns the default value for the given field depending on the conditions
+ * given.
+ */
+function ec_recurring_get_default_value(&$values, $fldname, $readonly, $options) {
+  if (!is_array($values)) {
+    return '';
+  }
+  
+  if ($readonly) {
+    return $options[$values[$fldname]];
+  } else {
+    return $values[$fldname];
+  }
+}
+
+/**
+ * Returns the local timestamp (unix timestamp) for the expiry desired
+ * in schedule. Expiry is calculated from midnight for the given $prevexpiry.
+ * If $prevexpiry is null, the current unix timestamp is used.
+ *
+ * @param $schedule Reference to the schedule array or object.
+ * @param $prevexpiry Timestamp of the previous expiry date. Can be NULL.
+ * @return Returns a timestamp for the new expiry date. If $schedule is passed
+ * as neither an array or object this function calls exit(). Likewise, if
+ * values for unit and numunits are not found in $schedule, exit() is called.
+ */ 
+function ec_recurring_calc_expiry(&$schedule, $prevexpiry = NULL) {
+  if (is_null($prevexpiry)) {
+    $prevexpiry = ec_recurring_default_expiry_time();
+  }
+
+  list($unit, $numunits) = ec_recurring_calc_validate_input(__FUNCTION__, $schedule);
+
+  $prevexpiry = date('Y-m-d 03:00:00', $prevexpiry);
+
+  $units = ec_recurring_unit_string($unit, $numunits, TRUE);
+
+  return strtotime("$prevexpiry +$units");
+}
+
+/**
+ * Returns a local timestamp (unix timestamp) of when a reminder will be sent.
+ * The timestamp is calculated as being before $expiry, which is the timestamp
+ * of the expiry date. The timestamp returned will be at midnight on the day
+ * calculated.
+ *
+ * @return Local timestamp of when the reminder is to be sent.
+ */
+function ec_recurring_calc_reminder_time(&$schedule, $expiry) {
+  list($unit, $numunits) = ec_recurring_calc_validate_input(__FUNCTION__, $schedule);
+
+  $expiry = date('Y-m-d 03:00:00', $expiry);
+  $units = ec_recurring_unit_string($unit, $numunits, TRUE);
+
+  if ($numunits == ECRECURRING_ATEXPIRY_NUMUNITS) {
+    return strtotime($expiry);
+  } else {
+    return strtotime("$expiry -$units");
+  }
+}
+
+/**
+ * Validates the schedule given to ensure it has valid values for unit and
+ * numunits. If an error is found, the function calls exit(). This is used
+ * because errors of this sort are programming errors and not user errors.
+ *
+ * @param $fname Name of the calling function
+ * @param $schedule Array or object containing a unit and numunits.
+ * @return Array (unit, numunits). This function fails (calls exit()) if
+ * any errors are found.
+ */
+function ec_recurring_calc_validate_input($fname, &$schedule) {
+  $errors = array();
+  
+  if (is_array($schedule)) {
+    list($unit, $numunits) = array($schedule['unit'], $schedule['numunits']);
+  } else if (is_object($schedule)) {
+    list($unit, $numunits) = array($schedule->unit, $schedule->numunits);
+  } else {
+    $errors[] = "$fname(): ERROR. Expected array or object for parameter 1";
+  }
+
+  $msg = '';
+  if ($fname != 'ec_recurring_calc_reminder_time') {
+    if (empty($unit)) {
+      $msg = 'unit';
+    } else if (empty($numunits)) {
+      $msg = 'numunits';
+    }
+  }
+
+  if (!empty($msg)) {
+    $errors[] = "$fname(): ERROR. Expected schedule to have '$msg' defined";
+  }
+
+  if (!in_array($unit, array_keys(ec_recurring_get_units()))) {
+    $errors[] = "$fname(): ERROR. Unit \"$unit\" invalid";
+  }
+
+  if (count($errors)) {
+    echo implode("<br/>\n", $errors)."<br/>\n";
+    exit(1);
+  }
+
+  return array($unit, $numunits);
+}
+
+/**
+ * Updates expiry timestamp of the given product entry and all reminders
+ * associated with it have their start_time and expiry time updated.
+ *
+ * @param $row Product entry of the ec_recurring_expiration table.
+ * @param $schedule Schedule array returned by ec_recurring_load_schedule
+ */
+function ec_recurring_mapfn_schedule_update_all(&$row, &$schedule) {
+  $row['expiry'] = ec_recurring_calc_expiry($schedule, $row['start_time']);
+  ec_recurring_update_expiration($row);
+
+  // move the product expiry into the start_time field and
+  // cascade through all the reminders
+  $row['start_time'] = $row['expiry'];
+  $rlist =& $schedule['reminders'];
+  for ($i = 0; $i < count($rlist); $i++) {
+    $row['rid'] = $rlist[$i]['rid'];
+    $row['expiry'] = ec_recurring_calc_reminder_time($rlist[$i], $row['start_time']);
+    ec_recurring_update_expiration($row, FALSE); // don't update the status
+  }
+}
+
+/**
+ * Returns schedules stored in the system as an array of rows. Each row can be
+ * optionally manipulated by the supplied row function to alter the resulting
+ * set.
+ *
+ * @param $tablename Name of the database table to process
+ * @param $rowFn Function which alters each row. Calling syntax must be
+ *   rowFn(&$row).
+ * @param $orderfield Name of the field(s) for ordering the rows. Multiple fields
+ *   can be specified by separating them with commas. E.g 'field1, field2'.
+ * @param $qry_override Override of the default query. Use this to do multitable
+ *   queries.
+ * @return Array of rows. Defaults to all rows but this may be changed by using
+ *   a row function.
+ */
+function ec_recurring_get_table($tablename, $rowFn = '', $orderfield = '', $qry_override = '') {
+  $orderby = !empty($orderfield) ? " ORDER BY $orderfield" : '';
+
+  $result = db_query(empty($qry_override) ? "SELECT * FROM {$tablename}$orderby" : "$qry_override$orderby");
+  $table = array();
+  while ($row = db_fetch_array($result)) {
+    if (!empty($rowFn) && function_exists($rowFn)) {
+      $table[] = $rowFn($row);
+    } else {
+      $table[] = $row;
+    }
+  }
+  return $table;
+}
+
+/**
+ * Returns the default time used when performing calculations. Use this function
+ * rather than hard-coding the call to mktime() as this implementation may change
+ * to take timezones into account.
+ *
+ * @return Timestamp for 3am on the current date in system local time
+ */
+function ec_recurring_default_expiry_time($time = NULL) {
+  if (is_null($time) || $time === FALSE) {
+    return mktime(3, 0, 0);
+  } else {
+    return strtotime(date("Y-m-d 03:00:00", $time));
+  }
+}
+
+/**
+ * Renew the node given from the given transaction.
+ *
+ * @param $nid Product node ID.
+ * @param $txnid Transaction ID.
+ * @param $token Transaction token.
+ */
+function ec_recurring_renew_item($nid, $txnid, $token) {
+  $txn = store_transaction_load($txnid);
+  
+  // Only renew the item if the token matches. Currently we don't 
+  // support admins renewing products through this workflow.
+  if ($txn->token != $token) {
+    return drupal_not_found();
+  }
+  
+  $items = ec_recurring_get_active_for_user($txn->uid);
+  
+  $canrenew = FALSE;
+  foreach ($items as $item) {
+    if ($item['nid'] == $nid) {
+      if (ec_recurring_renewals_remaining($item['rid'])) {
+        $canrenew = TRUE;
+      }
+      break;
+    }
+  }
+  
+  if ($canrenew) {
+    //TODO: Process this differently if an admin user is renewing for
+    // a customer
+    cart_add_item($nid);
+    drupal_goto('cart/checkout');
+  } else {
+    return drupal_not_found();
+  }
+}
+
+// End Helper functions
+/////////////////////////////////////////////////////////////////////////////////
+// Token hook implementations
+
+function ec_recurring_token_list($type = 'all') {
+  if (in_array($type, array('all', ECMAIL_TYPE_REMINDER))) {
+    if ($type != 'all') {
+      $vars = array_merge(store_token_list(STORE_TOKEN_TYPE), user_token_list('user'));
+    }
+    
+    $vars[ECMAIL_TYPE_REMINDER]['recurring-expiry-date']    = t('Product expiry date');
+    $vars[ECMAIL_TYPE_REMINDER]['recurring-time-to-expire'] = t('Time to product expiry (in weeks and days).');
+  }
+  
+  return $vars;
+}
+
+function ec_recurring_token_values($type, $entry = NULL) {
+  if ($type == ECMAIL_TYPE_REMINDER) {
+    $txn = store_transaction_load($entry['txnid']);
+    $u = user_load(array('uid' => $txn->uid));
+    
+    foreach ($txn->items as $item) {
+      if ($item->vid == $entry['vid']) {
+        $product =& $item;
+        break;
+      }
+    }
+    
+    // retrieve the tokens for everything
+    $values = array_merge(
+      token_get_values(STORE_TOKEN_TYPE, $txn),
+      token_get_values('user', $u),
+      token_get_values('product', $product)
+    );
+    
+    if (variable_get('configurable_timezones', 1) && strlen($u->timezone)) {
+      $timezone = $u->timezone;
+    } else {
+      $timezone = variable_get('date_default_timezone', 0);
+    }
+    
+    $values['recurring-expiry-date']    = format_date($entry['start_time'], 'medium', '', $timezone);
+    $values['recurring-time-to-expire'] = format_interval($entry['start_time'] - time());
+    $values['recurring-renewal-url'] = url("store/renew/{$product->nid}/{$txn->txnid}/{$txn->token}", NULL, NULL, TRUE);
+  }
+  
+  return $values;
+}
+
+// End Token hook implementations
+/////////////////////////////////////////////////////////////////////////////////
+// Mail hook implementations
+
+/**
+ * Implementation of hook_mail_types() from ec_mail module.
+ */
+function ec_recurring_mail_types() {
+  return array(
+    ECMAIL_TYPE_REMINDER => t('Recurring product reminder'),
+  );
+}
+
+/**
+ * Implementation of hook_mail_reset() from ec_mail module.
+ */
+function ec_recurring_mail_reset($type) {
+  $mids = array();
+  if ($type == ECMAIL_TYPE_REMINDER) {
+    $mails = array(
+      'renewal' => array(
+        'name' => t('Default renewal reminder'),
+        'subject' => t('Your %site renewal'),
+        'body' => t("Dear %billing_firstname %billing_lastname,\n\nis message is to inform you that the following item will expire in %time_to_expire.\n\n%renewal_item\n\nTo prevent this from happening, please renew the item as soon as possible.\n\nClick the link below to renew:\n%renewal_link\n\nThanks,\n\n%site\n%uri")),
+      'expired' => array(
+        'name' => t('Default expiration notice'),
+        'subject' => t('Your %site renewal has expired'),
+        'body' => t("Dear %billing_firstname %billing_lastname,\n\nThis message is to inform you that the following item expired at %time_since_expired:\n\n%renewal_item\n\nThanks,\n\n%site\n%uri"))
+    );
+    
+    foreach ($mails as $cat => $m) {
+      $m['mid'] = ec_mail_get_mid($m['name']);
+      $m['type'] = ECMAIL_TYPE_REMINDER;
+      $m['subject'] = ec_mail_convert_tokens($m['subject']);
+      $m['body'] = ec_mail_convert_tokens($m['body']);
+      $mids[$cat] = ec_mail_save($m);
+    }
+  }
+  
+  return $mids;
+}
+
+// End Mail hook implementations

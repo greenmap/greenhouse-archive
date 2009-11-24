@@ -1,0 +1,94 @@
+<?php
+// $Id: registerprofile.module,v 1.1.2.2 2007/02/01 10:15:55 sym Exp $
+/*
+ * Implementation of hook_help().
+ */
+function registerprofile_help($section) {
+  switch ($section) {
+  case 'admin/modules#description':
+    return t('Adds profilenodes to the register form. <em>Note: Requires nodeprofile.module</em>');
+  }
+}
+
+/*
+ * Implementation of hook_user().
+ */
+function registerprofile_user($op, &$edit, &$account, $category = NULL) { 
+  switch ($op) {
+    case 'register':
+      $types = node_get_types();
+      foreach ($types as $type => $type_name) {
+        if (is_nodeprofile($type)) {
+          $node = NULL;
+          	if (!$_SESSION['role']) {
+          	$role = 1;
+          	} else {
+          	$role = $_SESSION['role'];
+          	}
+            $query = db_query("SELECT perm FROM {permission} WHERE rid=%s", $role);
+            $result = db_fetch_object($query);
+            if (strpos($result->perm, "view ".$type." on register form")) {
+              (object)$node->type = $type;
+              $node->type_name = $type_name; 
+              $profile_types[] = $node;
+            } 
+          }
+      }
+      foreach ($profile_types as $node) {
+        $form_data = node_form_array($node);
+
+        /* I have to call each hook_form_alter by 'hand' because node_form_array doesn't include any changes made by form_alter */
+        $form_id = $form_data['#id'];
+        foreach (module_implements('form_alter') as $module) {
+          $function = $module .'_form_alter';
+          $function($form_id, $form_data);
+        } 
+    
+        /*put the whole node form in to a fieldset and set tree to true for future use by node_save*/
+        $form[$node->type] = array(
+          '#type' => 'fieldset',
+          '#title' => $node->type_name,
+          '#collapsible' => FALSE,
+          '#collapsed' => FALSE,
+          '#tree' => TRUE,
+          );
+          
+        /* get rid of the submit and other stuff here.  I could add per-field permissions here as well */
+        unset($form_data['submit']);
+        unset($form_data['preview']);
+        unset($form_data['title']);
+        unset($form_data['uid']);
+          
+        /* make the form array*/
+        foreach ($form_data as $name => $field) {
+          $form[$node->type][$name] = $field;
+        }    
+      }
+    return $form; 
+    
+    case 'insert':
+      foreach ($edit as $field) {
+        if (is_nodeprofile($field['type'])) {
+        if (is_array($field)) {
+          $node = (object)$field;
+          $node->uid = $account->uid;
+          $node->title = $account->name . "'s profile";
+          $finalnode = node_submit($node);       
+          node_save($finalnode);
+        }
+        }
+      }
+  }
+}
+/*
+ * Implementation of hook_perm().
+ */
+function registerprofile_perm() {
+  $types = node_get_types();
+  foreach ($types as $type => $type_name) {
+    if (is_nodeprofile($type)) {
+       $perm[] = "view ".$type." on register form";
+    }
+  }
+  return $perm;
+}
