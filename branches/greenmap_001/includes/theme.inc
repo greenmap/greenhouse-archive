@@ -979,8 +979,8 @@ function theme_username($object) {
 
   if ($object->uid && $object->name) {
     // Shorten the name when it is too long or it will break many tables.
-    if (drupal_strlen($object->name) > 20) {
-      $name = drupal_substr($object->name, 0, 15) .'...';
+    if (drupal_strlen($object->name) > 50) {
+      $name = drupal_substr($object->name, 0, 40) .'...';
     }
     else {
       $name = $object->name;
