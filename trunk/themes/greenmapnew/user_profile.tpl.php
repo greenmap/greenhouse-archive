@@ -289,13 +289,13 @@ $attributes_mapmakers = array('class' => 'mapmakers');
 	
 	
 	<?php if($profile_project_country || $allowed_editor) { ?>
-		- <?php print check_plain($profile_project_country) ?>
+		- <?php print check_plain($profile_project_country) ?> -
 		<?php if (!$profile_project_country && $allowed_editor) { print l(t('Set your country*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
 	<?php }?>
 	
 	
 	
-	<?php if($profile_project_continent || $allowed_editor) { ?>
+<?php if($profile_project_continent || $allowed_editor) { ?>
 <?php
 $dictc = array( 
  'Africa' => 'maps/list/continent/africa',
@@ -306,6 +306,7 @@ $dictc = array(
  );
 
 ?>
+
 <?php print l(check_plain(ucwords(check_plain($profile_project_continent))),
  $dictc[$profile_project_continent]);
 ?>
@@ -1175,15 +1176,51 @@ if ($allowed_editor && !$new_user) {
 <?php }?>
 
 
+
+
+
+<?php
+
+$dict = array(
+ 'business' => 'mapmakers/list/organization/business',
+ 'community/grass roots' => 'mapmakers/list/organization/community',
+ 'governmental agency' => 'mapmakers/list/organization/individual',
+ 'individual' => 'mapmakers/list/organization/individual',
+ 'non-profit' => 'mapmakers/list/organization/nonprofit',
+ 'school' => 'mapmakers/list/organization/school',
+ 'tourism agency' => 'mapmakers/list/organization/tourism',
+ 'university/college' => 'mapmakers/list/organization/university',
+ 'youth' => 'mapmakers/list/organization/youth',
+ 'other ' => 'mapmakers/list/organization/other',
+);
+?>
+
+
+
+
+
+
+
+
 <?php if($profile_organization_type || $allowed_editor) { ?>
 <div class="item <?php if (!$profile_organization_type && $allowed_editor) { print 'required'; } ?>">
 	<div><label><?php print t('Type'); ?>:</label></div>
 	<div class="data"> 
-		<?php print check_plain($profile_organization_type); ?>
+		<?php
+    print l(check_plain(ucwords(check_plain($profile_organization_type))),
+          $dict[$profile_organization_type]);
+   ?>
+
 		<?php if (!$profile_organization_type && $allowed_editor) { print l(t('Add your organization type*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
 	</div>
 </div>
 <?php }?>
+
+
+
+
+
+
 
 
 <?php if($profile_project_status || $allowed_editor) { ?>
