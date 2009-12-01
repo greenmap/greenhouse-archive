@@ -104,14 +104,10 @@ return;
 				<?php print $messages ?>
 				<?php print $content; ?>
 			
+</div>		
 
-	<div id="footer_gh">
-		<div id="bottomleft">&nbsp;</div>
-		<div id="bottomright">&nbsp;</div>
-		<?php print $footerlinks; ?>
-		&nbsp;
-	</div>
-		</div>
+
+</div>
 </div>		
 
 
