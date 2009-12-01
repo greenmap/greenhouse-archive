@@ -1,0 +1,55 @@
+<?php
+/** $Id: ec_anon.install,v 1.1.2.6 2007/02/10 20:42:03 neclimdul Exp $
+ * @author Sammy Spets thanks to Synerger Pty Ltd
+ */
+
+require_once (drupal_get_path('module', 'ec_anon') .'/ec_anon.module');
+
+/**
+ * Installs E-Commerce anonymous purchasing tables into the database
+ */
+function ec_anon_install() {
+  switch($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {ec_anon} (
+        vid int unsigned NOT NULL,
+        policy tinyint NOT NULL,
+        PRIMARY KEY (vid)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
+      break;
+    case 'pgsql':
+      db_query("CREATE TABLE {ec_anon} (
+        vid int NOT NULL CHECK (vid >= 0),
+        policy smallint NOT NULL CHECK (policy in (%d, %d, %d, %d)),
+        PRIMARY KEY (vid)
+      )", ECANON_POLICY_UNSET, ECANON_POLICY_NEVER, ECANON_POLICY_OPTIONAL, ECANON_POLICY_ALWAYS);
+      break;
+  }
+
+  // set the ec_anon module as the first checkout screen
+  $screens = array('ec_anon');
+  foreach (variable_get('ec_checkout_screens', array()) as $module) {
+    if ($module != 'ec_anon' && $module != 'cart') {
+      $screens[] = $module;
+    }
+  }
+  $screens[] = 'cart';
+  variable_set('ec_checkout_screens', $screens);
+
+  drupal_set_message(t('ec_anon module has been set as the first checkout screen'));
+
+  // set the policy variable
+  $oldval = variable_get('store_auth_cust', 'FOO');
+  if ($oldval == 'FOO') {
+    $newval = ECANON_POLICY_DEFAULT;
+  } else if ($oldval) {
+    $newval = ECANON_POLICY_NEVER;
+  } else {
+    $newval = ECANON_POLICY_OPTIONAL;
+  }
+  variable_set('ec_anon_policy', $newval);
+  
+  $plist = ec_anon_policy_list(FALSE);
+  drupal_set_message(t('Anonymous purchasing policy for the site has been set to <b>%policy</b>. You can change it on the <a href="%settingsurl">store settings page</a>.', array('%policy' => $plist[$newval], '%settingsurl' => url('admin/store/settings'))));
+}
