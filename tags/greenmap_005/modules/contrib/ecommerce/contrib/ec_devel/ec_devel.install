@@ -1,0 +1,14 @@
+<?php
+// $Id: ec_devel.install,v 1.1.2.1 2007/02/01 12:45:46 gordon Exp $
+
+/**
+ * Implementation of hook_install()
+ */
+function ec_devel_install() {
+  db_query("UPDATE {system} SET weight = 10 WHERE name = 'ec_devel'");
+}
+
+function ec_devel_update_1() {
+  $ret[] = update_sql("UPDATE {system} SET weight = 10 WHERE name = 'ec_devel'");
+  return $ret;
+}

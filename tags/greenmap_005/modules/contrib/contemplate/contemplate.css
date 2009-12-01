@@ -1,0 +1,21 @@
+div.contemplate-input {
+  width: 45%;
+  float: left;
+  clear: both;
+}
+
+div.contemplate-input form-textarea {
+  height: 200px;
+}
+
+div.contemplate-tips {
+  width: 45%;
+  float: left;
+}
+
+div.contemplate-scroller {
+  padding: 0 1em;
+  height: 200px;
+  overflow: auto;
+  border: 1px solid #666;
+}
