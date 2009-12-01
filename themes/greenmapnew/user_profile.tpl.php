@@ -89,6 +89,14 @@ if ($teaser && !$new_user) {
 
 
 
+<fieldset>
+
+
+
+<div id="mapmakername">
+<legend><?php print $user->name ?></legend>
+</div>
+
 <?php if(($user->profile_project_area_english) || ($user->profile_project_area_local) ||($user->profile_state) || 
 	($user->profile_project_country) || ($user->profile_project_continent)) { ?>
 <div class="item"><div><label><?php print t('Location'); ?>:</label></div>
@@ -113,7 +121,6 @@ if ($teaser && !$new_user) {
     <div><label><?php print t('About'); ?>:</label></div><div class="data">
      <?php print check_plain($user->profile_introduction) ?></div></div>
 <?php }?>
-
 
 
 </fieldset>
@@ -258,8 +265,405 @@ $attributes_mapmakers = array('class' => 'mapmakers');
 
 ?>
 
+<div id="top">
+
+<?php if(($profile_project_area_english) || ($profile_project_area_local) ||($profile_state) || 
+	($profile_project_country) || ($profile_project_continent || $allowed_editor )) { ?>
+
+<div class="item <?php if ((!$profile_project_area_english || !$profile_state || !$profile_project_country || !$profile_project_continent ) && $allowed_editor) { print 'required'; } ?>">
+
+<div class="data">
+	<?php print check_plain($profile_project_area_english) ?>
+	<?php if (!$profile_project_area_english && $allowed_editor) { print l(t('Set your location*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
+	
+	<?php if($profile_project_area_local || $allowed_editor) { ?>
+		(<?php print check_plain($profile_project_area_local) ?>
+		<?php if (!$profile_project_area_local && $allowed_editor) { print l(t('Set the local name of location if different '),'user/'. $user -> uid .'/edit/A.+Organization+details');  } ?>) 
+	<?php }?>
+	
+	
+	<?php if($profile_state || $allowed_editore) { ?>
+		- <?php print check_plain($profile_state) ?>
+		<?php if (!$profile_state && $allowed_editor) { print l(t('Set your state*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
+	<?php }?>
+	
+	
+	<?php if($profile_project_country || $allowed_editor) { ?>
+		- <?php print check_plain($profile_project_country) ?>
+		<?php if (!$profile_project_country && $allowed_editor) { print l(t('Set your country*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
+	<?php }?>
+	
+	
+	
+	<?php if($profile_project_continent || $allowed_editor) { ?>
+<?php
+$dictc = array( 
+ 'Africa' => 'maps/list/continent/africa',
+ 'Europe' => 'maps/list/continent/europe',
+ 'Latin America' => 'maps/list/continent/latin america',
+ 'North America' => 'maps/list/continent/north america',
+ 'Oceania' => 'maps/list/continent/oceania',
+ );
+
+?>
+<?php print l(check_plain(ucwords(check_plain($profile_project_continent))),
+ $dictc[$profile_project_continent]);
+?>
+
+	
+</div>
+</div>
+
+<?php }?>
+
+</div>
+
 
 <div id="leftprofile">
+
+
+<fieldset <?php if (!$mapmaker_complete) { print 'required'; } ?>><legend><?php print t('Mapmaker Profile'); ?></legend>
+
+<?php if($profile_organization_name || $allowed_editor) { ?>
+<div class="item <?php if (!$profile_organization_name && $allowed_editor) { print 'required'; } ?>">
+	<div><label><?php print t('Organization'); ?>:</label></div>
+	<div class="data"> 
+		<?php print check_plain($profile_organization_name)   . $sustaining . $supporting ?>
+		<?php if (!$profile_organization_name && $allowed_editor) { print l(t('Add your organization name*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
+	</div>
+</div>
+<?php }?>
+
+<?php if($profile_org_name_local || $allowed_editor) { ?>
+<div class="item">
+	<div><label>&nbsp;</label></div>
+	<div class="data"> 
+		<?php print check_plain($profile_org_name_local);  ?>
+		<?php if (!$profile_org_name_local && $allowed_editor) { print l(t('Add your organization name in your local language (if different)'),'user/'. $user -> uid .'/edit/A.+Organization+details');  } ?>
+	</div>
+</div>
+<?php }?>
+
+
+
+<?php if($profile_organization_email || $allowed_editor) { ?>
+	<?php if($profile_organization_email_public == 'Public') { ?>
+		<div class="item"><div><label><?php print t('Org Email'); ?>:</label></div>
+		<div class="data"> 
+					<?php print check_plain($profile_organization_email) ?>
+					<?php if (!$profile_organization_email && $allowed_editor) { print l(t('Add an email contact for your organization. You have the option to keep this private'),'user/'. $user -> uid .'/edit/B.+Contact+information');  } ?>
+		</div></div>
+	<?php }  else { ?>
+	
+			<?php if($profile_organization_email_public == 'Mapmakers') { ?>
+				<?php $approved_roles = array('admin user', 'authenticated user'); ?>
+			<?php }  else { ?>
+				<?php $approved_roles = array('admin user'); ?>
+			<?php } ?>
+			
+			<?php  if ((count(array_intersect($GLOBALS['user']->roles, $approved_roles)) > 0) || $allowed_editor ) { ?>
+				<div class="item"><div><label><?php print t('Org Email'); ?>:</label></div>
+				<div class="data"> 
+					<?php print check_plain($profile_organization_email) ?>
+					<?php if (!$profile_organization_email && $allowed_editor) { print l(t('Add an email contact for your organization. You have the option to keep this private'),'user/'. $user -> uid .'/edit/B.+Contact+information');  } ?>
+				</div></div>
+			<?php } ?>
+			
+	<?php } ?>
+<?php }?>
+
+
+<?php if($profile_organization_phone || $allowed_editor) { ?>
+	<?php if($profile_organization_phone_public == 'Public') { ?>
+		<div class="item"><div><label><?php print t('Org Phone'); ?>:</label></div>
+		<div class="data"> 
+			<?php print check_plain($profile_organization_phone) ?>
+			<?php if (!$profile_organization_phone && $allowed_editor) { print l(t('Add a phone number for your organization. You have the option to keep this private'),'user/'. $user -> uid .'/edit/B.+Contact+information');  } ?>
+		</div></div>
+	<?php }  else { ?>
+	
+			<?php if($profile_organization_phone_public == 'Mapmakers') { ?>
+				<?php $approved_roles = array('admin user', 'authenticated user'); ?>
+			<?php }  else { ?>
+				<?php $approved_roles = array('admin user'); ?>
+			<?php } ?>
+			
+			<?php  if ((count(array_intersect($GLOBALS['user']->roles, $approved_roles)) > 0) || $allowed_editor ) { ?>
+				<div class="item"><div><label><?php print t('Org Phone'); ?>:</label></div>
+				<div class="data"> 
+					<?php print check_plain($profile_organization_phone) ?>
+					<?php if (!$profile_organization_phone && $allowed_editor) { print l(t('Add a phone number for your organization. You have the option to keep this private'),'user/'. $user -> uid .'/edit/B.+Contact+information');  } ?>
+				</div></div>
+			<?php } ?>
+			
+	<?php } ?>
+<?php }?>
+
+
+
+
+<?php if($profile_project_name_first || $profile_project_name_last || $allowed_editor) { ?>
+<div class="item <?php if ((!$profile_project_name_first || !$profile_project_name_last) && $allowed_editor) { print 'required'; } ?>">
+	<div><label><?php print t('Mapmaker'); ?>:</label></div>
+	<div class="data"> 
+		<?php print check_plain($profile_project_name_first) . '&nbsp;' . check_plain($profile_project_name_last); ?>
+		<?php if ((!$profile_project_name_first || !$profile_project_name_last) && $allowed_editor) { print l(t('Add your name*'),'user/'. $user -> uid .'/edit/B.+Contact+information',$attributes_required);  } ?>
+	</div>
+</div>
+<?php }?>
+
+
+<?php if($profile_project_leader_email || $allowed_editor) { ?>
+	<?php if($profile_project_email_public == 'Public') { ?>
+		<div class="item <?php if (!$profile_project_leader_email && $allowed_editor) { print 'required'; } ?>"><div><label><?php print t('Email'); ?>:</label></div><div class="data"> <?php print check_plain($profile_project_leader_email) ?></div></div>
+	<?php }  else { ?>
+	
+			<?php if($profile_project_email_public == 'Mapmakers') { ?>
+				<?php $approved_roles = array('admin user', 'authenticated user'); ?>
+			<?php }  else { ?>
+				<?php $approved_roles = array('admin user'); ?>
+			<?php } ?>
+			
+			<?php  if ((count(array_intersect($GLOBALS['user']->roles, $approved_roles)) > 0) || $allowed_editor ) { ?>
+				<div class="item <?php if (!$profile_project_leader_email && $allowed_editor) { print 'required'; } ?>"><div><label><?php print t('Email'); ?>:</label></div>
+				<div class="data"> 
+					<?php print check_plain($profile_project_leader_email) ?>
+					<?php if (!$profile_project_leader_email && $allowed_editor) { print l(t('Add your email address* '),'user/'. $user -> uid .'/edit/B.+Contact+information',$attributes_required) . t('This should be different to the email you registered with. You have the option to keep this private');  } ?>
+				</div></div>
+			<?php } ?>
+			
+	<?php } ?>
+<?php }?>
+
+
+<?php if($profile_project_leader_phone || $allowed_editor) { ?>
+	<?php if($profile_mapmaker_phone_public == 'Public') { ?>
+		<div class="item <?php if (!$profile_project_leader_phone && $allowed_editor) { print 'required'; } ?>"><div><label><?php print t('Phone'); ?>:</label></div><div class="data"> 
+			<?php print check_plain($profile_project_leader_phone) ?></div></div>
+	<?php }  else { ?>
+	
+			<?php if($profile_mapmaker_phone_public == 'Mapmakers') { ?>
+				<?php $approved_roles = array('admin user', 'authenticated user'); ?>
+			<?php }  else { ?>
+				<?php $approved_roles = array('admin user'); ?>
+			<?php } ?>
+			
+			<?php  if ((count(array_intersect($GLOBALS['user']->roles, $approved_roles)) > 0) || $allowed_editor ) { ?>
+				<div class="item <?php if (!$profile_project_leader_phone && $allowed_editor) { print 'required'; } ?>"><div><label><?php print t('Phone'); ?>:</label></div>
+				<div class="data"> 
+					<?php print check_plain($profile_project_leader_phone) ?>
+					<?php if (!$profile_project_leader_phone && $allowed_editor) { print l(t('Add your phone number* '),'user/'. $user -> uid .'/edit/B.+Contact+information',$attributes_required) ;  } ?>
+				</div></div>
+			<?php } ?>
+			
+	<?php } ?>
+<?php }?>
+
+
+
+<?php if($profile_contact_other || $allowed_editor) { ?>
+	<?php if($profile_othercontact_public == 'Public') { ?>
+		<div class="item"><div><label><?php print t('Contact'); ?>:</label></div><div class="data"> 
+			<?php print check_plain($profile_contact_other) ?></div></div>
+	<?php }  else { ?>
+	
+			<?php if($profile_othercontact_public == 'Mapmakers') { ?>
+				<?php $approved_roles = array('admin user', 'authenticated user'); ?>
+			<?php }  else { ?>
+				<?php $approved_roles = array('admin user'); ?>
+			<?php } ?>
+			
+			<?php  if ((count(array_intersect($GLOBALS['user']->roles, $approved_roles)) > 0) || $allowed_editor ) { ?>
+				<div class="item"><div><label><?php print t('Contact'); ?>:</label></div>
+				<div class="data"> 
+					<?php print check_plain($profile_contact_other) ?>
+					<?php if (!$profile_contact_other && $allowed_editor) { print l(t('Add any other contact details '),'user/'. $user -> uid .'/edit/B.+Contact+information') ;  } ?>
+				</div></div>
+			<?php } ?>
+			
+	<?php } ?>
+<?php }?>
+
+
+
+
+<?php if($profile_mapmaker_role_other) { ?>
+	<div class="item"><div><label><?php print t('Role'); ?>:</label></div><div class="data"> <?php print check_plain($profile_mapmaker_role_other) ?></div></div>
+<?php } elseif($profile_project_role || $allowed_editor) { ?>
+	<div class="item <?php if (!$profile_project_role && $allowed_editor) { print 'required'; } ?>">
+		<div><label><?php print t('Role'); ?>:</label></div>
+		<div class="data"> 
+			<?php print check_plain($profile_project_role) ?>
+			<?php if (!$profile_project_role && $allowed_editor) { print l(t('Add your role*'),'user/'. $user -> uid .'/edit/C.+Mapmaker+information',$attributes_required); } ?>
+		</div></div>
+<?php }?>
+
+
+<?php if($profile_mapmaker_firstlanguage_other || $profile_languages || $allowed_editor) { ?>
+	<div class="item"><div><label><?php print t('First Language'); ?>:</label></div><div class="data"> 
+		<?php if ($profile_mapmaker_firstlanguage_other) {
+			print check_plain($profile_mapmaker_firstlanguage_other) . '&nbsp;' ;
+		} ?>
+		<?php if ($profile_languages && ($profile_languages != 'Other')) {
+				print check_plain($profile_languages);
+		} ?>
+		<?php if (!$profile_languages && $allowed_editor) { print l(t('Add your first language'),'user/'. $user -> uid .'/edit/C.+Mapmaker+information'); } ?>
+	</div></div>
+<?php } ?>
+
+
+<?php if($profile_langues_other || $allowed_editor) { ?>
+<div class="item">
+	<div><label><?php print t('Languages'); ?>:</label></div>
+	<div class="data"> 
+		<?php print check_plain($profile_langues_other);  ?>
+		<?php if (!$profile_langues_other && $allowed_editor) { print l(t('Add other languages you speak'),'user/'. $user -> uid .'/edit/C.+Mapmaker+information');  } ?>
+	</div>
+</div>
+<?php }?>
+
+
+
+<?php if($profile_project_address && $allowed_editor) { ?>
+<div class="item <?php if (!$profile_project_address && $allowed_editor) { print 'required'; } ?>">
+	<div><label><?php print t('Address'); ?>:</label></div>
+	<div class="data"> 
+		<?php if ($profile_project_address) { ?>
+			<?php print check_markup($profile_project_address); ?>
+		<?php } ?>
+		<?php if (!$profile_project_address && $allowed_editor) { print l(t('Add your address*'),'user/'. $user -> uid .'/edit/B.+Contact+information',$attributes_required);  } ?>
+	</div>
+</div>
+<?php }?>
+
+
+
+
+
+<?php if($profile_organization_website || $allowed_editor) { ?>
+<div class="item">
+	<div><label><?php print t('Website'); ?>:</label></div>
+	<div class="data"> 
+		<?php print t('<a href='.check_plain($profile_organization_website).'>'.check_plain($profile_organization_website).'</a>');  ?>
+		<?php if (!$profile_organization_website && $allowed_editor) { print l(t('Add your website'),'user/'. $user -> uid .'/edit/A.+Organization+details');  } ?>
+	</div>
+</div>
+<?php }?>
+
+
+
+<?php {?>
+<div class="item">
+	<div><label><?php print t('Contact'); ?>:</label></div>
+	<div class="data">
+	<?php print t('Use contact box at the bottom');  ?></div>
+</div>
+<?php }?>
+
+
+</fieldset>
+
+
+
+<?php if($allowed_editor) { ?>
+	<fieldset <?php if (!$reginfo_complete) { print 'required'; } ?>><legend><?php print t('Your Registration Information'); ?></legend>
+		
+<?php if($profile_team_skills || $allowed_editor) { ?>
+<div class="item <?php if (!$profile_team_skills && $allowed_editor) { print 'required'; } ?>">
+	<div><label><?php print t('Team Skills'); ?>:</label></div>
+	<div class="data"> 
+		<?php print check_plain($profile_team_skills); ?>
+		<?php if (!$profile_team_skills && $allowed_editor) { print l(t('Add your team skills*'),'user/'. $user -> uid .'/edit/E.+Registration+Information',$attributes_required);  } ?>
+	</div>
+</div>
+<?php }?>		
+		
+		
+<?php if($profile_background_big_issues || $allowed_editor) { ?>
+<div class="item <?php if (!$profile_background_big_issues && $allowed_editor) { print 'required'; } ?>">
+	<div><label><?php print t('Issues'); ?>:</label></div>
+	<div class="data"> 
+		<?php print check_plain($profile_background_big_issues); ?>
+		<?php if (!$profile_background_big_issues && $allowed_editor) { print l(t('Add information about the big issues in your area*'),'user/'. $user -> uid .'/edit/E.+Registration+Information',$attributes_required);  } ?>
+	</div>
+</div>
+<?php }?>
+
+
+<?php if($profile_background_other_resources || $allowed_editor) { ?>
+<div class="item">
+	<div><label><?php print t('Resources'); ?>:</label></div>
+	<div class="data"> 
+		<?php print check_plain($profile_background_other_resources);  ?>
+		<?php if (!$profile_background_other_resources && $allowed_editor) { print l(t('Add details of other resources you have'),'user/'. $user -> uid .'/edit/E.+Registration+Information');  } ?>
+	</div>
+</div>
+<?php }?>		
+		
+
+<?php if($profile_check_greenmap || $allowed_editor) {  ?>
+<div class="item <?php if (!$profile_check_greenmap && $allowed_editor) { print 'required'; } ?>">
+	<div><label><?php print t('Other Projects'); ?>:</label></div>
+	<div class="data"> 
+		<?php print check_plain($profile_check_greenmap); ?>
+		<?php if (!$profile_check_greenmap && $allowed_editor) { print l(t('Have you checked for other local projects?*'),'user/'. $user -> uid .'/edit/E.+Registration+Information',$attributes_required);  } ?>
+	</div>
+</div>
+<?php }?>
+
+
+
+<?php if($allowed_editor && $new_user) { ?>
+<div class="item">
+	<div><label><?php print t('Local Projects'); ?>:</label></div>
+	<div class="data"> 
+		<?php print check_plain($profile_check_local);  ?>
+		<?php if (!$profile_check_local && $allowed_editor) { print l(t('If there is a local project already, please describe how you will work with them'),'user/'. $user -> uid .'/edit/E.+Registration+Information');  } ?>
+	</div>
+</div>
+<?php }?>
+
+
+
+
+<?php if($profile_how_find_out || $allowed_editor) {  ?>
+<div class="item <?php if (!$profile_how_find_out && $allowed_editor) { print 'required'; } ?>">
+	<div><label><?php print t('Marketing'); ?>:</label></div>
+	<div class="data"> 
+		<?php print check_plain($profile_how_find_out); ?>
+		<?php if (!$profile_how_find_out && $allowed_editor) { print l(t('How did you hear about Green Map?*'),'user/'. $user -> uid .'/edit/E.+Registration+Information',$attributes_required);  } ?>
+	</div>
+</div>
+<?php }?>
+
+
+<?php if($profile_consultant || $allowed_editor) { ?>
+<div class="item">
+	<div><label><?php print t('Consultancy'); ?>:</label></div>
+	<div class="data"> 
+		<?php print check_plain($profile_consultant);  ?>
+		<?php if (!$profile_consultant && $allowed_editor) { print l(t('If you are a consultant please provide details of your work'),'user/'. $user -> uid .'/edit/E.+Registration+Information');  } ?>
+	</div>
+</div>
+<?php }?>
+
+
+
+<?php if($profile_business || $allowed_editor) { ?>
+<div class="item">
+	<div><label><?php print t('Business'); ?>:</label></div>
+	<div class="data"> 
+		<?php print check_plain($profile_business);  ?>
+		<?php if (!$profile_business && $allowed_editor) { print l(t('If you are a business please tell us about your Environmental and CSR policies'),'user/'. $user -> uid .'/edit/E.+Registration+Information');  } ?>
+	</div>
+</div>
+<?php }?>
+<?php } ?>
+
+
+
+
+<!-- > USER PROFILE PICTURE -->
 
 <?php	// print user picture
 		if($user_picture) {print $user_picture;}
@@ -446,7 +850,6 @@ if ($allowed_editor && !$new_user) {
 <?php // end hiding of fieldset if no photos present
 } ?> 
  
-
 <?php } // end if that's hiding photos for new user ?>
 
 
@@ -742,7 +1145,13 @@ if ($allowed_editor && !$new_user) {
 	</fieldset>
 <?php } ?>
 
-<fieldset class="collapsible <?php if (!$organization_complete) { print 'required'; } ?>"><legend><?php print t('Organization Details'); ?></legend>
+
+
+<!-- > ORGANIZATION DETAILS -->
+
+<div id="item_org">
+<fieldset <?php if (!$organization_complete) { print 'required'; } ?>><legend><?php print t('Related Organization'); ?></legend>
+
 <div>
 
 <?php if($profile_organization_name || $allowed_editor) { ?>
@@ -786,6 +1195,7 @@ if ($allowed_editor && !$new_user) {
 	</div>
 </div>
 <?php }?>
+</div>
 
 
 <?php if($profile_introduction || $allowed_editor) { ?>
@@ -810,6 +1220,7 @@ if ($allowed_editor && !$new_user) {
 		</div></div>
 	<?php }  else { ?>
 	
+
 			<?php if($profile_organization_email_public == 'Mapmakers') { ?>
 				<?php $approved_roles = array('admin user', 'authenticated user'); ?>
 			<?php }  else { ?>
@@ -841,6 +1252,9 @@ if ($allowed_editor && !$new_user) {
 		</div></div>
 	<?php }  else { ?>
 	
+
+<?php if( $profile_facebook )
+	print t('<div><a href="'.$profile_facebook.'">Facebook</a></div>'); ?> -->
 			<?php if($profile_organization_phone_public == 'Mapmakers') { ?>
 				<?php $approved_roles = array('admin user', 'authenticated user'); ?>
 			<?php }  else { ?>
@@ -892,31 +1306,40 @@ if ($allowed_editor && !$new_user) {
 <div class="data">
 	<?php print check_plain($profile_project_area_english) ?>
 	<?php if (!$profile_project_area_english && $allowed_editor) { print l(t('Set your location*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
+
 	
-	<?php if($profile_project_area_local || $allowed_editor) { ?>
-		(<?php print check_plain($profile_project_area_local) ?>
-		<?php if (!$profile_project_area_local && $allowed_editor) { print l(t('Set the local name of location if different '),'user/'. $user -> uid .'/edit/A.+Organization+details');  } ?>) 
-	<?php }?>
-	<?php if($profile_state || $allowed_editore) { ?>
-		- <?php print check_plain($profile_state) ?>
-		<?php if (!$profile_state && $allowed_editor) { print l(t('Set your state*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
-	<?php }?>
-	<?php if($profile_project_country || $allowed_editor) { ?>
-		- <?php print check_plain($profile_project_country) ?>
-		<?php if (!$profile_project_country && $allowed_editor) { print l(t('Set your country*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
-	<?php }?>
-	<?php if($profile_project_continent || $allowed_editor) { ?>
-		- <?php print check_plain($profile_project_continent) ?>
-		<?php if (!$profile_project_continent && $allowed_editor) { print l(t('Set your continent*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
-	<?php }?>
+<?php print t('<a href="'.$profile_facebook.'"> <?php print l(/themes/greenmapnew/img/facebook.png) </a>');  ?>
+
+<img src="<?php print $base_path ?>/themes/greenmapnew/img/facebook.png"?>
+
+	
+	
+<?php if( $profile_twitter )
+	print t('<div><a href="'.$profile_twitter.'">Twitter</a></div>'); ?>	
+<?php if( $profile_youtube )
+	print t('<div><a href="'.$profile_youtube.'">YouTube</a></div>'); ?>
+<?php if( $profile_flickr )
+	print t('<div><a href="'.$profile_flickr.'">Flickr</a></div>'); ?>
+<?php if( $profile_hi5 )
+	print t('<div><a href="'.$profile_hi5.'">Hi5</a></div>'); ?>
+<?php if( $profile_othersocial1 )
+	print t('<div><a href="'.$profile_othersocial1.'">'.$profile_othersocial1.'</a></div>'); ?>
+<?php if( $profile_othersocial2 )
+	print t('<div><a href="'.$profile_othersocial2.'">'.$profile_othersocial2.'</a></div>'); ?>
+<?php if( $profile_othersocial3 )
+	print t('<div><a href="'.$profile_othersocial3.'">'.$profile_othersocial3.'</a></div>'); ?>
+<?php if( $profile_facebook || $profile_twitter || $profile_youtube || $profile_flickr || $profile_hi5 || $profile_othersocial1 || $profile_othersocial2 || $profile_othersocial3)
+	print t( '</fieldset>'); ?>
+<?php // end Social Newtorks collapsible ?>
+
+
+
 </div></div>
 <?php }?>
 
-
-
-
 </div>
 </fieldset>
+
 
 <?php if($supporting || $sustaining) { ?>
 	<fieldset class="collapsible"><legend>Support to Green Map System</legend>
@@ -1414,9 +1837,6 @@ if ($allowed_editor && !$new_user) {
 </div>
 <?php }?>
 
-
-
-	
 	</fieldset>
 <?php } ?>
 
@@ -1529,12 +1949,6 @@ if ($allowed_editor && !$new_user) {
 
 
 
-
-
-
-
-
-
 <?php if($new_user && $allowed_editor) { // print a form for the "Submit to Green Map" button ?>
 <p></p>
 
@@ -1550,15 +1964,89 @@ if ($allowed_editor && !$new_user) {
 		<?php  print '<p>' .  t('Your application has been submitted to Green Map System and is being checked. If you have not had a reply in over two working days please email ') .
 					 'greenhouse@greenmap.org</p>' ; ?>
 	<?php } // end message if not complete ?>
-<?php } // end submit form for new mapameker ?>
 
 <p></p>
 </div>
+<?php }}} elseif (!$teaser && !$not_hidden) {?>
 
-<?php
-// end else, for showing full page view.
-}
-elseif (!$teaser && !$not_hidden) { // if someone's trying to view a profile of an unregistered user then say this ?>
+
 <p>This Mapmaker is in the process of registering. Please check back soon to find out more about what they are doing</p>
-<?php }
-?>
+
+<?php }?>
+
+
+
+<style type="text/css">
+
+
+#content fieldset{
+	border: none;
+}
+
+#top{
+	margin-left: -250px;
+	margin-top: -16px;
+}
+
+#content h1 {
+margin-left: -150px;
+}
+
+#content legend {
+font-size: 15px;
+margin-left: -3px;
+}
+
+#content {
+font-size: 11.5px;
+color: #4D4D4D;
+}
+
+html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
+	border: none;
+}
+
+
+#content p a:hover, #content div.data a:hover, a:hover{
+	color: #2E67B1;
+	text-decoration: underline;
+}
+
+.plain-list ul li {
+	list-style-image: url(img/list.gif);
+	margin: 0 0 0.15em;
+	padding: 1px 0;
+}
+
+#content p a, #content div.data a, a {
+	font-size: 11.5px;
+	font-weight: normal;
+	text-decoration: none;
+	color: #2E67B1;
+}
+
+ul.primary {
+  border-collapse: collapse;
+  display: none;
+  padding: 0 0 0 1em;
+  white-space: nowrap;
+  list-style: none;
+  margin: 0 0 15px -160px;
+  height: auto;
+  line-height: normal;
+  border-bottom: 1px solid #F78F1E;
+}
+
+#content .scrollbar {
+	width: 470px;
+	height: 180px;
+	overflow: auto;
+	padding: 5px;
+	border: solid 1px #999;
+}
+
+#item_org {
+	margin-top: 60px;
+}
+
+</style>
