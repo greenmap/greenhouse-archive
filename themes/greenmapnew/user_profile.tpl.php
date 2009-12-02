@@ -1007,7 +1007,7 @@ else {
   <?php } ?>
   
   <?php if (!($user->profile_exchange_consulting) && !($user->profile_exchange_offline) && !($user->profile_exchange_visiting)) {
-  	$url = base_path() . 'user/' . $user->uid . '/edit/H.+Exchange'; ?>
+  	$url = base_path() . $i18n_langpath . '/user/' . $user->uid . '/edit/H.+Exchange+Services'; ?>
 	<p class="mapmakers"><?php print t('You have not added anything to the Green Map Exchange. Adding this information lets other Green Mapmakers know about consultancy and other services that you offer, as well as any hospitality you can offer to visiting Mapmakers. '); ?>
 	<a href="<?php print $url; ?>"><?php print t('Click here to add your Mapmakers Exchange information'); ?></a>.</p>
 	<?php $todo = $todo + 1; ?>
