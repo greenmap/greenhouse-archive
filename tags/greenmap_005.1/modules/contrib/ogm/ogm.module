@@ -1,0 +1,49 @@
+<?php 
+/**
+* Display help and module information
+*/
+function ogm_help($section='') {
+  $output = '';
+  switch ($section) {
+    case 'admin/modules#description':
+      $output = t('Exports info about maps to OGM');
+      break;
+  }
+  return $output;
+}
+function ogm_menu($may_cache){
+	global $user;
+	$items = array();
+	if($may_cache){
+
+	}   else {
+	    if (arg(0) == 'check' && is_numeric(arg(1))) {
+		  // create a callback url 
+		  $items[] = array('path' => 'check/'. arg(1), 
+			  'title' => t('check'),
+	          'callback' => 'ogm_check',
+			  'callback arguments' => arg(1),
+	          'access' => true,
+	          'type' => MENU_CALLBACK);
+	    }
+	}
+
+	return $items;
+}
+/*
+* This function returns  json data containing pdf, node type, and other stuff to be decided...
+*/
+
+function ogm_check($nid){
+	$node = node_load($nid);
+	$arr = array();
+	$arr['type'] = $node->type;
+	// include a download if it exists
+	if($node->field_pdf_of_map[0]['filepath'] > ''){
+		$arr['download'] = $GLOBALS['base_url'] . '/' . $node->field_pdf_of_map[0]['filepath'];
+	}
+
+	echo 'jsonGM(' . json_encode($arr) . ')';
+	die();
+
+}

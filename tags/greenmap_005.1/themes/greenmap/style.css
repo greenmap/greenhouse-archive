@@ -1,0 +1,588 @@
+/* andreas09 v1.0 (Dec 10th 2005) - An open source template by Andreas Viklund - http://andreasviklund.com. Free to use for any purpose as long as the proper credits are given to the original author. */
+
+body {
+background:#8b8b8b;
+color:#303030;
+font:76% Verdana,Tahoma,Arial,sans-serif;
+margin:0;
+padding:0;
+text-align:center;
+}
+
+p {
+	padding: 0;
+	margin: 0;
+}
+
+a {
+color:#505050;
+font-weight:bold;
+text-decoration:none;
+}
+
+a:hover {
+color:#808080;
+text-decoration:underline;
+}
+
+/*** Main container ***/
+
+#container {
+background:#f0f0f0; /* background:#f0f0f0 url(img/bodybg.jpg) repeat-x; */
+color:#303030;
+margin:0;
+min-width:770px;
+padding:0;
+text-align:left;
+width:100%;
+}
+
+/*** Header section ***/
+
+#sitename {
+color:#ffffff;
+height:92px;
+margin:0 20px 10px;
+text-align:left;
+}
+
+#sitename h1,#sitename h2 {
+font-weight:400;
+letter-spacing:-2px;
+margin:0;
+padding:0;
+}
+
+#sitename a {
+	font-weight: normal;
+	color: #FFFFFF;
+}
+
+#sitename h1 {
+font-size:2.4em;
+padding-top:20px;
+}
+
+#sitename h2 {
+font-size:1.6em;
+}
+
+/*** Horizontal menu ***/
+
+#mainmenu {
+float:left;
+margin-bottom:25px;
+}
+
+#mainmenu ul {
+font-size:16px;
+margin:0;
+padding:0;
+}
+
+#mainmenu li {
+float:left;
+height:35px;
+list-style:none;
+margin:0;
+padding:0;
+}
+
+#mainmenu a {
+border-right:1px solid #b0b0b0;
+color:#606060;
+display:block;
+font-size:0.7em;
+padding:11px 10px 10px;
+text-transform:uppercase;
+}
+
+#mainmenu a:hover {
+background:#f0f0f0; /* background:#f0f0f0 url(img/menuhover.jpg) top left repeat-x; */
+color:#505050;
+text-decoration:none;
+}
+
+#mainmenu a.current {
+background:#f0f0f0 url(img/menuhover.jpg) top left repeat-x;
+color:#505050;
+text-decoration:none;
+}
+
+/*** Content wrap ***/
+
+#wrap {
+clear:both;
+font-size:0.9em;
+padding:0;
+}
+
+/*** Sidebars ***/
+
+#leftside,#rightside {
+margin:0;
+padding:0 10px 10px;
+width:165px;
+}
+
+#leftside {
+float:left;
+margin-right:10px;
+}
+
+#rightside {
+float:right;
+margin-left:10px;
+}
+
+#leftside h1,#rightside h1 {
+color:#505050;
+font-size:1.6em;
+font-weight:bold;
+letter-spacing:-1px;
+margin:0 0 3px;
+}
+
+#leftside h2,#rightside h2 {
+font-size:1.1em;
+margin:0 0 20px;
+}
+
+#leftside p,#rightside p {
+font-size:0.9em;
+line-height:1.4em;
+margin:0 0 16px 10px;
+}
+
+/*** Content ***/
+
+#content {
+background-color:#fafcff;
+border:1px solid #909090;
+color:#2a2a2a;
+padding:20px 20px 5px;
+margin:0 200px;
+line-height: 1.5em;
+}
+
+#content h1, #content h2 {
+background-color:inherit;
+color:#606060;
+font-size:1.8em;
+font-weight:bold;
+letter-spacing:-1px;
+margin:0 0 .5em 0;
+padding:0;
+}
+
+#content h2 {
+font-size:1.6em;
+margin-bottom:10px;
+}
+
+#content h3 {
+	padding: 0;
+	margin: 0;
+}
+
+#content img {
+border:1px solid #b0b0b0;
+float:left;
+margin:5px 15px 6px;
+padding:5px;
+}
+
+.links ul, .links li {
+font-size: .95em;
+display: inline;
+}
+
+.links li {
+	padding: 0 15px 0 0;
+}
+
+.links {
+	text-align: right;
+}
+
+.submitted {
+	padding: 0px 30px 0 0;
+	font-size: .9em;
+}
+
+.postinfo {
+	background-color: #EDEDED;
+	padding: 0px 6px 0px 2px;
+	font-size: .9em;
+	text-align: right;
+	margin-top: 10px;
+	border: 1px solid #CCCCCC;
+}	
+
+.postinfo ul, .postinfo li {
+	margin: 0;
+	padding: 0;
+	display: inline;
+	list-style: none;
+}
+
+.postinfo li {
+	padding: 0 15px 0 0;
+}
+
+.postinfo ul li:before {
+	content: url("img/square-black.gif");
+	padding-right: 3px;
+}
+
+#content .feed-icon {
+	display: none;
+}
+
+.node {
+	margin-bottom: 30px;
+}
+
+.comment .title a {
+  font-size: 1.1em;
+  font-weight: normal;
+}
+.comment .picture {
+  border: 1px solid #abc;
+  float: right;
+  margin: 0.5em;
+}
+
+.block {
+	margin-bottom: 25px;
+}
+
+/***** Thomas Custom Styles *****/
+
+/***** TT - user_profile styles *****/
+
+#leftprofile{
+	float:left;
+	margin-right:10px;
+	width:140px;
+
+}
+
+#leftprofile img{
+	border:none;
+	margin:0;
+	padding:0;
+	display:block;
+	float:none;
+}
+
+#rightprofile{
+	margin-left: 160px;
+}
+
+
+
+
+/***** TT - map profile styles *****/
+
+#leftmap{
+	float:left;
+	margin-right:10px;
+	width:300px;
+
+}
+
+#leftmap img{
+	border:none;
+	margin:0;
+	padding:0;
+	display:block;
+	float:none;
+}
+
+#gmap {
+	width:100%;
+	height:150px;
+	margin-top:10px;
+}
+
+#albums a.img, #albums img {
+	display: inline;
+	margin-right: 1px;
+	margin-bottom: 1px;
+	
+}
+
+#albums a {
+	display: block;	
+}
+
+#rightmap{
+	margin-left: 320px;
+}
+
+.item div label{
+	width: 150px;
+	display: inline;
+	float: left;
+	color: #999999;
+	clear: left;
+	font-weight: normal;
+}
+
+
+
+.item .data{
+	margin-left: 150px;	
+}
+
+.data p {
+	padding-bottom: 0;
+}
+
+.item .data ul, .item .data li {
+	margin: 0;
+	padding: 0;
+	display: inline;
+	list-style: none;
+}
+
+.item .data li {
+	padding: 0 15px 0 0;
+}
+
+/***** TT - Gallery *****/
+
+
+
+#gallery  {
+	height: 650px; 
+}
+
+#gallery a.thumbs img {
+	border: 0;
+	padding: 0;
+	background: #CCCCCC;
+	margin: 0px 9px 9px 0px;
+	
+}
+
+#captionHolder  {
+	float: left;
+	margin-top: 9px;
+	display: block;
+}
+
+#gallerydescription {
+	float: left;
+	margin-top: 9px;
+	display: block;
+	clear: left;
+}
+
+#galleryadmin {
+	float: left;
+	margin-top: 9px;
+	display: block;
+}
+
+#gallery img.imageHolder {
+	border: 0;
+	padding: 0;
+	background: #CCCCCC;
+	margin: 0 500px 0 0;
+}
+
+/***** TT - service links styles *****/
+#block-service_links-0 li {
+  margin: 0 4px 4px 0;
+  padding: 0;
+  list-style: none;
+  display: inline;
+}
+
+a.rss {
+	border:1px solid;
+	border-color:#FC9 #630 #330 #F96;
+	padding:0 3px;
+	font:bold 10px verdana,sans-serif;
+	color:#FFF;
+	background:#F60;
+	text-decoration:none;
+	margin:0;
+}
+/***** TT - Tool Center styles *****/
+
+#toolcentertable th {
+	border: none;
+	text-align: center;
+}
+
+#toolcentertable td {
+	padding-left: 3px;
+	padding-right: 3px;
+}
+
+#toolcentertable div {
+	width: 15px;
+	height: 15px;
+	display: inline;
+	float: left;
+	margin: 1px;
+}
+
+#toolcentertable div a {
+	width: 15px;
+	height: 15px;
+	font-size: 15px;
+	color: #fff;
+	text-decoration: none;
+	text-align: center;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+#toolcentertable div.blackbox {
+	background-color: #000;
+}
+#toolcentertable div.greenbox {
+	background-color: #8CC63F;
+}
+#toolcentertable div.whitebox {
+	background-color: #fff;
+	border: 1px solid #000;
+	width: 13px;
+	height: 13px;
+}
+#toolcentertable div.pinkbox {
+	background-color: #CA006C;
+}
+
+
+/***** TT - Dontation block styles *****/
+
+#donateboxtt {
+
+	width: 161px;
+	margin: 0;
+	padding: 0;
+	height: 19px;
+}
+
+#donateboxtt label, #currencysymbol {
+	float: right;
+	display: block;
+	padding-top: 3px;
+	padding-right: 3px;
+}
+
+#donationinputtt {
+	margin: 0 1px 0 1px;
+	border: 1px solid #c3d399;
+	padding: 0;
+	text-size: 0.6 em;
+	width: 50px;
+	height: 17px;
+	float: right;
+	display: block;
+	font-size: 10px;
+	color: #999999;
+}
+
+#donatebutton {
+	width: 25px;
+	height: 19px;
+	float: right;
+	display: block;
+}
+
+/***** TT - Who's Online Styles *****/
+
+#block-user-3 h1 {
+	text-transform: capitalize;
+}
+
+#block-user-3 h3 {
+	display: none;
+	text-size: 0.8em;
+}
+
+
+/***** TT - other styles *****/
+
+.plain-list ul {
+  margin: 0 0 0.75em 0;
+  padding: 0;
+}
+.plain-list ul li {
+  margin: 0 0 0.25em 0;
+  padding: 0;
+  list-style: none;
+}
+/*** Footer ***/
+
+#footer {
+background:#8b8b8b url(img/footerbg.jpg) top left repeat-x;
+clear:both;
+color:#d0d0d0;
+font-size:0.9em;
+font-weight:bold;
+margin:0;
+padding:20px 0;
+text-align:center;
+width:100%;
+}
+
+#footer a {
+color:#d0d0d0;
+font-weight:bold;
+}
+
+/*** Various classes ***/
+
+.clearingdiv {
+clear:both;
+height:30px;
+width:1px;
+}
+
+.hide {display:none;}
+
+/*** drupal.css fixes ***/
+.profile {
+	clear: none;
+}
+
+.node-form .standard {
+	clear: none;
+}
+
+.poll .bar .foreground {
+  clear: none;
+}
+
+/*** Text format ***/
+
+.intro {
+font-size:1.1em;
+font-weight:bold;
+letter-spacing:-1px;
+}
+
+.small {font-size:0.8em;}
+.large {font-size:1.4em;}
+.center {text-align:center;}
+.right {text-align:right;}
+
+p {
+	padding-bottom: 1em;
+
+}
+
+/*** Additions ***/
+.node {
+	padding-bottom: 10px;
+}
+
+
+/*** End of file ***/
