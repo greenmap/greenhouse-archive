@@ -181,7 +181,7 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
   <div>
       <label><?php print t('Availability'); ?>:</label>
     </div>
-  <?php print t('This map is not available yet'); ?>
+  <?php print t('This map is not available for download yet'); ?>
  </div>
 <?php endif; ?>
 
