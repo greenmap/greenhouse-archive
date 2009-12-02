@@ -1,0 +1,42 @@
+<?php
+// $Id: node_images.install,v 1.1.2.2 2007/01/13 14:48:55 stefano73 Exp $
+
+/**
+ * Implementation of hook_install().
+ */
+function node_images_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {node_images} (
+	id int(10) unsigned NOT NULL auto_increment,
+	nid int(10) unsigned NOT NULL default '0',
+	uid int(10) unsigned NOT NULL default '0',
+	filename varchar(255) NOT NULL default '',
+	filepath varchar(255) NOT NULL default '',
+	filemime varchar(255) NOT NULL default '',
+	filesize int(10) unsigned NOT NULL default '0',
+	thumbpath varchar(255) NOT NULL default '',
+	thumbsize int(10) unsigned NOT NULL default '0',
+	status tinyint(1) unsigned NOT NULL default '1',
+	weight tinyint(1) NOT NULL default '0',
+	description varchar(255) default NULL,
+	PRIMARY KEY  (id),
+	KEY uid (uid),
+	KEY nid_status (nid,status)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
+  }
+}
+
+function node_images_update_1() {
+  $types = node_get_types();
+  $names = node_get_types('names');
+  foreach ($names as $key => $name) {
+    $type = $types[$key];
+    if ($result = variable_get('node_images_allow_'. $type, '')) {
+      variable_set('node_images_position_'. $type, $result);
+      variable_del('node_images_allow_'. $type);
+    }
+  }
+  return array();
+}

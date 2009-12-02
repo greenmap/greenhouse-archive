@@ -1,0 +1,1106 @@
+<?php
+
+// $Id: ec_mail.module,v 1.1.2.18 2007/02/24 13:27:16 sammys Exp $
+
+/*
+ * List of TODO items for integrating this module into the system
+ * 
+ */
+ 
+/*
+TODO: mail add, update, delete events exposed through ecmail hook?
+*/
+
+/**
+ * @file
+ * Centralised mail system for E-Commerce so emails are no longer
+ * difficult to code or manage. The initial version of this file for
+ * E-Commerce 4.7 will not integrate with E-Commerce core. Integration will
+ * start with E-Commerce 5.0, if at all.
+ *
+ * @author Sammy Spets
+ *         thanks to Synerger Pty Ltd, Australia (http://synerger.com)
+ */
+
+define('ECMAIL_NAMELEN', 255);
+define('ECMAIL_SUBJECTLEN', 255);
+
+/**
+ * Implementation of hook_help().
+ */
+function ec_mail_help($section) {
+  switch ($section) {
+    case 'admin/modules#description':
+      return '<b>EC:</b> '.t('Enables mail support');
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function ec_mail_perm() {
+  return array('administer ec emails');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function ec_mail_menu($may_cache) {
+  $items = array();
+
+  if ($may_cache) {
+    $items[] = array(
+      'path' => 'admin/store/settings/ec_mail', 
+      'title' => t('mail'),
+      'callback' => 'ec_mail_table',
+      'access' => user_access('administer ec emails')
+    );
+    $items[] = array(
+      'path' => 'admin/store/settings/ec_mail/list', 
+      'title' => t('list of mails'),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'callback' => 'ec_mail_table',
+      'access' => user_access('administer ec emails'),
+      'weight' => 0
+    );
+    $items[] = array(
+      'path' => 'admin/store/settings/ec_mail/add', 
+      'title' => t('add mail'),
+      'type' => MENU_LOCAL_TASK,
+      'callback' => 'ec_mail_edit_form',
+      'access' => user_access('administer ec emails'),
+      'weight' => 1
+    );
+    $items[] = array(
+      'path' => 'admin/store/settings/ec_mail/tokens',
+      'title' => t('mail tokens'),
+      'type' => MENU_CALLBACK,
+      'callback' => 'ec_mail_show_tokens',
+      'access' => user_access('administer ec emails')
+    );
+  } else {
+    if (is_numeric(arg(4))) {
+      $mid = arg(4);
+      $name = ec_mail_get_name($mid);
+      if (!empty($name)) {
+        $items[] = array(
+          'path' => "admin/store/settings/ec_mail/$mid",
+          'title' => t('mail: "%name"', array('%name' => $name)),
+          'type' => MENU_DEFAULT_LOCAL_TASK,
+          'callback' => 'ec_mail_view_preview',
+          'access' => user_access('administer ec emails'),
+          'weight' => 2
+        );
+        $items[] = array(
+          'path' => "admin/store/settings/ec_mail/$mid/view",
+          'title' => t('view mail'),
+          'type' => MENU_LOCAL_TASK,
+          'callback' => 'ec_mail_view_preview',
+          'access' => user_access('administer ec emails'),
+          'weight' => 0
+        );
+        $items[] = array(
+          'path' => "admin/store/settings/ec_mail/$mid/edit", 
+          'title' => t('edit mail'),
+          'type' => MENU_LOCAL_TASK,
+          'callback' => 'ec_mail_edit_form',
+          'access' => user_access('administer ec emails'),
+          'weight' => 1
+        );
+        $items[] = array(
+          'path' => "admin/store/settings/ec_mail/$mid/delete",
+          'title' => t('delete mail'),
+          'type' => MENU_LOCAL_TASK,
+          'callback' => 'ec_mail_delete_confirm',
+          'access' => user_access('administer ec emails'),
+          'callback arguments' => array($mid),
+          'weight' => 2
+        );
+      }
+    }
+  }
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function ec_mail_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  switch ($op) {
+    case 'load':
+      break;
+    case 'validate':
+      break;
+    case 'insert':
+      break;
+    case 'update':
+      break;
+    case 'view':
+      if (user_access('administer products')) {
+        $blah = theme('ec_mail_view', $node);
+      }
+      break;
+  }
+}
+
+/**
+ * Displays a table of mails currently stored in the system.
+ *
+ * @return HTML of the table containing list of mails stored in the system.
+ */
+function ec_mail_table() {
+  $output = '';
+  // show table of currently stored emails: name and subject.
+  $table = ec_mail_get_table('ec_mail_rowFn_settings');
+  if (count($table)) {
+    $output .= theme_table(array(t('name'), t('type'), t('op')), $table);
+  } else {
+    $output .= t('No mails were found');
+  }
+
+  return $output;
+}
+
+/**
+ * Form API code for displaying the mail add/update form.
+ *
+ * @param $mid ID of the mail being edited. If this is not supplied
+ * a mail add form will be displayed.
+ * @return HTML of the mail add/update form
+ */
+function ec_mail_edit_form($mid = '') {
+  if (empty($mid)) {
+    $mid = (is_numeric(arg(4)) ? arg(4) : '');
+  }
+
+  if (!empty($mid) && is_numeric($mid)) {
+    $m = ec_mail_load_mail($mid);
+  }
+
+  $form['mid'] = array(
+    '#type' => 'value',
+    '#value' => ($m ? $m['mid'] : '')
+  );
+  $mailtypes = array_merge(array('0' => '--'), ec_mail_get_types());
+  $form['type'] = array(
+    '#type' => 'select',
+    '#title' => t('Mail type'),
+    '#default_value' => ($m ? $m['type'] : ''),
+    '#options' => $mailtypes,
+    '#required' => TRUE
+  );
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Name'),
+    '#maxlength' => ECMAIL_NAMELEN,
+    '#default_value' => ($m ? $m['name'] : '')
+  );
+  $form['subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#maxlength' => ECMAIL_SUBJECTLEN,
+    '#default_value' => ($m ? $m['subject'] : ''),
+    '#description' => l(t('See available tokens'), 'admin/store/settings/ec_mail/tokens', array('target' => '_blank'))
+  );
+  $form['body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#rows' => 5,
+    '#default_value' => ($m ? $m['body'] : ''),
+    '#description' => l(t('See available tokens'), 'admin/store/settings/ec_mail/tokens', array('target' => '_blank'))
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => ($m ? t('Update mail') : t('Add mail'))
+  );
+
+  return drupal_get_form('ec_mail_edit_form', $form);
+}
+
+/**
+ * Validates the mail add/edit form.
+ *
+ * @param $form_id Text ID of the form
+ * @param $fv Reference to the values supplied by the user
+ */
+function ec_mail_edit_form_validate($form_id, &$fv) {
+  if (strlen($fv['name']) > ECMAIL_NAMELEN) {
+    form_set_error('name', t('Name is too long'));
+  }
+  if (strlen($fv['subject']) > ECMAIL_SUBJECTLEN) {
+    form_set_error('subject', t('Subject is too long'));
+  }
+}
+
+/**
+ * Commits mail fields supplied by the user.
+ *
+ * @param $form_id Text ID of the form
+ * @param $fv Reference to the values supplied by the user
+ * @return URL to which the user is redirected once data is committed
+ */
+function ec_mail_edit_form_submit($form_id, &$fv) {
+  ec_mail_save($fv);
+  return 'admin/store/settings/ec_mail';
+}
+
+/**
+ * Saves the given mail.
+ *
+ * @param $mail Array containing the mail entry to save. If mid is not specified
+ *   new mail is created.
+ * @return Mail ID of the mail saved or NULL if the mail couldn't be saved.
+ */
+function ec_mail_save(&$mail) {
+  if (!empty($mail['mid'])) {
+    $mid = $mail['mid'];
+    db_query("UPDATE {ec_mail} SET name = '%s', subject = '%s', body = '%s' WHERE mid = %d", $mail['name'], $mail['subject'], $mail['body'], $mid);
+  } else {
+    $mid = db_next_id('{ec_mail}_mid');
+    db_query("INSERT INTO {ec_mail} (mid, type, name, subject, body) VALUES (%d, '%s', '%s', '%s', '%s')", $mid, $mail['type'], $mail['name'], $mail['subject'], $mail['body']);
+  }
+
+  $msg = (empty($mail['mid']) ? t('Mail added') : t('Mail updated')) . ": {$mail['name']}";
+  watchdog('ec_mail', $msg, WATCHDOG_NOTICE, l(t('edit'), "admin/store/settings/ec_mail/edit/$mid"));
+  drupal_set_message($msg);
+  return $mid;
+}
+
+function ec_mail_rowFn_settings(&$row) {
+  $links = array();
+  $links[] = l(t('view'), "admin/store/settings/ec_mail/{$row['mid']}/view");
+  $links[] = l(t('edit'), "admin/store/settings/ec_mail/{$row['mid']}/edit");
+  if (!$row['numrefs']) {
+    $links[] = l(t('delete'), "admin/store/settings/ec_mail/{$row['mid']}/delete");
+  }
+
+  return array($row['name'], ec_mail_get_type($row['type']), theme('links', $links));
+}
+
+function ec_mail_get_type($type) {
+  static $types;
+
+  if (!$types) {
+    $types = ec_mail_get_types();
+  }
+
+  return $types[$type];
+}
+
+function ec_mail_delete_confirm($mid = '') {
+  if (empty($mid)) {
+    return drupal_not_found();
+  }
+
+  if (ec_mail_get_numrefs($mid)) {
+    // can't delete the mail
+    drupal_set_message(t('This mail is currently in use and can not be deleted.'), 'error');
+    return '';
+  }
+
+  $mail = ec_mail_load_mail($mid);
+
+  $form['mid'] = array('#type' => 'value', '#value' => $mid);
+  $form['mail'] = array(
+    '#type' => 'item',
+    '#title' => t('Subject'),
+    '#value' => $mail['subject'],
+    '#disable' => TRUE 
+  );
+  $form['body'] = array(
+    '#type' => 'item',
+    '#title' => t('Body'),
+    '#value' => $mail['body']
+  );
+  $output = confirm_form('ec_mail_delete_confirm', $form,
+                 t('Are you sure you want to delete this mail?'),
+                   $_GET['destination'] ? $_GET['destination'] : 'admin/store/settings/ec_mail', t('This action cannot be undone.'),
+                   t('Delete'), t('Cancel')  );
+
+  return $output;
+}
+
+function ec_mail_delete_confirm_validate($form_id, &$fv) {
+  if (ec_mail_get_numrefs($fv['mid'])) {
+    form_set_error('', t('This mail is currently in use and can not be deleted.'));
+  }
+}
+
+function ec_mail_delete_confirm_submit($form_id, &$fv) {
+  ec_mail_delete($fv['mid']);
+}
+
+/**
+ * Deletes the given mail. This function assumes that the mail given is not
+ * referenced. If it is, this function will spit out an error and call exit().
+ *
+ * @param $mid Mail to delete.
+ * @return TRUE if a mail was deleted, otherwise FALSE.
+ */
+function ec_mail_delete($mid) {
+  if (ec_mail_get_numrefs($mid)) {
+    echo __FUNCTION__."() ERROR: trying to delete a mail when it is referenced";
+    exit(0);
+  }
+
+  return db_affected_rows(db_query("DELETE FROM {ec_mail} WHERE mid = %d", $mid));
+}
+
+/**
+ * Deletes all mails of the given type or all mails (CAREFUL!).
+ */
+function ec_mail_delete_all_form($type = 'all') {
+  $form = array();
+  $form['type'] = array(
+    '#type' => 'value',
+    '#value' => $type,
+  );
+  $msgval = $type == 'all' ? '' : " <i>$type</i>";
+  confirm_form('ec_mail_delete_all_confirm', $form,
+                 t('Are you sure you want to delete all%type mails?', array('%type' => $msgval)),
+                 $_GET['destination'] ? $_GET['destination'] : 'admin/store/settings/ec_mail', t('This action cannot be undone.'),
+                 t('Delete'), t('Cancel')  );
+}
+
+function ec_mail_delete_all_form_submit($form_id, &$fv) {
+  ec_mail_delete_all($fv['type']);
+}
+
+function ec_mail_delete_all($type) {
+  if ($type == 'all') {
+    db_query("DELETE FROM {ec_mail} WHERE numrefs = 0");
+  } else if (!empty($type)) {
+    db_query("DELETE FROM {ec_mail} WHERE numrefs = 0 AND type = '%s'", $type);
+  }
+}
+
+/**
+ * Returns the name of the given mail.
+ *
+ * @param Mail ID
+ * @return Name of the given mail or NULL if the mail ID is invalid.
+ */
+function ec_mail_get_name($mid) {
+  return db_result(db_query("SELECT name FROM {ec_mail} WHERE mid = %d", $mid));
+}
+
+/**
+ * Returns the number of references for the given mail.
+ *
+ * @param $mid Mail
+ * @return Number of references for that mail or -1 if the mail ID is invalid.
+ */
+function ec_mail_get_numrefs($mid) {
+  $numrefs = db_result(db_query("SELECT numrefs FROM {ec_mail} WHERE mid = %d", $mid));
+  if (is_null($numrefs)) {
+    return -1;
+  }
+
+  return $numrefs;
+}
+
+/**
+ * Returns the mid for the mail with name $name. If there are more than one mail with
+ * the same name the behaviour is undefined. Returns FALSE if the name is not found.
+ * 
+ * @param $name Name of the mail.
+ * @return Mail ID of the mail with the given name or FALSE if it is not found.
+ */
+function ec_mail_get_mid($name) {
+  return db_result(db_query("SELECT mid FROM {ec_mail} WHERE name = '%s'", $name));
+}
+
+/**
+ * Returns mails stored in the system as an array of rows. Each row can be
+ * optionally manipulated by the supplied row function to alter the resulting
+ * set.
+ *
+ * @param $rowFn Function which alters each row. Calling syntax must be
+ * rowFn(&$row).
+ * @return Array of rows. Defaults to all rows but this may be changed by using
+ * a row function.
+ */
+function ec_mail_get_table($rowFn = '') {
+  $result = db_query("SELECT * FROM {ec_mail} ORDER BY name");
+  $table = array();
+  while ($row = db_fetch_array($result)) {
+    if (!empty($rowFn) && function_exists($rowFn)) {
+      $table[] = $rowFn($row);
+    } else {
+      $table[] = $row;
+    }
+  }
+  return $table;
+}
+
+/**
+ * Returns an array of all mails ready for use in a select form element.
+ *
+ * @return Array of all mails ready for use in a select form element.
+ */
+function ec_mail_get_list($type = '') {
+  $where = (!empty($type) ? " WHERE type = '$type'" : '');
+  
+  $result = db_query("SELECT mid, name FROM {ec_mail}$where ORDER BY name");
+  $list = array();
+  while ($row = db_fetch_array($result)) {
+    $list[$row['mid']] = $row['name'];
+  }
+  return $list;
+}
+
+/**
+ * Loads the given mail from the database.
+ *
+ * @param $mid ID of the mail to be loaded.
+ * @return Array containing the fields of the mail record stored in
+ *   the database or null if the mail does not exist.
+ */
+function ec_mail_load_mail($mid) {
+  return db_fetch_array(db_query("SELECT * FROM {ec_mail} WHERE mid = %d", $mid));
+}
+
+/**
+ * Loads the mail with the given name from the database. If more than one mail has the
+ * same name the behaviour of this function is undefined.
+ *
+ * @param $name Name of the mail to load
+ * @return Array containing the fields of the mail record stored in
+ *   the database or null if the mail does not exist.
+ */
+function ec_mail_load_mail_by_name($name) {
+  return db_fetch_array(db_query("SELECT * FROM {ec_mail} WHERE name = '%s'", $name));
+}
+
+function ec_mail_view_preview($mid = '') {
+  if ((empty($mid) || !is_numeric($mid)) && arg(4) && is_numeric(arg(4))) {
+    $mid = arg(4);
+  }
+  if (empty($mid)) {
+    return drupal_not_found();
+  }
+
+  return ec_mail_preview($mid);
+}
+
+function theme_mail_preview($to, $from, $subject, $body) {
+  $output = t('<p>This is a preview of the message.</p>');
+  $output .= t('<p><strong>From:</strong> %from<br />', array('%from' => $from));
+  $output .= t('<strong>To:</strong> %to<br />', array('%to' => $to));
+  $output .= t('<strong>Subject:</strong> %subject</p>', array('%subject' => $subject));
+  $output .= t('<p><strong>Body:</strong></p><pre>%body</pre>', array('%body' => wordwrap($body)));
+
+  return $output;
+}
+
+function ec_mail_simpletest() {
+  $dir = drupal_get_path('module', 'ec_mail'). '/tests';
+  $tests = file_scan_directory($dir, 'ec_mail\.test$');
+  return array_keys($tests);
+}
+
+/**
+ * Returns the mail address of the user that purchased the transaction given.
+ *
+ * @param $txnid ID of the transaction
+ * @return Mail address of the user that made the transaction or '' if the transaction
+ * was not found.
+ */
+function ec_mail_get_transaction_address($txnid) {
+  // get the email address
+  $mail = db_result(db_query("SELECT mail FROM {ec_transaction} t WHERE txnid = %d", $txnid));
+
+  return (!$mail ? '' : $mail);
+}
+
+/**
+ * Shows a page displaying mail tokens. If the mail type is an
+ * empty string a list of mail types is displayed.
+ *
+ * @param $mailtype Optional mail type.
+ */
+function ec_mail_show_tokens($mailtype = '') {
+  $types = ec_mail_get_types();
+  if (!$types[$mailtype]) {
+    theme('token_help');
+    arsort($types);
+    reset($types);
+    $rows = array();
+    foreach ($types as $t => $d) {
+      $rows[] = array(l($d, "admin/store/settings/ec_mail/tokens/$t"));
+    }
+
+    $output = theme('table', array(t('mail types')), $rows);
+    $output .= theme('token_help');
+    return $output;
+  }
+  
+  $link = l(t('see tokens for all mail types'), 'admin/store/settings/ec_mail/tokens');
+
+  return theme('token_help', $mailtype).$link;
+}
+
+/**
+ * Returns the module responsible for the given mail type.
+ *
+ * @param Mail type
+ * @return Module name for the module responsible for the given mail type.
+ *    If a module is not found this function returns FALSE.
+ */
+function ec_mail_module_from_type($mailtype) {
+  $hook = 'mail_types';
+  foreach (module_implements($hook) as $module) {
+    $function = $module .'_'. $hook;
+    $result = array_keys($function());
+    if (is_array($result) && in_array($mailtype, $result)) {
+      return $module;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Returns the mail types currently available in the system.
+ * 
+ * TODO: Cache the values!!!!
+ */
+function ec_mail_get_types() {
+  return module_invoke_all('mail_types');
+}
+
+/**
+ * Returns an array (keys are subject, body, from) containing the given mail
+ * with substitutions applied to both the subject and the body.
+ *
+ * @param $mid Mail ID of mail to send.
+ * @param $to Email address to send the mail to.
+ * @param $object Object to use for the mail variable substitutions.
+ * @param $from Email address of the sender.
+ * @return Array containing the subject, body and from address with
+ * substitutions applied.
+ */
+function ec_mail_load_mail_for_send($mid, $to, $object = NULL, $from = NULL) {
+  $mail = ec_mail_load_mail($mid);
+
+  $mail['subject'] = token_replace($mail['subject'], $mail['type'], $object);
+  $mail['body'] = token_replace($mail['body'], $mail['type'], $object);
+  $mail['to'] = $to;
+  $mail['from'] = $from;
+  
+  return $mail;
+}
+
+/**
+ * Sends the given mail to the address. Prior to sending a substitutions are made on
+ * the tokens in both the subject and body with values from the given object.
+ *
+ * @param $mid Mail ID of mail to send.
+ * @param $to Email address to send the mail to.
+ * @param $object Object to use for the mail variable substitutions.
+ * @param $from Email address of the sender.
+ * @param $preview When set to TRUE this function will return a preview email.
+ * When FALSE the mail is sent.
+ * @return If $preview is FALSE returns TRUE if the mail was accepted for delivery.
+ * If $preview is TRUE returns HTML preview of the mail themed by theme('mail_preview').
+ */
+function ec_mail_send_mid($mid, $to, $object = NULL, $from = NULL, $preview = FALSE) {
+  $mail = ec_mail_load_mail_for_send($mid, $to, $object, $from);
+
+  if ($preview) {
+    return theme('mail_preview', $to, $mail['from'], $mail['subject'], $mail['body']);
+  } else {
+    return ec_mail_send_mail($mail);
+  }
+}
+
+/**
+ * Returns a HTML preview of the email to be sent.
+ * 
+ * @param $mid Mail ID of mail to send.
+ * @param $to Email address to send the mail to.
+ * @param $object Object to use for the mail variable substitutions.
+ * @param $from Email address of the sender.
+ * @return Returns HTML preview of the mail themed by theme('mail_preview').
+ */
+function ec_mail_preview($mid, $to = 'user@host.com', $object = NULL, $from = NULL) {
+  return ec_mail_send_mid($mid, $to, $object, NULL, TRUE);
+}
+
+/**
+ * Sends the mail given in the array $mail. $mail must have the following
+ * keys: to, from, subject, body, type. Type is required for the call to
+ * drupal_mail().
+ */
+function ec_mail_send_mail(&$mail) {
+  if (empty($mail['from'])) {
+    $mail['from'] = variable_get('site_mail', ini_get('sendmail_from'));
+  }
+  
+  return user_mail($mail['to'], $mail['subject'], $mail['body'], "From: {$mail['from']}\nReply-to: {$mail['from']}\nX-Mailer: Drupal\nReturn-path: {$mail['from']}\nErrors-to: {$mail['from']}");
+}
+
+/**
+ * Modifies the reference counts for the given mail. The reference count
+ * is incremented or decremented by one using the given operator (+ or -).
+ * Any module using this should always have one call to ec_mail_addref() and
+ * one call to ec_mail_delref().
+ *
+ * Modules should NEVER call this function directly!!!
+ *
+ * This function is prone to break on mysql because the system doesn't place all
+ * queries into transactions.
+ * 
+ * @param $mid Mail to alter reference counts for
+ * @param $op Either '+' or '-'. A fatal error with exit() will occur if the
+ *   op value is not one of these.
+ */
+function _ec_mail_modref($mid, $op = '+') {
+  if (!in_array($op, array('+', '-')) 
+        || !db_affected_rows(db_query("UPDATE {ec_mail} SET numrefs = numrefs %s 1 WHERE mid = %d", $op, $mid))) {
+
+    // SERIOUS ERROR!!! SYSTEM WILL BREAK
+    echo __FUNCTION__."() SERIOUS ERROR! Your system is not functioning properly. Consult your system administrator and DO NOT, repeat DO NOT, modify any mail settings.<br/><br/>\n\n";
+    if (!in_array($op, array('+', '-'))) {
+      echo "Invalid operator given.\n";
+    } else {
+      echo "Update to reference counts failed while attempting $op operation.\n";
+    }
+    debug_print_backtrace();
+    print_r(module_list(FALSE, TRUE, TRUE));
+    exit(1);
+  }
+}
+
+/**
+ * Decrements reference count for the given mail.
+ *
+ * @param $mid Mail ID
+ */
+function ec_mail_delref($mid) {
+  _ec_mail_modref($mid, '-');
+}
+
+/**
+ * Increments reference count for the given mail.
+ *
+ * @param $mid Mail ID
+ */
+function ec_mail_addref($mid) {
+  _ec_mail_modref($mid);
+}
+
+/**
+ * Imports mail from variables into the new mail subsystem.
+ * 
+ * @param $name Name for the new mail.
+ * @param $type Type of the new mail. This value needs to be one exported by hook_mailapi('types', ...).
+ * @param $subvar Name of the subject variable.
+ * @param $defsub Default subject value in case the variable is not set.
+ * @param $bodyvar Name of the body variable.
+ * @param $defbody Default body value in case the variable is not set.
+ * @param $delvars Delete the variables given after the import is complete.
+ * @param $conversions Additional set of mail token names to convert to the new format. These are
+ *    in addition to those done by default in ec_mail_convert_tokens(). See documentation for
+ *    ec_mail_convert_tokens() for more information.
+ * @return ID of the new mail.
+ */
+function ec_mail_import_old_mail($name, $type, $subvar, $defsub, $bodyvar, $defbody, $delvars = TRUE, $conversions = array()) {
+  $mail = array('name' => $name, 'type' => $type);
+  $mail['subject'] = ec_mail_convert_tokens(variable_get($subvar, $defsub));
+  $mail['body'] = ec_mail_convert_tokens(variable_get($bodyvar, $defbody));
+
+  if ($delvars) {
+    variable_del($subvar);
+    variable_del($bodyvar);
+  }
+  
+  return ec_mail_save($mail);
+}
+
+/**
+ * Converts mail tokens in the given string using both default
+ * conversions and specific conversions passed in.
+ * 
+ * @param $s String in which tokens need to be converted.
+ * @param $conversions Array of from => to pairs. These pairs must not contain the %
+ *   in the from values and must not contain the [] in the to values.
+ * @return String with the conversions applied.
+ */
+function ec_mail_convert_tokens($s, $conversions = array()) {
+  $conversions = array_merge($conversions, array(
+    'uri' => '[site-url]',
+    'uri_brief' => '[site-url-brief]',
+    'site' => '[site-name]',
+    'email' => '[site-mail]',
+    'mailto' => '[mail]',
+    'login_uri' => '[user-login-url]',
+    'edit_uri' => '[user-edit-url]',
+    'reset_uri' => '[user-reset-url]',
+    'txnid' => '[txn-id]',
+    'order_date' => '[txn-order-date]',
+    'first_name' => '[txn-billing-name]',
+    'billing_firstname' => '[txn-billing-firstname]',
+    'billing_lastname' => '[txn-billing-lastname]',
+    'billing_name' => '[txn-billing-firstname] [txn-billing-lastname]',
+    'billing_to' => '[txn-bill-to]',
+    'shipping_to' => '[txn-ship-to]',
+    'user_data' => '[txn-bill-plus-ship]',
+    'expiry' => '[recurring-expiry-date]',
+    'time_to_expire' => '[recurring-time-to-expire]',
+    'time_since_expired' => '[recurring-expiry-date]',
+    'renewal_item' => '[title]',
+    'renewal_link' => '[recurring-renewal-url]',
+    'coupon_number' => '[coupon-number]',
+    'discount_amount' => '[coupon-discount]',
+    'confirmuri' => '[mail-confirm-url]',
+    'timetoexpiry' => '[mail-confirm-time-to-expire]',
+    'password' => '[user-clear-password]',
+  ));
+  
+  foreach ($conversions as $from => $to) {
+    $s = preg_replace("/%{$from}\\b/", "$to", $s);
+  }
+  return preg_replace('/%(\w+)/', '[\1]', $s);
+}
+
+/**
+ * Returns a form array of a mail editing form. Through this form user's can modify the
+ * default mails, preview their changes and send the mail. The mail subject and content
+ * have tokens automatically substituted by values in $object according to the rules
+ * defined in the mail type's hook_token_values() implementation.
+ * 
+ * This function is typically called when producing form elements for sending of a mail.
+ */
+function ec_mail_send_varmail_form($varname, $to, $pagetitle = NULL, $object = NULL, $perform_send = TRUE) {
+  $mid = variable_get($varname, 0);
+  if (!$mid) {
+    drupal_set_message(t('Mail template for %var could not be found!', array('%var' => $varname)), 'error');
+  } else {
+    $mail = ec_mail_load_mail_for_send($mid, $to, $object);
+  }
+  
+  if ($pagetitle) {
+    drupal_set_title($pagetitle);
+  }
+  
+  $form = array();
+  $form['info'] = array(
+    '#type' => 'markup',
+    '#value' => t("<p>The message shown below is to be sent from %from to %to. You can take this opportunity to modify the message before sending it.</p>", array('%from' => $mail['from'], '%to' => $to)),
+  );
+  $form['from'] = array(
+    '#type' => 'value',
+    '#value' => $mail['from'],
+  );
+  $form['type'] = array(
+    '#type' => 'value',
+    '#value' => $mail['type'],
+  );
+  $form['object'] = array(
+    '#type' => 'value',
+    '#value' => $object,
+  );
+  $form['perform_send'] = array(
+    '#type' => 'value',
+    '#value' => $perform_send,
+  );
+  $form['to'] = array(
+    '#type' => 'textfield',
+    '#title' => t('To'),
+    '#default_value' => $to,
+    '#validate' => array('ec_mail_valid_email_address' => array()),
+  );
+  $form['subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#maxlength' => ECMAIL_SUBJECTLEN,
+    '#default_value' => $mail['subject'],
+    '#process' => array('ec_mail_varmail_substitutions' => array($mail['type'], $object)),
+    '#description' => l(t('See available tokens'), 'admin/store/settings/ec_mail/tokens', array('target' => '_blank'))
+  );
+  $form['body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#rows' => 5,
+    '#default_value' => $mail['body'],
+    '#process' => array('ec_mail_varmail_substitutions' => array($mail['type'], $object)),
+    '#description' => l(t('See available tokens'), 'admin/store/settings/ec_mail/tokens', array('target' => '_blank'))
+  );
+  $form['preview'] = array('#type' => 'button', '#value' => t('Preview'), '#weight' => 40);
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'), '#weight' => 45);
+  $form['#validate'] = array('ec_mail_send_varmail' => array());
+  
+  return $form;
+}
+
+function ec_mail_valid_email_address(&$form) {
+  if (!valid_email_address($form['#value'])) {
+    form_set_error('to', t('To address is not a valid email address.'));
+  }
+}
+
+function ec_mail_varmail_substitutions(&$form, $type, $object) {
+  if (isset($_POST['op'])) {
+    // We perform substitutions on any tokens the user has submitted
+    $form['#value'] = token_replace($form['#value'], $type, $object);
+  }
+   
+  return $form;
+}
+
+function ec_mail_send_varmail($form_id, &$fv) {
+  if ($fv['perform_send'] && isset($_POST['op']) && $_POST['op'] != t('Preview') && !count(form_get_errors())) {
+    // send the mail
+    if (!ec_mail_send_mail($fv)) {
+      form_set_error(t('Sending the mail failed. It was not accepted for delivery.'));
+    }
+  }
+}
+
+/**
+ * Build a selection form element for selecting a mail of a given type
+ * to set a variable of the given name.
+ * 
+ * Currently the calling convention for this function expects this:
+ * 
+ * $form[] = ec_mail_selection_form(_, _, _, 'variable_name')
+ * 
+ * @param $type
+ *   The type of the mail.
+ * @param $title
+ *   The title for the form element.
+ * @param $variable_name
+ *   Name of the variable being set.
+ * @param $description
+ *   The description for the form element. This function appends a link to the
+ *   ec_mail settings page to this description.
+ * @return
+ *   Array for the form element.
+ */
+function ec_mail_selection_form_for_variable($form_id, $type, $title, $variable_name, $description = '') {
+  if (!empty($description)) {
+    $description .= ' ';
+  }
+  
+  ec_mail_form_alter_setup($form_id, $variable_name);
+  
+  return ec_mail_selection_form($type, $title, $variable_name, variable_get($variable_name, 0), $description);
+}
+
+/**
+ * Builds a selection form element for selecting a mail using the values given.
+ * 
+ * @param $type
+ *   The type of the mail.
+ * @param $title
+ *   The title for the form element.
+ * @param $fieldname
+ *   Name of the field in the form.
+ * @param $default_value
+ *   Default value to be selected in the form element.
+ * @param $description
+ *   The description for the form element. This function appends a link to the
+ *   ec_mail settings page to this description.
+ * @return
+ *   Array for the form element.
+ */
+function ec_mail_selection_form($type, $title, $fieldname, $default_value, $description = '') {
+  return array(
+    $fieldname => array(
+      '#type' => 'select',
+      '#title' => $title ? $title : t('mail'),
+      '#options' => ec_mail_get_list($type),
+      '#default_value' => $default_value,
+      '#description' => $description.t('The mails shown here can be modified on the %mailpage.', array('%mailpage' => l(t('ec_mail settings page'), 'admin/store/settings/ec_mail/'.$type))),
+    )
+  );
+}
+
+/**
+ * A very special beast that gets around FAPI not having element specific
+ * submit functions. The form_id is stored along with variable names with
+ * successive calls. These are then passed through to ec_mail_form_alter()
+ * so it can add a submit hook with the appropriate variable names.
+ * 
+ * Anyone reading this may find this a silly approach. Just to make things
+ * clearer for readers this function makes it possible for a special submit
+ * function to be used automatically on any form where the mail selection
+ * is used.
+ * 
+ * This is important so reference counting operates properly for all mails.
+ * 
+ * @param $form_id
+ *  The ID of the form.
+ * @param $variable_name
+ *  Name of the variable. 
+ * @return
+ *  Array of currently stored information ('id' => id, array(v1, v2, ..., vN))
+ */
+function &ec_mail_form_alter_setup($form_id = '', $variable_name = '') {
+  static $id;
+  
+  if (!$id) {
+    $id = array('id' => '', 'varnames' => array());
+  }
+  
+  if (!empty($form_id) && $form_id != $id['id']) {
+    $id = array('id' => $form_id, 'varnames' => array());
+  }
+  
+  if (!empty($variable_name)) {
+    $id['varnames'][] = $variable_name;
+  }
+  
+  return $id;
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function ec_mail_form_alter($form_id, &$form) {
+  $setup = ec_mail_form_alter_setup();
+
+  if (!empty($setup['id']) && $setup['id'] == $form_id) {
+    $form['#submit'] = array_merge(array('ec_mail_selection_submit' => array($setup['varnames'])), $form['#submit']);
+  }
+}
+
+/**
+ * Adjusts reference counts for mail IDs stored in all variables given.
+ * This function is automatically called upon the submission of a settings
+ * form that is using a mail selection list from ec_mail. This function is added
+ * to the form by ec_mail_form_alter() with the help of ec_mail_form_alter_setup().
+ * 
+ * @param $form_id
+ *  ID of the form.
+ * @param $fv
+ *  Reference to the form values.
+ * @param $varnames
+ *  Reference to an array of variable names to adjust reference counts.
+ */
+function ec_mail_selection_submit($form_id, &$fv, &$varnames) {
+  foreach ($varnames as $v) {
+    $oldmid = variable_get($v, 0);
+    
+    if ($fv[$v] != $oldmid) {
+      // don't remove reference count if the mid is 0
+      if ($oldmid) {
+        ec_mail_delref($oldmid);
+      }
+      ec_mail_addref($fv[$v]);
+      // variable_set() is called by the owner of the form.
+    }
+  }
+}
+
+/**
+ * Adjusts mail reference counts for the old and new
+ * selections for a variable. This function must be called
+ * BEFORE variable_set() is called.
+ * 
+ * @param $varname
+ *  Variable name.
+ * @param $value
+ *  New variable value.
+ * @param $call_set
+ *  TRUE if this function needs to call variable_set() on the caller's
+ *  behalf. Otherwise FALSE.
+ */
+function ec_mail_variable_change($varname, $value, $call_set = FALSE) {
+  $oldmid = variable_get($varname, 0);
+  
+  if ($value != $oldmid) {
+    // don't remove reference count if the mid is 0
+    if ($oldmid) {
+      ec_mail_delref($oldmid);
+    }
+    ec_mail_addref($value);
+    // variable_set() is called by the owner of the form.
+    
+    if ($call_set) {
+      variable_set($varname, $value);
+    }
+  }
+}
+
+/**
+ * Resets the given mails to their defaults given by
+ * the implementing module. This function calls the
+ * hook_mail_reset() implementation in the module.
+ * 
+ * @param $types
+ *  Array of the types to reset.
+ * @param $module
+ *  Module to include manually. This is required when this
+ *  function is called from hook_install() implementations.
+ * @return
+ *  Array of 'type' => array(mid1, mid2, ... , midN) giving
+ *  the caller a list of mail IDs for each type reset.
+ */
+function ec_mail_reset_to_defaults($types, $module = FALSE) {
+  $mids = array();
+  
+  if (!empty($types) && !is_array($types)) {
+    $types = array($types);
+  }
+  
+  if (count($types)) {
+    $imps = ec_mail_implementor_list($types, $module);
+    
+    while (count($types)) {
+      $type = array_shift($types);
+      
+      ec_mail_delete_all($type);
+      
+      $fn = $imps[$type].'_mail_reset';
+      
+      if (!isset($mids[$type])) {
+        $mids[$type] = $fn($type);
+      } else {
+        $mids = array_merge($mids, $fn($type));
+      }
+    }
+  }
+  
+  return $mids;
+}
+
+/**
+ * Returns a list of type => module_name pairs
+ * for the given types. If no types are given all pairs are
+ * returned for the currently installed module set.
+ * 
+ * @param $types
+ *  Array of type names.
+ * @param $module
+ *  Module to include manually. This is required when this
+ *  function is called from hook_install() implementations.
+ * @return
+ *  Array of type => module_name pairs
+ */
+function ec_mail_implementor_list($types = array(), $module = FALSE) {
+  $imps = array();
+  
+  if (!empty($types) && !is_array($types)) {
+    $types = array($types);
+  }
+  
+  $modules = module_implements('mail_types');
+  if ($module && !in_array($module, $modules)) {
+    $modules[] = $module;
+  }
+  
+  foreach ($modules as $module) {
+    $function = $module .'_mail_types';
+    
+    foreach (array_keys($function()) as $type) {
+      if (in_array($type, $types) || !count($types)) {
+        $imps[$type] = $module;
+      }
+    }
+  }
+  
+  return $imps;
+}
