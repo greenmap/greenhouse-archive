@@ -274,7 +274,7 @@ $attributes_mapmakers = array('class' => 'mapmakers');
 	<?php }?>
 	
 	
-	<?php if($profile_state || $allowed_editore) { ?>
+	<?php if($profile_state || $allowed_editor) { ?>
 		- <?php print check_plain($profile_state) ?>
 		<?php if (!$profile_state && $allowed_editor) { print l(t('Set your state*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
 	<?php }?>
