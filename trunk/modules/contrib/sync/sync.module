@@ -661,3 +661,38 @@ function sess_regene($link) {
   return true;
 
 }
+
+function sync_fetch_ogm_maps($uid = 0) {
+  require_once('sync.inc.php');
+  $ogm_profile_fields_fid = 1;
+  if (!$link = sync_open_mysql_connect($db_user,$db_pass,$db)) {
+    watchdog('error', t('Error S6: Couldnt do sync_open_mysql_connect in sync.module'));
+    return false;
+  }
+
+  // fetch the public, published ogm maps for this gm user, including url alias
+  $query = sprintf("SELECT n.nid, title, dst as path
+    FROM node n 
+    INNER JOIN og ON og.nid=n.nid
+    INNER JOIN url_alias ON src = CONCAT('node/', n.nid)
+    WHERE type = 'green_map' 
+    AND status = 1 
+    AND og_private = 0 
+    AND uid = (SELECT uid AS ogm_uid 
+      FROM profile_values WHERE fid = 1 AND value = %d LIMIT 1)", $uid);
+
+  if(!$result = mysql_query($query,$link)) {
+    watchdog('error',t('Error S7: Database select failure. Synchronisation with Open Green Map aborted.'));
+    drupal_set_message(t('Database update failure. Synchronisation with Open Green Map aborted.'));
+    mysql_close($link); // close connect
+    return false;
+  }
+
+  $ogm_maps = array();
+  while ($ogm_map = db_fetch_object($result)) {
+    $ogm_maps[] = $ogm_map;
+  }
+
+  mysql_close($link);
+  return $ogm_maps;
+}
