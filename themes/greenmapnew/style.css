@@ -1704,4 +1704,6 @@ div.wbx-gw-wrapper {
 
 div.breadcrumb { display: none; }
 
-/*** End of file ***/
+.ogm-maps div.item-list ul li a {
+  color: #F89938;
+}
