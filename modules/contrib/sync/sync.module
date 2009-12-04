@@ -662,24 +662,22 @@ function sess_regene($link) {
 
 }
 
-function sync_fetch_ogm_maps($uid = 0) {
+function sync_fetch_all_ogm_maps() {
   require_once('sync.inc.php');
-  $ogm_profile_fields_fid = 1;
   if (!$link = sync_open_mysql_connect($db_user,$db_pass,$db)) {
     watchdog('error', t('Error S6: Couldnt do sync_open_mysql_connect in sync.module'));
     return false;
   }
 
   // fetch the public, published ogm maps for this gm user, including url alias
-  $query = sprintf("SELECT n.nid, title, dst as path
+  $query = sprintf("SELECT n.nid, n.uid, title, dst
     FROM node n 
     INNER JOIN og ON og.nid=n.nid
-    INNER JOIN url_alias ON src = CONCAT('node/', n.nid)
+    LEFT JOIN url_alias ON src = CONCAT('node/', n.nid)
     WHERE type = 'green_map' 
     AND status = 1 
     AND og_private = 0 
-    AND uid = (SELECT uid AS ogm_uid 
-      FROM profile_values WHERE fid = 1 AND value = %d LIMIT 1)", $uid);
+    ORDER BY nid", $uid);
 
   if(!$result = mysql_query($query,$link)) {
     watchdog('error',t('Error S7: Database select failure. Synchronisation with Open Green Map aborted.'));
@@ -689,10 +687,29 @@ function sync_fetch_ogm_maps($uid = 0) {
   }
 
   $ogm_maps = array();
-  while ($ogm_map = db_fetch_object($result)) {
+  db_query('TRUNCATE TABLE {sync_ogm_green_maps}');
+  while ($ogm_map = mysql_fetch_object($result)) {
     $ogm_maps[] = $ogm_map;
+    db_query("INSERT INTO {sync_ogm_green_maps} (ogm_nid, ogm_uid, title, alias) VALUES (%d, %d, '%s', '%s')", $ogm_map->nid, $ogm_map->uid, $ogm_map->title, $ogm_map->dst);
   }
 
   mysql_close($link);
   return $ogm_maps;
+}
+
+function sync_fetch_ogm_maps($uid = 0) {
+  $ogm_maps = array();
+  $greenhouse_profile_fields_fid = 97; // the place in the greenhouse that the OGM UID is stored
+
+  $result = db_query("SELECT u.uid, u.name, pv.value AS ogm_uid, ogm_nid, title, alias FROM users u INNER JOIN profile_values pv ON pv.uid=u.uid INNER JOIN sync_ogm_green_maps s_o_g_m ON s_o_g_m.ogm_uid = pv.value WHERE u.uid = %d AND pv.fid = %d", $uid, $greenhouse_profile_fields_fid);
+
+  while ($ogm_map = db_fetch_object($result)) {
+    $ogm_maps[] = $ogm_map;
+  }
+
+  return $ogm_maps;
+}
+
+function sync_cron() {
+  sync_fetch_all_ogm_maps();
 }

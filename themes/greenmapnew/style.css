@@ -1707,3 +1707,18 @@ div.breadcrumb { display: none; }
 .ogm-maps div.item-list ul li a {
   color: #F89938;
 }
+
+a.external {
+  background: url(img/external.png) center right no-repeat;
+  padding-right: 13px;
+}
+
+a.pdf {
+  background: url(img/pdf.png) center right no-repeat !important;
+  padding-right: 13px !important;
+}
+
+a.img_file {
+  background: url(img/img.png) center right no-repeat !important;
+  padding-right: 13px !important;
+}
