@@ -441,10 +441,14 @@ letter-spacing: 0.05em;
 }
 
 #content img {
-border:none;
-float:right;
+  border:none;
+  float:right;
+  padding:5px;
+}
 
-padding:5px;
+#content img.maplist {
+  float: none;
+  padding: 0px 0px 0px 5px;
 }
 
 #content div.image-attach-body {
