@@ -287,6 +287,18 @@ $result = db_query($sql);
 $num_rows = db_num_rows($result);
 $num_rows_map = $num_rows;
 
+$rows = array();
+$ogm_maps = sync_fetch_ogm_maps($user->uid);
+if (is_array($ogm_maps) && count($ogm_maps)) {
+  foreach ($ogm_maps as $ogm_map) {
+    $rows[] = l($ogm_map->title, 'http://www.opengreenmap/'. $ogm_map->path);
+  }
+  $output = theme_item_list($rows);
+  print '<div class="plain-list ogm-maps">'.$output.'</div>';
+}
+
+$rows = array();
+
 if($num_rows > 0) {
 	while ($this_node = db_fetch_object($result)) {
 		   // $this_node = node_load(array('nid' => $this_node->nid));
