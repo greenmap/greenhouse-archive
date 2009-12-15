@@ -1,0 +1,640 @@
+<?php
+// $Id: payment.module,v 1.68.2.3.2.12 2007/02/28 11:04:28 sime Exp $
+
+/**
+ * @file
+ * This module implements a flexible api for payment processing. 
+ */
+
+/**
+ * @name Payment statuses
+ * @{
+ * Flags for use in the "type" attribute of menu items.
+ */
+
+/**
+ * No payment information has been recieved.
+ */
+define('EC_PAYMENT_PENDING', 1);
+
+/**
+ * Payment has been completed and confirmed and money has been transfered.
+ */
+define('EC_PAYMENT_COMPLETED', 2);
+
+/**
+ * Payment failed.
+ */
+define('EC_PAYMENT_FAILED', 3);
+
+/**
+ * Payment has been denied.
+ */
+define('EC_PAYMENT_DENIED', 4);
+
+/**
+ * Payment has been refunded.
+ */
+define('EC_PAYMENT_REFUNDED', 5);
+
+/**
+ * Payment has been canceled.
+ */
+define('EC_PAYMENT_CANCELED', 6);
+
+/**
+ * Payment recieved but not confirmed.
+ */
+define('EC_PAYMENT_RECEIVED', 7);
+
+/**
+ * @} End of "Payment statuses".
+ */
+
+/********************************************************************
+ * Drupal Hooks
+ ********************************************************************/
+
+/**
+ * Implementation of help_hook()
+ */
+function payment_help($section = 'admin/help#payment') {
+  $output = '';
+
+  switch ($section) {
+    case 'admin/modules#description':
+      return t('<b>EC:</b> A payment API for ecommerce.');
+  }
+}
+
+/**
+ * Implementation of menu_hook()
+ */
+function payment_menu($may_cache) {
+  $items = array();
+  if ($may_cache) {
+    $items[] = array(
+      'path' => 'store/payment',
+      'title' => t('Payments'),
+      'callback' => 'payment_process_payment',
+      'access' => 1, // The callback handles the access
+      'type' => MENU_CALLBACK,
+    );
+    $items[] = array(
+      'path' => 'store/payment/accepted',
+      'title' => t('Payment Accepted'),
+      'callback' => 'payment_accepted',
+      'access' => TRUE, // The callback handles the access
+      'type' => MENU_CALLBACK,
+    );
+    $items[] = array(
+      'path' => 'admin/store/settings/payment',
+      'title' => 'payment',
+      'callback' => 'payment_ec_settings',
+      'access' => user_access('administer store'),
+      'type' => MENU_NORMAL_ITEM,
+    );
+  }
+  
+  return $items;
+}
+
+/**
+ * Implementation of hook_checkoutapi().
+ */
+function payment_checkoutapi(&$txn, $op, $arg3 = NULL, $arg4 = NULL) {
+  if ($txn == 'payment') return TRUE;
+  $output = '';
+  switch ($op) {
+    case 'form':
+      /* if there is only 1 payment method then don't display the payment
+       * page as the user will not need to see this. */
+      if ($form = payment_view_methods()) {
+        drupal_set_title(t('Please select a payment method'));
+        $form[] = array(
+          '#type' => 'submit',
+          '#value' => t('Continue'),
+        );
+        return $form;
+      }
+      else {
+        foreach (payment_get_methods() as $module) {
+          if (module_invoke($module, 'paymentapi', $edit, 'display name')) {
+            $txn->payment_method = $module;
+            break;
+          }
+        }
+        return false;
+      }
+
+    case 'validate':
+      if (store_transaction_calc_gross($txn) > 0 && !$txn->payment_method) {
+        form_set_error('payment_method', t('Please choose a payment method.'));
+      }
+      else {
+        module_invoke($txn->payment_method, 'paymentapi', $txn, 'on checkout');
+      }
+      break;
+
+    case 'save':
+      $txn->screen++;
+      break;
+
+    case 'review':
+      $form['payment'] = array('#value' => module_invoke($txn->payment_method, 'paymentapi', $txn, 'display name'));
+      return $form;
+  }
+}
+
+function theme_payment_review_form(&$form) {
+  if (count((array)payment_get_methods()) > 1) {
+    $screens = checkout_get_screens();
+    $screen = array_search('payment', $screens);
+  }
+  return theme('box', t('Payment details'), form_render($form['payment']) .( $screen ? ' '. l(t('(change)'), 'cart/checkout', array(), "op={$screen}&". drupal_get_destination()) : '')); 
+}
+
+/**
+ * Implementation of hook_invoiceapi()
+ */
+function payment_invoiceapi(&$invoice, $op) {
+  switch ($op) {
+    case 'review':
+      $form['make_payment'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Process Payment Now.'),
+      );
+      return $form;
+      break;
+
+    case 'after_create':
+      if (store_transaction_calc_gross($invoice) <= 0) {
+        store_transaction_save(array('txnid' => $invoice->txnid, 'payment_status' => 2));
+        $invoice = store_transaction_load($invoice->txnid);
+      }
+      elseif ($invoice->make_payment) {
+        if ($invoice->destination) {
+          return array("store/payment/{$invoice->txnid}", 'destination='. urlencode($invoice->destination));
+        }
+        else {
+          return "store/payment/{$invoice->txnid}";
+        }
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_ec_settings().
+ */
+function payment_ec_settings() {
+  drupal_set_title(t('Payment settings'));
+  // Begin price format section
+  $form['price_format'] = array(
+    '#type' => 'fieldset', 
+    '#title' => t('Price Formatting'), 
+    '#collapsible' => TRUE, 
+    '#collapsed' => TRUE, 
+  );
+  $form['price_format']['payment_symbol'] = array(
+    '#type' => 'textfield', 
+    '#title' => t('Currency Symbol'), 
+    '#default_value' => variable_get('payment_symbol', '$'), 
+    '#size' => 3, 
+    '#maxlength' => 5, 
+    '#description' => t('Enter the currency symbol you wish to associate with your price. This will be displayed in front of the price. Default is the dollar symbol.')
+  );
+  $form['price_format']['payment_symbol_position'] = array(
+    '#type' => 'radios', 
+    '#title' => t('Currency Symbol'), 
+    '#default_value' => variable_get('payment_symbol_position', 1), 
+    '#options' => array(t('Right'), t('Left')),
+    '#description' => t('This option places the currency symbol of the left or right side of the price.')
+  );
+  $form['price_format']['payment_thousands'] = array(
+    '#type' => 'textfield', 
+    '#title' => t('Thousands separator'), 
+    '#default_value' => variable_get('payment_thousands', ','), 
+    '#size' => 3, '#maxlength' => 5, 
+    '#description' => t('Enter the sign for the thousands separator.')
+   );
+   $form['price_format']['payment_decimal'] = array(
+    '#type' => 'textfield', 
+    '#title' => t('Decimal separator'), 
+    '#default_value' => variable_get('payment_decimal', '.'), 
+    '#size' => 3, '#maxlength' => 5, 
+    '#description' => t('Enter the sign to seperate real numbers from floating numbers.')
+   );
+  $form['price_format']['payment_decimal_places'] = array(
+    '#type' => 'textfield', 
+    '#title' => t('Number of places after the decimal separator'), 
+    '#default_value' => variable_get('payment_decimal_places', 2), 
+    '#size' => 3, '#maxlength' => 5, 
+    '#description' => t('How many slots are needed after the decimal?')
+   );
+    
+  // payment testing settings
+  $form['testing'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Payment Testing'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE
+  );
+  $form['testing']['payment_testing'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable payment testing'),
+    '#default_value' => variable_get('payment_testing', TRUE)
+  );
+  
+  return system_settings_form('payment_ec_settings_form', $form);
+}
+
+/**
+ *
+ */
+function payment_process_payment($txnid = false) {
+  if (!$txnid) {
+    drupal_access_denied();
+    exit();
+  }
+
+  if (!($txn = store_transaction_load($txnid))) {
+    drupal_not_found();
+    exit();
+  }
+
+  if ($txn->payment_status != payment_get_status_id('pending')) {
+    drupal_set_message(t('The current transactions payment status is not correct, Please contact the system administrator'), 'error');
+    return ' ';
+  }
+  
+  $form = payment_checkoutapi($txn, 'form');
+  if (!$form) {
+    $goto = module_invoke($txn->payment_method, 'paymentapi', $txn, 'payment page');
+    if (is_array($goto)) {
+      call_user_func_array('drupal_goto', $goto);
+    }
+    elseif (isset($goto)) {
+      drupal_goto($goto);
+    }
+    exit(0);
+  } else {
+    $form['txnid'] = array('#type' => 'value', '#value' => $txn->txnid);
+    $form['txn'] = array('#type' => 'value', '#value' => $txn);
+    $form['#theme'] = 'payment_checkout_form';
+
+    return drupal_get_form('payment_process_payment', $form);
+  }
+}
+
+function payment_process_payment_validate($form_id, $form_values) {
+  $txn = $form_values['txn'];
+  unset($form_values['txn']);
+  foreach ($form_values as $key => $value) {
+    $txn->$key = $value;
+  }
+  
+  payment_checkoutapi($txn, 'validate');
+}
+
+function payment_process_payment_submit($form_id, &$form_values) {
+  $txn = $form_values['txn'];
+  unset($form_values['txn']);
+  foreach ($form_values as $key => $value) {
+    $txn->$key = $value;
+  }
+
+  store_transaction_save($form_values);
+
+  return module_invoke($txn->payment_method, 'paymentapi', $txn, 'payment page');
+}
+
+/********************************************************************
+ * Module Functions
+ ********************************************************************/
+
+function payment_get_methods() {
+  return module_implements('paymentapi');
+}
+
+/*
+ * 
+ */ 
+function payment_view_methods() {
+  $options = array();
+
+  foreach((array) payment_get_methods() as $name) {
+    $method_value = module_invoke($name, 'paymentapi', $edit, 'display name');
+    if ($method_value) {
+      $form['payment_types'][$name]['title'] = array(
+        '#value' => '<h3>'. $method_value .'</h3>'
+      );
+      $form['payment_types'][$name]['form'] = module_invoke($name, 'paymentapi', $edit, 'form');
+      $options[$name] = '';
+    }
+  }
+
+  if (count($options) > 1) {
+    $form['payment_method'] = array(
+      '#type' => 'radios',
+      '#options' => $options
+      );
+  }
+  else {
+    $payment_types = array_keys($options);
+    if (!$form['payment_types'][$payment_types[0]]['form']) {
+      return false;
+    }
+    $form['payment_method'] = array(
+      '#type' => 'hidden',
+      '#value' => $payment_types[0]
+    );
+  }
+  return $form;
+}
+
+function theme_payment_checkout_form($form) {
+  $header = array(t('Payment method'), t('Choose one'));
+  $single_method = false;
+  if (count(element_children($form['payment_types'])) == 1) {
+    $single_method = true;
+    $header = array(t('Payment method'));
+  }
+  $row = '';
+  
+  foreach (element_children($form['payment_types']) as $key) {
+    unset($row);
+    $row[] = array('data' => form_render($form['payment_types'][$key]['title']) 
+        . form_render($form['payment_types'][$key]['form']));
+    if (!$single_method) {
+      $row[] = array('data' => form_render($form['payment_method'][$key]));
+    }
+    $rows[] = $row;
+  }
+
+  $output.= theme('table', $header, $rows);
+  $output.= form_render($form);
+
+  return $output;
+}
+
+function payment_get_status($id) {
+  $status = payment_build_status();
+  return $status[$id];
+}
+
+function payment_get_status_id($name) {
+  return array_search(strtolower(t($name)), payment_build_status());
+}
+
+/**
+ * Sets the payment status of the given transation to the status given.
+ * This function accepts both the textual status and the numeric status.
+ * If a textual status (valid values are in payment_build_status()) is
+ * given it will be converted to the appropriate value.
+ * 
+ * @param $txnid
+ *  Transaction ID.
+ * @param $status
+ *  Either a textual or numeric status value.
+ */
+function payment_set_status($txnid, $status) {
+  if (empty($status) || empty($txnid) || !is_numeric($txnid) || !$txnid) {
+    return;
+  }
+  
+  if (!is_numeric($status)) {
+    $status = payment_get_status_id($status);
+  }
+  
+  store_transaction_save(array('txnid' => $txnid, 'payment_status' => $status));
+}
+
+/**
+ * Return an array of payment workflow settings.
+ */
+function payment_build_status() {
+  // the odd ordering of this array is so the options are shown in the
+  // given order in a selection list.
+  $payment_status = array (
+    EC_PAYMENT_PENDING => t('pending'),
+    EC_PAYMENT_RECEIVED => t('payment received'),
+    EC_PAYMENT_COMPLETED => t('completed'),
+    EC_PAYMENT_FAILED => t('failed'),
+    EC_PAYMENT_DENIED => t('denied'),
+    EC_PAYMENT_REFUNDED => t('refunded'),
+    EC_PAYMENT_CANCELED => t('canceled'),
+  );
+
+  return $payment_status;
+}
+
+/**
+ * The controller for the plugin API hooks. It iterates through the enabled
+ * plugins and calls their *_paymentapi hook if one exists, passing it the
+ * action (via $op) to execute.
+ *
+ * @param object $items
+ * @param string $op The action to execute (e.g., validate, insert, update, delete)
+ * @param string $arg Optional argument to pass along. Currently being used to
+ *                    pass an array of errors during form display
+ *
+ * @return array Collection of output from the all *_paymentapi calls.
+ */
+function payment_invoke_paymentapi(&$items, $op, $arg = 0) {
+  return module_invoke_all('paymentapi', $items, $op, $arg);
+}
+
+/**
+ * Format the price according to payment_settings() config options.
+ */
+function payment_format($price) {
+  $price = number_format((float) $price,
+    variable_get('payment_decimal_places', 2), 
+    variable_get('payment_decimal', '.'), 
+    variable_get('payment_thousands', ','));
+  return (variable_get('payment_symbol_position', 1) == 1) ? variable_get('payment_symbol', '$') . $price : $price . variable_get('payment_symbol', '$');
+}
+
+function payment_accepted($txnid) {
+  if ($txnid == '') {
+    return drupal_not_found();
+  }
+
+  $output = t("Your payment has been accepted. Below is the receipt for your purchase. We recommend printing the receipt using the print. Thank you for shopping at %site.", array('%site' => variable_get('site_name', t('our online store'))));
+
+  return $output; 
+}
+
+function payment_elements() {
+  $type['credit_card'] = array('#input' => TRUE, '#process' => array('expand_credit_card' => array()));
+  $type['credit_card_expiry'] = array('#input' => TRUE, '#process' => array('expand_credit_card_expiry' => array()));
+  return $type;
+}
+
+function expand_credit_card_expiry($element) {
+  $element['expmonth'] =  array(
+    '#type' => 'textfield',
+    '#size' => 3,
+    '#maxlength' => 2,
+    '#value' => $element['#value']['expmonth'],
+    '#description' => 'MM'
+  );
+  $element['expyear'] =  array(
+    '#type' => 'textfield',
+    '#size' => 3,
+    '#maxlength' => 2,
+    '#value' => $element['#value']['expyear'],
+    '#description' => 'YY'
+  );
+  $element['#tree'] = TRUE;
+  return $element;
+}
+
+function expand_credit_card($element) {
+  $element['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('cardholder name'),
+    '#size' => 60,
+    '#maxlength' => 100,
+    '#default_value' => $element['#name'],
+    '#required' => TRUE
+  );
+  $element['cardnumber'] = array(
+    '#type' => 'textfield',
+    '#title' => t('credit card number'),
+    '#size' => 20,
+    '#maxlength' => 40,
+    '#required' => TRUE
+  );
+  $element['expiry'] = array(
+    '#type' => 'credit_card_expiry',
+    '#title' => t('card expiry date'),
+    '#required' => TRUE
+  );
+  if ($element['#cvnshow'] || $element['#cvnrequired']) {
+    $element['cvn'] = array(
+      '#type' => 'textfield',
+      '#title' => t('card verification number'),
+      '#size' => 4,
+      '#maxlength' => 4,
+      '#description' => t('The card verification number (cvn) is the last three or four digit number printed on the signature strip of a credit card'),
+      '#required' => (isset($element['#cvnrequired']) ? $element['#cvnrequired'] : FALSE)
+    );
+  }
+  $element['#required'] = FALSE;
+  return $element;
+}
+
+function valid_credit_card(&$form_values) {
+  // validate the card number
+  $form_values['cardnumber'] = str_replace(' ', '', $form_values['cardnumber']);
+  $cardnumber = $form_values['cardnumber'];
+  if ($cardnumber == '' || !preg_match('/^\d+$/', $cardnumber)) {
+    form_set_error('cardnumber', t('A valid Credit Card Number is required'));
+  }
+  else {
+    $j = 1;
+    for ($i = strlen($cardnumber) - 1; $i >= 0; $i--) {
+      $calc = $cardnumber[$i] * $j;
+
+      if ($calc > 9) {
+        $checksum++;
+        $calc-= 10;
+      }
+
+      $checksum+= $calc;
+
+      $j = ($j == 1 ? 2 : 1);
+    }
+    if ($checksum % 10 != 0) {
+      form_set_error('cardnumber', t('Credit Card Number is not valid. Please check number'));
+    }
+  }
+
+  // validate the expiry date
+  $month = $form_values['expiry']['expmonth'];
+  $year = $form_values['expiry']['expyear'];
+  if (empty($month) || empty($year)) {
+    form_set_error('expiry', 'Both expiry month and expiry year are required');
+  } else if (!ereg('[0-9]{2}', $month) || !ereg('[0-9]{2}', $year)) {
+    form_set_error('expiry', 'Card expiry month and year must have two digits each');
+  } else if (($expiry = strtotime("20$year-$month-1")) == -1) {
+    form_set_error('expiry', 'Card expiry date is not a valid date');
+  } else if ($expiry < strtotime(date('Y-m-1'))) {
+    form_set_error('expiry', 'Card expiry date is in the past');
+  }
+
+  // validate the CVN
+  if ($form_values['cvn'] && !preg_match('/^\d{3,4}$/', $form_values['cvn'])) {
+    form_set_error('cvn', t('Card Verification Number is a required field, and must be numeric'));
+  }
+
+  return !is_array(form_get_errors());
+}
+
+function theme_credit_card($element) {
+  return $element['#children'];
+}
+
+function theme_credit_card_expiry($element) {
+  $output = '<div class="container-inline">' . $element['#children'] . '</div>';
+  return theme('form_element', $element['#title'], $output, $element['#description'], $element['#id'], $element['#required'], form_get_error($element));
+}
+
+/**
+ * Either updates or inserts a new payment record into the credit card payment
+ * table. Use this from your payment module's hook_ec_transactionapi() for the
+ * insert or update operations.
+ *
+ * NOTE: It is important to set $txn->payment->cc_* while using the global
+ * version of $form_values. Ensure that you're data is reaching here by
+ * putting a print_r($txn); exit(0); as the first line of this function when
+ * you reach the payment entry page. Doing it beforehand will prevent you
+ * from reaching the payment page.
+ *
+ * @param $txn Reference to the transaction.
+ */
+function payment_cc_save(&$txn) {
+  if (is_numeric($txn->txnid) && is_numeric($txn->payment->cc_refnum)) {
+    $p =& $txn->payment;
+    $p->cc_reason = substr($p->cc_reason, 0, 128);
+    if (db_result(db_query("SELECT COUNT(txnid) FROM {ec_credit_card} WHERE txnid = '%s'", $txn->txnid))) {
+      db_query("UPDATE {ec_credit_card} SET cc_refnum = '%s', cc_amount = '%f', cc_ordernum = '%s', cc_reason = '%s' WHERE txnid = %d", $p->cc_refnum, $p->cc_amount, $p->cc_ordernum, $p->cc_reason, $txn->txnid);
+    }
+    else {
+      db_query("INSERT INTO {ec_credit_card} (txnid, cc_amount, cc_refnum, cc_ordernum, cc_reason) VALUES (%d, '%f', '%s', '%s', '%s')", $txn->txnid, $p->cc_amount, $p->cc_refnum, $p->cc_ordernum, $p->cc_reason);
+    }
+  }
+}
+
+/**
+ * Redirects the client to the payment page.
+ *
+ * @param $txn Transaction being paid for
+ * @param $redir_url URL the client is to be redirected to
+ */
+function payment_cc_goto($txn, $redir_url) {
+  $uri_array = array(
+    'txnid' => $txn->txnid,
+    session_name() => session_id()
+  );
+
+  foreach ($uri_array as $k => $v) {
+    $v = urlencode($v);
+    $uri[] .= "$k=$v";
+  }
+
+  $url = array($redir_url ,implode('&', $uri));
+
+  return $url;
+}
+
+/**
+ * Deletes a payment record from the credit card tracking table.
+ *
+ * @param Reference to a transaction of which the record is to be deleted.
+ */
+function payment_cc_delete(&$txn) {
+  db_query('DELETE FROM {ec_credit_card} WHERE txnid = %d', $edit['txnid']);
+}
