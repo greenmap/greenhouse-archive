@@ -115,6 +115,8 @@ if ($teaser && !$new_user) {
      <?php print check_plain($user->profile_introduction) ?></div></div>
 <?php }?>
 
+
+
 </fieldset>
 
 <?php
@@ -256,7 +258,6 @@ $attributes_required = array('class' => 'required');
 $attributes_mapmakers = array('class' => 'mapmakers');
 ?>
 
-
 <div id="top">
 
 <?php if(($profile_project_area_english) || ($profile_project_area_local) ||($profile_state) ||
@@ -309,16 +310,6 @@ $dictc = array(
 </div></div>
 <?php }?>
 </div>
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -724,9 +715,11 @@ $add_a_map = '<br /><a class="mapmakers" href="' . base_path() . $i18n_langpath 
 <!-- > STATEMENT OF PURPOSE -->
 
 <?php if($profile_statement_of_purpose || $allowed_editor) { ?>
+
 <fieldset<?php if (!$statement_complete) { print 'required'; } ?>><legend><?php print t('Statement of Purpose'); ?></legend>
 
 <div class="item">
+   
    <div class="scrollbar"><?php if ($profile_statement_of_purpose)  { print check_markup($profile_statement_of_purpose); }
     else { ?></div>
 
@@ -735,6 +728,7 @@ $add_a_map = '<br /><a class="mapmakers" href="' . base_path() . $i18n_langpath 
     <div class="data">
       <?php if (!$profile_statement_of_purpose && $allowed_editor) { print l(t('Add your statement of purpose*'),'user/'. $user -> uid .'/edit/D.+Statement+of+Purpose', $attributes_required);  } ?>
   </div>
+  
   <?php } ?>
 </div>
 </fieldset>
@@ -744,14 +738,19 @@ $add_a_map = '<br /><a class="mapmakers" href="' . base_path() . $i18n_langpath 
 <!-- > LOCAL LANGUAGE OVERVIEW -->
 
 <?php if($profile_local_overview || $allowed_editor) { ?>
-<div class="collapsible <?php if(!$profile_local_overview) { print 'collapsed'; } ?>"><legend><?php print t('Local Language Overview'); ?></legend>
+
+<fieldset<?php if(!$profile_local_overview) { print 'collapsed'; } ?>><legend><?php print t('Local Language Overview'); ?></legend>
+
 <div class="item">
-  <?php if ($profile_local_overview) { print check_markup($profile_local_overview); }
-    else { ?>
+  <div class="scrollbar"><?php if ($profile_local_overview) { print check_markup($profile_local_overview); }
+    else { ?></div>
+   
     <div><label><?php print t('Overview'); ?>:</label></div>
+    
     <div class="data">
       <?php if (!$profile_local_overview && $allowed_editor) { print l(t('Add an overview of your project in your local language'),'user/'. $user -> uid .'/edit/D.+Statement+of+Purpose');  } ?>
     </div>
+  
   <?php } ?>
 </div>
 </fieldset>
@@ -771,6 +770,7 @@ $add_a_map = '<br /><a class="mapmakers" href="' . base_path() . $i18n_langpath 
 <fieldset>
 <?php if(!$new_user) { // don't show blog box if they're a new user ?>
 <legend><?php print t('Blogs'); ?></legend>
+<div class="blog">
 
 <?php // set the messages to allow them to add another blog post, or add 1st post, if user is viewing own account
 if ($allowed_editor && !$new_user) {
@@ -796,9 +796,20 @@ $num_rows = db_num_rows($result);?>
   }
   ?>
 <?php } // end if that's hiding blogs for new user ?>
+</div>
 </fieldset>
 
-</div>
+
+</div> <!-- > Left Profile Div End -->
+
+
+
+
+
+
+
+
+
 
 <!-- > RIGHT PROFILE -->
 
@@ -861,7 +872,7 @@ else {
 <!-- > LOCATION MAP -->
 
 <?php if ($location_set || $allowed_editor) : ?>
-<fieldset class=<?php if (!$location_set) { print 'required'; } ?> ><legend><?php print t('Location'); ?></legend>
+<fieldset <?php if (!$location_set) { print 'required'; } ?> ><legend><?php print t('Location'); ?></legend>
   <div id="gmap">
   <?php
 
@@ -880,6 +891,63 @@ else {
   </div>
 </fieldset>
 <?php endif ?>
+
+
+
+
+
+
+
+<!-- > ORGANIZATION DETAILS -->
+
+
+<fieldset <?php if (!$organization_complete) { print 'required'; } ?>>
+<legend><?php print t('Related Organization'); ?></legend>
+
+
+<div class="related_org">
+<?php if($profile_organization_type || $allowed_editor) { ?>
+
+<?php
+
+$dict = array(
+ 'business' => 'mapmakers/list/organization/business',
+ 'community/grass roots' => 'mapmakers/list/organization/community',
+ 'governmental agency' => 'mapmakers/list/organization/individual',
+ 'individual' => 'mapmakers/list/organization/individual',
+ 'non-profit' => 'mapmakers/list/organization/nonprofit',
+ 'school' => 'mapmakers/list/organization/school',
+ 'tourism agency' => 'mapmakers/list/organization/tourism',
+ 'university/college' => 'mapmakers/list/organization/university',
+ 'youth' => 'mapmakers/list/organization/youth',
+ 'other ' => 'mapmakers/list/organization/other',
+);
+?>
+
+<div class="item <?php if (!$profile_organization_type && $allowed_editor) { print 'required'; } ?>">
+  <div class="data">
+    <?php
+     print l(check_plain(ucwords(check_plain($profile_organization_type))),
+           $dict[$profile_organization_type]);
+    ?>
+    <?php if (!$profile_organization_type && $allowed_editor) { print l(t('Add your organization type*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
+  </div>
+</div>
+
+<?php } else {
+  print t('No Organization Type Added');
+}
+?>
+
+</div>
+</fieldset>
+
+
+
+
+
+
+
 
 
 <?php if ($lapsed_user && !$allowed_editor) { ?>
@@ -1028,14 +1096,14 @@ else {
     <p class="mapmakers"><?php print t('You have done all of the things that you need to do - thanks! You can still write more blog articles and add photos to your albums.'); ?></p>
   <?php } ?>
 
-     </fieldset>
+    </fieldset>
 <?php } // end fieldset for things the user needs to do ?>
 
 
 <?php // Set up a collapsible block for admins showing all info they need for a new user ?>
 
 <?php if ($is_admin) { ?>
-  <fieldset class="collapsible"><legend><?php print t('Administration Information for New Users'); ?></legend>
+  <fieldset class="collapsible collapsed"><legend><?php print t('Administration Information for New Users'); ?></legend>
     <div class="item">
       <div><label><?php print t('Username'); ?></label></div>
       <div class="data"><?php print $user->name . ' [' .  l(t('edit'),'user/' . $user->uid . '/edit/G.+Administration') . ']'; ?></div>
@@ -1137,63 +1205,16 @@ else {
 <?php } ?>
 
 
-<!-- > ORGANIZATION DETAILS -->
-
-
-<fieldset <?php if (!$organization_complete) { print 'required'; } ?>><legend><?php print t('Organization Details'); ?></legend>
-<div>
-
-
-<?php if($profile_organization_type || $allowed_editor) { ?>
-
-<?php print "asdf: $profile_organization_type" ?>
-
-<?php
-
-$dict = array(
- 'business' => 'mapmakers/list/organization/business',
- 'community/grass roots' => 'mapmakers/list/organization/community',
- 'governmental agency' => 'mapmakers/list/organization/individual',
- 'individual' => 'mapmakers/list/organization/individual',
- 'non-profit' => 'mapmakers/list/organization/nonprofit',
- 'school' => 'mapmakers/list/organization/school',
- 'tourism agency' => 'mapmakers/list/organization/tourism',
- 'university/college' => 'mapmakers/list/organization/university',
- 'youth' => 'mapmakers/list/organization/youth',
- 'other ' => 'mapmakers/list/organization/other',
-);
-?>
-
-<div class="item <?php if (!$profile_organization_type && $allowed_editor) { print 'required'; } ?>">
-  <div><label><?php print t('Type'); ?>:</label></div>
-  <div class="data">
-    <?php
-     print l(check_plain(ucwords(check_plain($profile_organization_type))),
-           $dict[$profile_organization_type]);
-    ?>
-    <?php if (!$profile_organization_type && $allowed_editor) { print l(t('Add your organization type*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
-  </div>
-</div>
-<?php }?>
-
-
-</div>
-</fieldset>
-
-
 <!-- > SOCIAL NETWORK CONNECT -->
 
 <?php // Social Networks Fieldset in User profile?>
 <?php if( $profile_facebook || $profile_twitter || $profile_youtube || $profile_flickr || $profile_hi5 || $profile_othersocial1 || $profile_othersocial2 || $profile_othersocial3)
-  print t('<fieldset ><legend>Social Networks</legend>' ); ?>
+  print t('<fieldset ><legend>Connect with Mapmaker</legend>' ); ?>
 
 
 
 <?php if( $profile_facebook )
   print t('<div><a href="'.$profile_facebook.'">Facebook</a></div>'); ?>
-
-
-
 <?php if( $profile_twitter )
   print t('<div><a href="'.$profile_twitter.'">Twitter</a></div>'); ?>
 <?php if( $profile_youtube )
@@ -1208,11 +1229,10 @@ $dict = array(
   print t('<div><a href="'.$profile_othersocial2.'">'.$profile_othersocial2.'</a></div>'); ?>
 <?php if( $profile_othersocial3 )
   print t('<div><a href="'.$profile_othersocial3.'">'.$profile_othersocial3.'</a></div>'); ?>
+
 <?php if( $profile_facebook || $profile_twitter || $profile_youtube || $profile_flickr || $profile_hi5 || $profile_othersocial1 || $profile_othersocial2 || $profile_othersocial3)
   print t( '</fieldset>'); ?>
 <?php // end Social Newtorks collapsible ?>
-
-
 
 
 
@@ -1427,9 +1447,7 @@ $dict = array(
   </div>
 </div>
 
-
-
-  </fieldset>
+</fieldset>
 <?php } ?>
 
 
@@ -1561,8 +1579,6 @@ if ($allowed_editor && !$new_user) {
 
 
 
-
-
 <?php if($new_user && $allowed_editor) { // print a form for the "Submit to Green Map" button ?>
 <p></p>
 
@@ -1599,12 +1615,13 @@ elseif (!$teaser && !$not_hidden) { // if someone's trying to view a profile of 
 }
 
 #top{
-  margin-left: -250px;
+  margin-left: -92px;
   margin-top: -16px;
 }
 
 #content h1 {
-margin-left: -150px;
+margin-left: 34px;
+margin-top: -3px;
 }
 
 #content legend {
@@ -1613,14 +1630,31 @@ margin-left: -3px;
 }
 
 #content {
-font-size: 11.5px;
-color: #4D4D4D;
+	background-color:#ffffff;
+	color: #4D4D4D;
+	line-height: 1.5em;
+	height: auto;
+	font-size: 11.5px;
+	margin-left: 40px;
+	margin-top: 6px;
+	padding-top: 25px;
+	position: absolute;
+	width: 75%;
+	min-width: 600px;
+	float: left;
+	
+	background-image: url("http://localhost/gmsite/images/mapmaker_icon.gif");
+	background-repeat: no-repeat;
+	background-position: 9px 19px; 
 }
 
 html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
   border: none;
 }
 
+html.js #content fieldset.required {
+  border: none;
+}
 
 #content p a:hover, #content div.data a:hover, a:hover{
   color: #2E67B1;
@@ -1628,9 +1662,17 @@ html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
 }
 
 .plain-list ul li {
-  list-style-image: url(img/list.gif);
+  list-style-image: url("http://localhost/gmsite/images/list.gif");
   margin: 0 0 0.15em;
   padding: 1px 0;
+}
+
+.plain-list ul {
+	margin-left: 13px;
+}
+
+.blog .plain-list ul {
+	margin-left: 7px;
 }
 
 #content p a, #content div.data a, a {
@@ -1658,6 +1700,10 @@ ul.primary {
   overflow: auto;
   padding: 5px;
   border: solid 1px #999;
+}
+
+.related_org .item .data {
+  margin-left: 0px;
 }
 
 </style>
