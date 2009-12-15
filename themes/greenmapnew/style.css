@@ -109,11 +109,11 @@ float:right;
 	margin-bottom: -8px;
 	min-width: 1049px;
 	overflow: hidden;
-background-color: transparent;
+	background-color: transparent;
 }
 
 #sitelogo {
-margin-left: -12px;
+	margin-left: -12px;
 	float: left;
 	position:absolute;
 	z-index: 3;
@@ -404,9 +404,6 @@ ul.secondary a:hover {
 	}
 
 
-
-
-
 #content h1, #content h2, #content h3 {
 margin:0 0 1em 0;
 padding:0;
@@ -416,7 +413,7 @@ letter-spacing: 0.05em;
 }
 
 #content h1 {
-	color: #F78F1E;
+	color: #F89938;
 	font-size: 1.8em;
 }
 
@@ -527,9 +524,10 @@ display: inline;
 #leftprofile{
 	float:left;
 	margin-right:10px;
-	width:140px;
-
+	margin-top: 10px;
+	width:500px;
 }
+
 
 #leftprofile img{
 	border:none;
@@ -540,19 +538,22 @@ display: inline;
 }
 
 #rightprofile{
-	margin-left: 160px;
+	margin-left: 500px;
+	margin-top: 10px;
+	width:320px;
 }
 
-
-
-
+#rightprofile #gmap {
+	width:220px;
+	height:150px;
+}
 /***** TT - map profile styles *****/
 
 #leftmap{
 	float:left;
 	margin-right:10px;
-	width:300px;
-
+	margin-top: 10px;
+	width:500px;
 }
 
 #leftmap img{
@@ -563,11 +564,9 @@ display: inline;
 	float:none;
 }
 
-#leftmap #gmap {
-	width:100%;
+#rightmap #gmap {
+	width:200px;
 	height:150px;
-	margin-top: 0px;
-	margin-bottom: 0px;
 }
 
 #albums a.img, #albums img {
@@ -582,7 +581,9 @@ display: inline;
 }
 
 #rightmap{
-	margin-left: 320px;
+	margin-left: 500px;
+	margin-top: 10px;
+	width:320px;
 }
 
 .item div label{
@@ -609,7 +610,8 @@ display: inline;
 	margin: 0;
 	padding: 0;
 	display: inline;
-	list-style: none;
+
+	list-style:none;
 }
 
 .item .data li {
