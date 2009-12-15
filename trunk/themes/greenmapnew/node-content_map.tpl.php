@@ -98,7 +98,8 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
 
 <div id="top">
  <div class="item">
-    <div class="data"> <?php print "by" ?> <?php print $name ?> </div>
+    <div class="data"> <?php print "by" ?> <?php print $name ?>
+     </div>
  </div>
 </div>
 
@@ -1124,12 +1125,13 @@ if (is_array($author->roles)) {
 }
 
 #top{
-  margin-left: -250px;
+  margin-left: -92px;
   margin-top: -16px;
 }
 
 #content h1 {
-margin-left: -150px;
+margin-left: 34px;
+margin-top: -3px;
 }
 
 #content legend {
@@ -1138,8 +1140,22 @@ margin-left: -3px;
 }
 
 #content {
-font-size: 11.5px;
-color: #4D4D4D;
+	background-color:#ffffff;
+	color: #4D4D4D;
+	line-height: 1.5em;
+	height: auto;
+	font-size: 11.5px;
+	margin-left: 40px;
+	margin-top: 6px;
+	padding-top: 25px;
+	position: absolute;
+	width: 75%;
+	min-width: 600px;
+	float: left;
+	
+	background-image: url("http://localhost/gmsite/images/map_icon.gif");
+	background-repeat: no-repeat;
+	background-position: 9px 20px; 
 }
 
 
