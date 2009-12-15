@@ -251,8 +251,21 @@ if ($currentnid > '') {  // in some cases nid isn't set (ie when first adding a 
   $viewmaplist = views_get_view('maps_list_user');  
   $maplist = views_build_view('embed', $viewmaplist, $maplist_view->args, false, false);
   
-  if ($maplist > '') { ?>
-  		<fieldset class="collapsible collapsed"><legend><?php print t('Other Maps by ') . $node->name; ?></legend>		
+ $rows = array();
+ $output = '';
+ $ogm_maps = sync_fetch_ogm_maps($node->uid);
+ if (is_array($ogm_maps) && count($ogm_maps)) {
+   foreach ($ogm_maps as $ogm_map) {
+     $rows[] = l($ogm_map->title, 'http://www.opengreenmap/'. $ogm_map->alias,
+         array('class' => 'external', 'target' => '_blank'));
+   }
+   $output = theme_item_list($rows);
+   $output = '<div class="plain-list ogm-maps">'.$output.'</div>';
+ }
+  if ($maplist > '' || $output) { ?>
+   		<fieldset><legend><?php print t('More Maps by ') . $node->name; ?></legend>		
+
+      <?php print $output; ?>
   		<?php print $maplist; ?>
 		</fieldset>
   <?php } ?>
