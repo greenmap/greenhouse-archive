@@ -125,5 +125,135 @@ function check_official_gms($check_uid) {
 	else { return FALSE; }
 }
 
+/**
+ * Themes the cart block
+ */
+function phptemplate_cart_display_block() {
+  global $user;
+  $output = '';
 
-?>
+  /**
+   * Until Drupal can handle partial page caching, We should only display a
+   * View Cart link for anonymous users and the full fancy items and total cart
+   * for authenticated users since those pages aren't cached.
+   */
+  if ($user->uid == 0 && variable_get('cache', 0)) {
+    $output .= l(t('View your cart'), 'cart/view');
+  }
+  else {
+
+    $item = cart_get_items();
+    $item_count = count($item);
+    $item_suffix = ($item_count == 1) ? t('item') : t('items');
+
+    $output .= '<div class="item-count">'. t("%item_count %item_suffix in %your_cart", array("%item_count" => $item_count, "%item_suffix" => $item_suffix, "%your_cart" => l(t("your cart"), "cart/view"))). "</div>\n";
+
+    if (!empty($item)) {
+      $output .= '<div class="items">';
+      foreach ($item as $i) {
+        $node = node_load($i->nid);
+        if (product_has_quantity($node)) {
+          $total += ($i->price * $i->qty) + product_get_specials($i, 'cart', true);
+          $output .= l("$node->title x $i->qty", 'node/'. ($node->pparent ? $node->pparent : $node->nid)). "<br />";
+        }
+        else {
+          $i->qty = 1;
+          $total += $i->price+product_get_specials($i, 'cart', true);
+          $output .= l("$node->title", 'node/'. ($node->pparent ? $node->pparent : $node->nid)). "<br />";
+        }
+      }
+      $output .= "</div><div class=\"total\">". payment_format($total) . "</div>";
+      $output .= '<div class="checkout">'. t('Ready to <a href="%checkout-url">checkout</a>?', array('%checkout-url' => url('cart/checkout'))) 
+        .' | '
+        .l(t('Cancel order'), 'cart/view')
+        .'</div>';
+    }
+  }
+
+  return $output;
+}
+
+function phptemplate_cart_review_form(&$form) {
+  $content = '';
+
+  $content = '<p>'. t('You can cancel your order by <a href="%cart_url">returning to your cart</a> and removing all items.', array("%cart_url" => url("cart/view"))) .'</p>';
+
+  $f =& $form['cart'];
+
+  $header = array(t('Qty'), t('Item'), t('Price'), t('Subtotal'), '');
+  $rows = array();
+  if ($f['items']) {
+    foreach ($f['items'] as $key => $line) {
+      if (is_numeric($key)) {
+        $rows[] = array(
+          $line['qty']['#value'],
+          $line['item']['#value']->title,
+          array('data' => payment_format($line['price']['#value']), 'align' => 'right'),
+          array('data' => payment_format($line['subtotal']['#value']), 'align' => 'right'),
+          $line['options']['#value']
+        );
+      }
+    }
+  }
+
+  $rows[] = array('', '', '', '', '');
+  foreach ($f['totals'] as $id => $line) {
+    if (is_numeric($id)) {
+      $rows[] = array(
+        '',
+        "<b>{$line['#title']}</b>",
+        '',
+        array('data' => payment_format($line['#value']), 'align' => 'right'),
+        ''
+      );
+    }
+  }
+
+  $content .= theme('table', $header, $rows);
+
+  return theme('box', t('Order Summary'), $content);
+}
+
+/**
+ * Returns a themed shopping cart form.
+ */
+function phptemplate_cart_view($form) {
+  $output = '<p>'. t('You can cancel your order at any time by removing all items from your shopping cart.') .'</p>';
+
+  $total = 0;
+  $header = array(t('Items'), t('Qty.'), '');
+  $extra = array_filter($form['items'], '_cart_form_filter_extra');
+  if ($extra) {
+    $header[] = '';
+  }
+
+  foreach (element_children($form['items']) as $nid) {
+    $total+= $form['items'][$nid]['#total'];
+    $total+= $form['items'][$nid]['#specials'];
+    $desc = form_render($form['items'][$nid]['title']) .'<br />';
+    if ($form['items'][$nid]['recurring']) {
+      $desc.= '<div class="recurring-details">'. form_render($form['items'][$nid]['recurring']) .'</div>';
+    }
+    if ($form['items'][$nid]['availability']) {
+      $desc.= form_render($form['items'][$nid]['availability']);
+    }
+    $desc.= '<p>'. payment_format($form['items'][$nid]['#total']+$form['items'][$nid]['#specials']) .'</p>';
+
+    $row = array(
+      array('data' => $desc),
+      array('data' => $form['items'][$nid]['qty'] ? form_render($form['items'][$nid]['qty']) : '', 'align' => 'center'),
+    );
+    if ($extra && $form['items'][$nid]['extra']) {
+      $row[] = array('data' => form_render($form['items'][$nid]['extra']));
+    }
+    elseif ($extra) {
+      $row[] = '';
+    }
+    $row[] = array('data' => l(t('Remove'), "cart/delete/$nid"));
+    $rows[] = $row;
+  }
+  $rows[] = array(array("data" => "<strong>". t('Subtotal:') . '</strong> ' . payment_format($total), "colspan" => $extra ? 4 : 3, "align" => "right"));
+  $output.= theme('table', $header, $rows);
+  $output.= form_render($form);
+  return $output;
+}
