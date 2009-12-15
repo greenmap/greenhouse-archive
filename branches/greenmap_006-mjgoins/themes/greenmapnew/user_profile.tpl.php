@@ -897,7 +897,7 @@ if ($allowed_editor && !$new_user) {
 		(<?php print check_plain($profile_project_area_local) ?>
 		<?php if (!$profile_project_area_local && $allowed_editor) { print l(t('Set the local name of location if different '),'user/'. $user -> uid .'/edit/A.+Organization+details');  } ?>) 
 	<?php }?>
-	<?php if($profile_state || $allowed_editore) { ?>
+	<?php if($profile_state || $allowed_editor) { ?>
 		- <?php print check_plain($profile_state) ?>
 		<?php if (!$profile_state && $allowed_editor) { print l(t('Set your state*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
 	<?php }?>
