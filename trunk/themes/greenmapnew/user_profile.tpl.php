@@ -834,7 +834,7 @@ $ogm_maps = sync_fetch_ogm_maps($user->uid);
 if (is_array($ogm_maps) && count($ogm_maps)) {
   foreach ($ogm_maps as $ogm_map) {
     $rows[] = l($ogm_map->title, 'http://www.opengreenmap.org/'. $ogm_map->alias,
-        array('class' => 'external', 'target' => '_blank'));
+        array('class' => 'external', 'target' => '_blank', 'title' => t('Open Green Map')));
   }
   $output = theme_item_list($rows);
   print '<div class="plain-list ogm-maps">'.$output.'</div>';
