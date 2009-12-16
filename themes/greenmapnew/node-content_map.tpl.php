@@ -1050,7 +1050,7 @@ if ($currentnid > '') {  // in some cases nid isn't set (ie when first adding a 
   if (is_array($ogm_maps) && count($ogm_maps)) {
     foreach ($ogm_maps as $ogm_map) {
       $rows[] = l($ogm_map->title, 'http://www.opengreenmap/'. $ogm_map->alias,
-          array('class' => 'external', 'target' => '_blank'));
+          array('class' => 'external', 'target' => '_blank', 'title' => t('Open Green Map')));
     }
     $output = theme_item_list($rows);
     $output = '<div class="plain-list ogm-maps">'.$output.'</div>';
