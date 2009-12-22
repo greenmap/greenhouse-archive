@@ -1123,7 +1123,6 @@ if (is_array($author->roles)) {
 <?php endif; ?>
 
 
-</div>
 
 <div class="links">
 	<?php print $links; ?>
