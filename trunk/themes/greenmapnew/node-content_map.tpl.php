@@ -1115,7 +1115,9 @@ if (is_array($author->roles)) {
 
 </div>
 
-
+<div class="links">
+	<?php print $links; ?>
+</div>
 
 <style type="text/css">
 
