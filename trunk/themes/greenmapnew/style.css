@@ -585,7 +585,7 @@ display: inline;
 }
 
 #albums a.img, #albums img {
-	display: inline;
+	display: block;
 	margin-right: 1px;
 	margin-bottom: 1px;
 	
