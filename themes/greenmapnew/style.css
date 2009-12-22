@@ -537,6 +537,20 @@ display: inline;
 	float:none;
 }
 
+#leftprofile_topleft {
+	float:left;
+	margin-right:10px;
+	margin-top: 10px;
+	width:150px;
+}
+
+#leftprofile_topright {
+	float:left;
+	margin-right:10px;
+	margin-top: 10px;
+	width:350px;
+}
+
 #rightprofile{
 	margin-left: 500px;
 	margin-top: 10px;
@@ -547,6 +561,7 @@ display: inline;
 	width:220px;
 	height:150px;
 }
+
 /***** TT - map profile styles *****/
 
 #leftmap{
