@@ -5,6 +5,8 @@
 drupal_add_js('misc/collapse.js');
 ?>
 
+
+
 <?php
 
 // if viewing list of map thumbnails then show that - used at the main maps overview page, and a dedicated views page
@@ -143,34 +145,42 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
 
 <?php if ($field_pdf_of_map[0]['fid']) : ?>
  <div class="item">
-  <div>
-      <label><?php print t('Download Here'); ?>:</label>
-  </div>
+
   <?php foreach ($field_pdf_of_map as $item) { ?>
-    <div class="data"><a href="<?php // print base_path() . $item['filepath']; ?><?php print file_create_url($item['filepath']); ?>" target="_blank"><?php print file_create_url($item['filepath']); ?></a></div>
+    <a href="<?php print file_create_url($item['filepath']); ?>" target="_blank"><?php print t('Download Here'); ?></a>
+    
   <?php } ?>
  </div>
 <?php endif; ?>
+
 
 
 <?php if (content_format('field_link_to_online_map', $field_link_to_online_map[0]) > '') : ?>
  <div class="item">
-  <div>
-    <label><?php print t('View Online'); ?></label>
-    </div>
+
   <?php foreach ($field_link_to_online_map as $item) { ?>
-  <?php $item = trim_url($item) ?>
-    <div class="data"> <?php print content_format('field_link_to_online_map', $item) ?> </div>
+ 
+	<?php 
+	//print content_format('field_link_to_online_map', $item) 
+	?>
+	<? print l(t('View Online'), $item['url']);?>
+                
   <?php } ?>
  </div>
 <?php endif; ?>
 
+
+
 <?php if (content_format('field_your_website_about_this_m', $field_your_website_about_this_m[0]) > '') : ?>
  <div class="item">
-  <div><label><?php print t('Website'); ?>:</label></div>
-  <?php foreach ($field_your_website_about_this_m as $item) { ?>
-  <?php $item = trim_url($item) ?>
-  <div class="data"> <?php print content_format('field_your_website_about_this_m', $item) ?> </div>
+ 
+   <?php foreach ($field_your_website_about_this_m as $item) { ?>
+
+  <?php 
+  //print content_format('field_your_website_about_this_m', $item);
+  print l(t('Website'), $item['url']);
+   ?>
+  
   <?php } ?>
  </div>
 <?php endif; ?>
@@ -1026,7 +1036,7 @@ if ($currentnid > '') {  // in some cases nid isn't set (ie when first adding a 
 <fieldset>
 
 <legend><?php print t('See Mapmaker Profile'); ?></legend>
-
+<?php print $name ?>
 </fieldset>
 <?php endif; ?>
 
