@@ -849,13 +849,13 @@ $dict = array(
 
 <div id="socialnetwork_img">
 <?php if( $profile_facebook )
-  print t('<div><a href="'.$profile_facebook.'"><img src="http://localhost/gmsite/images/facebook.png"></a></div>'); ?>
+  print t('<div><a href="'.$profile_facebook.'"><img src="<?php print $base_path ?>images/facebook.png" /></a></div>'); ?>
 <?php if( $profile_twitter )
-  print t('<div><a href="'.$profile_twitter.'"><img src="http://localhost/gmsite/images/twitter.png"></a></div>'); ?>
+  print t('<div><a href="'.$profile_twitter.'"><img src="<?php print $base_path ?>images/twitter.png" /></a></div>'); ?>
 <?php if( $profile_youtube )
-  print t('<div><a href="'.$profile_youtube.'"><img src="http://localhost/gmsite/images/youtube.png"></a></div>'); ?>
+  print t('<div><a href="'.$profile_youtube.'"><img src="<?php print $base_path ?>images/youtube.png" /></a></div>'); ?>
 <?php if( $profile_flickr )
-  print t('<div><a href="'.$profile_flickr.'"><img src="http://localhost/gmsite/images/flickr.png"></a></div>'); ?>
+  print t('<div><a href="'.$profile_flickr.'"><img src="<?php print $base_path ?>images/flickr.png" /></a></div>'); ?>
 <?php if( $profile_hi5 )
   print t('<div><a href="'.$profile_hi5.'">Hi5</a></div>'); ?>
 <?php if( $profile_othersocial1 )
@@ -1633,7 +1633,7 @@ color: #8CC63F;
 	min-width: 600px;
 	float: left;
 	
-	background-image: url("http://localhost/gmsite/images/mapmaker_icon.gif");
+	background-image: url("<?php print $base_path ?>images/mapmaker_icon.gif");
 	background-repeat: no-repeat;
 	background-position: 9px 19px; 
 }
@@ -1652,7 +1652,7 @@ html.js #content fieldset.required {
 }
 
 .plain-list ul li {
-  list-style-image: url("http://localhost/gmsite/images/list.gif");
+  list-style-image: url("<?php print $base_path ?>images/list.gif");
   margin: 0 0 0.15em;
   padding: 1px 0;
 }
