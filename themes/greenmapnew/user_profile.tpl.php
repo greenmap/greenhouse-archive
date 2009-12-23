@@ -1516,7 +1516,7 @@ $dict = array(
 if (($number != 0) || $allowed_editor) {
   ?>
 
-<fieldset><legend><?php print t('Photos'); ?></legend>
+<fieldset><legend><?php print t('Albums'); ?></legend>
 <div id="albums">
 
   <?php $i = 0; // used to loop through all the photos from teh database query
