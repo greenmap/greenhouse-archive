@@ -144,7 +144,7 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
     (content_format('field_cost_per_map_0', $field_cost_per_map_0[0]) > '')
     ) : ?>
 
-<fieldset><legend><?php print t('Get this Map'); ?></legend>
+<fieldset class="get_this_map"><legend><?php print t('Get this Map'); ?></legend>
 
 
 <?php if ($field_pdf_of_map[0]['fid']) : ?>
@@ -152,6 +152,7 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
 
   <?php foreach ($field_pdf_of_map as $item) { ?>
     <a href="<?php print file_create_url($item['filepath']); ?>" target="_blank"><?php print t('Download Here'); ?></a>
+
     
   <?php } ?>
  </div>
@@ -1006,7 +1007,7 @@ if ($currentnid > '') {  // in some cases nid isn't set (ie when first adding a 
   if (($number != 0) || $allowed_editor) {
     ?>
 
-  <fieldset><legend><?php print t('Photos'); ?></legend>
+  <fieldset><legend><?php print t('Albums'); ?></legend>
   <div id="albums">
 
     <?php $i = 0; // used to loop through all the photos from teh database query
@@ -1250,6 +1251,20 @@ ul.primary {
 	margin-top: 5px;
 	margin-bottom: 20px;
 	margin-left: 60px;
+}
+
+#content fieldset.get_this_map .item a{
+  font-size: 14px;
+  font-weight: bolder;
+  text-decoration: none;
+  color: #2E67B1;
+}
+
+#content fieldset.get_this_map .item a:hover{
+  font-size: 14px;
+  font-weight: bolder;
+  text-decoration: underline;
+  color: #2E67B1;
 }
 
 #content .scrollbarshort {
