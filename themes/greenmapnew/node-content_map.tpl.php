@@ -1188,7 +1188,7 @@ margin-left: -3px;
 	min-width: 600px;
 	float: left;
 	
-	background-image: url("http://localhost/gmsite/images/map_icon.gif");
+	background-image: url("<?php print $base_path ?>images/map_icon.gif");
 	background-repeat: no-repeat;
 	background-position: 9px 20px; 
 }
