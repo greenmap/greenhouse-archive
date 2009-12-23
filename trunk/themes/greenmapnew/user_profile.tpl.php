@@ -313,8 +313,6 @@ $dictc = array(
 
 
 
-
-
 <div id="leftprofile_topleft">
 
 
@@ -849,14 +847,15 @@ $dict = array(
 <?php if( $profile_facebook || $profile_twitter || $profile_youtube || $profile_flickr || $profile_hi5 || $profile_othersocial1 || $profile_othersocial2 || $profile_othersocial3)
   print t('<fieldset ><legend>Connect with Mapmaker</legend>' ); ?>
 
+<div id="socialnetwork_img">
 <?php if( $profile_facebook )
-  print t('<div><a href="'.$profile_facebook.'">Facebook</a></div>'); ?>
+  print t('<div><a href="'.$profile_facebook.'"><img src="http://localhost/gmsite/images/facebook.png"></a></div>'); ?>
 <?php if( $profile_twitter )
-  print t('<div><a href="'.$profile_twitter.'">Twitter</a></div>'); ?>
+  print t('<div><a href="'.$profile_twitter.'"><img src="http://localhost/gmsite/images/twitter.png"></a></div>'); ?>
 <?php if( $profile_youtube )
-  print t('<div><a href="'.$profile_youtube.'">YouTube</a></div>'); ?>
+  print t('<div><a href="'.$profile_youtube.'"><img src="http://localhost/gmsite/images/youtube.png"></a></div>'); ?>
 <?php if( $profile_flickr )
-  print t('<div><a href="'.$profile_flickr.'">Flickr</a></div>'); ?>
+  print t('<div><a href="'.$profile_flickr.'"><img src="http://localhost/gmsite/images/flickr.png"></a></div>'); ?>
 <?php if( $profile_hi5 )
   print t('<div><a href="'.$profile_hi5.'">Hi5</a></div>'); ?>
 <?php if( $profile_othersocial1 )
@@ -865,6 +864,7 @@ $dict = array(
   print t('<div><a href="'.$profile_othersocial2.'">'.$profile_othersocial2.'</a></div>'); ?>
 <?php if( $profile_othersocial3 )
   print t('<div><a href="'.$profile_othersocial3.'">'.$profile_othersocial3.'</a></div>'); ?>
+</div>
 
 <?php if( $profile_facebook || $profile_twitter || $profile_youtube || $profile_flickr || $profile_hi5 || $profile_othersocial1 || $profile_othersocial2 || $profile_othersocial3)
   print t( '</fieldset>'); ?>
@@ -1538,7 +1538,8 @@ if (($number != 0) || $allowed_editor) {
 
     // print photo thumbnail unless album_photo_number is greater than 2 ?>
     <?php if($album_photo_number < 3) { ?>
-        <a href="<?php print base_path() . $i18n_langpath ?>/node/<?php print $item[$i]['nid'] ?>" title="click to view album" class="img">
+        <a href="<?php print base_path() . $i18n_langpath ?>/node/
+        <?php print $item[$i]['nid'] ?>" title="click to view album" class="img">
         <?php print theme('imagecache', gallerythumb, $item[$i]['value'])   ?></a>
     <?php } ?>
 
@@ -1681,6 +1682,10 @@ ul.primary {
   height: auto;
   line-height: normal;
   border-bottom: 1px solid #F78F1E;
+}
+
+#content #socialnetwork_img img {
+  float: left;
 }
 
 #content .scrollbar {
