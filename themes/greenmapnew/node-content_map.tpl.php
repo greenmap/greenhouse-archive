@@ -9,6 +9,9 @@ drupal_add_js('misc/collapse.js');
 
 <?php
 
+
+
+
 // if viewing list of map thumbnails then show that - used at the main maps overview page, and a dedicated views page
 if ((arg(0) == 'maps') && (arg(1) != 'list')) { ?>
   <div class="mapthumb">
@@ -109,6 +112,7 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
 
 
 <!-- > MAP IMAGE (PROBABLY-CHECK) -->
+<div id="map_img">
 <legend><?php print t('    '); ?></legend>
   <div class="field-items">
     <?php foreach ((array)$field_main_map_image as $item) {
@@ -129,7 +133,7 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
     <?php }
       } ?>
   </div>
-
+</div>
 
 <!-- > (HOW TO) GET THIS MAP -->
 
@@ -907,6 +911,21 @@ elseif (content_format('field_scale', $field_scale[0]) > '') { ?>
 <?php }?>
 
 
+<!-- > LOCAL LANGUAGE OVERVIEW -->
+
+
+<?php if (content_format('field_1_local_language_overview', $field_1_local_language_overview[0]) > '') : ?>
+<fieldset class="collapsible collapsed"><legend>Local Language Overview</legend>
+
+  <?php foreach ($field_1_local_language_overview as $item) { ?>
+    <?php print check_markup(content_format('field_1_local_language_overview', $item)) ?>
+  <?php } ?>
+
+</fieldset>
+<?php endif; ?>
+
+
+
 </div> <!-- > End of LEFTMAP -->
 
 
@@ -987,7 +1006,7 @@ if ($currentnid > '') {  // in some cases nid isn't set (ie when first adding a 
   if (($number != 0) || $allowed_editor) {
     ?>
 
-  <fieldset class="collapsible"><legend><?php print t('Photos'); ?></legend>
+  <fieldset><legend><?php print t('Photos'); ?></legend>
   <div id="albums">
 
     <?php $i = 0; // used to loop through all the photos from teh database query
@@ -1036,7 +1055,14 @@ if ($currentnid > '') {  // in some cases nid isn't set (ie when first adding a 
 <fieldset>
 
 <legend><?php print t('See Mapmaker Profile'); ?></legend>
-<?php print $name ?>
+
+<div class="link_to_profile">
+<?php 
+$user_profile = user_load(array('uid'=>$node->uid));
+print theme('user_picture', $user_profile);
+?>
+</div>
+
 </fieldset>
 <?php endif; ?>
 
@@ -1109,24 +1135,20 @@ if (is_array($author->roles)) {
 </fieldset>
 
 
-<!-- > LOCAL LANGUAGE OVERVIEW? -->
-
-
-<?php if (content_format('field_1_local_language_overview', $field_1_local_language_overview[0]) > '') : ?>
-<fieldset class="collapsible collapsed"><legend>Local Language Overview</legend>
-
-  <?php foreach ($field_1_local_language_overview as $item) { ?>
-    <?php print check_markup(content_format('field_1_local_language_overview', $item)) ?>
-  <?php } ?>
-
-</fieldset>
-<?php endif; ?>
-
-
-
 <div class="links">
 	<?php print $links; ?>
 </div>
+
+    <?php
+	    if ($submitted) {
+	    print '<div class="styledbox postinfo">';
+//	    	if ($submitted) { print $submitted; }  changed this to remove time from submitted by information - TT - 14th March 2007
+			if ($submitted) {
+				print  t('Submitted by') . '&nbsp;' . theme('username', $node) . '&nbsp;' . t('on') . '&nbsp;' . format_date($node->created, 'custom', 'jS M Y') . '&nbsp;' . $rss;
+			}
+	    print '</div>';
+	    } ?>			
+
 
 <style type="text/css">
 
@@ -1134,6 +1156,7 @@ if (is_array($author->roles)) {
 #content fieldset{
   border: none;
 }
+
 
 #top{
   margin-left: -92px;
@@ -1223,12 +1246,22 @@ ul.primary {
   border: solid 1px #999;
 }
 
+#content #map_img {
+	margin-top: 5px;
+	margin-bottom: 20px;
+	margin-left: 60px;
+}
+
 #content .scrollbarshort {
   width: 470px;
   height: 60px;
   overflow: auto;
   padding: 5px;
   border: solid 1px #999;
+}
+
+#content .link_to_profile {
+	float: left;
 }
 
 </style>
