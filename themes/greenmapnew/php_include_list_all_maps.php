@@ -3,6 +3,7 @@
 drupal_add_js('misc/collapse.js');
 
 $debug = FALSE;
+$debug = true;
 
 // try to fetch from cache
 $cid = 'node:3820';
@@ -61,9 +62,11 @@ $lastCity = null;
 // admins, new unapproved, lapsed, and staff
 $invalid_rids = array(3,4,5,6,7);
 
+// get the list mapping gm.org map nid's with ogm.org map nid's
+$ogm_maps = sync_fetch_all_ogm_maps();
+
 // find first valid map
 while ($map = db_fetch_array($map_result)) {
-  //$output .= "<li>found potentially valid first map from mapmaker uid={$map['uid']} name={$map['name']}";
   // exclude invalid user roles
   $mapmaker_roles_result = db_query("SELECT rid FROM users_roles WHERE uid = %d", $map['uid']);
   $valid_user = TRUE;
@@ -104,13 +107,21 @@ while($map){
 
   // print map information
   $download_link = $map['filepath'] ?
-    sprintf('<a href="%s"><img src="%s" alt="%s" title="%s" class="maplist" /></a>',
+    sprintf('<a href="%s" target="_blank"><img src="%s" alt="%s" title="%s" class="maplist" /></a>',
       file_create_url($map['filepath']),
       base_path().drupal_get_path('theme', 'greenmapnew').'/img/icon_map_download.png',
       t('Download Green Map'), t('Download Green Map')) :
     sprintf('<img src="%s" alt="" title="" class="maplist" />',
       base_path().drupal_get_path('theme', 'greenmapnew').'/img/icon_map_blank.png');
-  $output .= sprintf('%s<a href="%s"><img src="%s" alt="%s" title="%s" class="maplist" /></a> %s<br />'."\n",
+  $ogm_link = $ogm_maps[$map['nid']] ?
+    sprintf('<a href="%s" target="_blank"><img src="%s" alt="%s" title="%s" class="maplist" /></a>',
+      'http://www.opengreenmap.org/'. $ogm_maps[$map['nid']]->alias,
+      base_path().drupal_get_path('theme', 'greenmapnew').'/img/icon_map_ogm.png',
+      t('Open Green Map'), t('Open Green Map')) :
+    sprintf('<img src="%s" alt="" title="" class="maplist" />',
+      base_path().drupal_get_path('theme', 'greenmapnew').'/img/icon_map_blank.png');
+  $output .= sprintf('%s%s<a href="%s"><img src="%s" alt="%s" title="%s" class="maplist" /></a> %s<br />'."\n",
+      $ogm_link,
       $download_link,
       url('user/'.$map['uid']),
       base_path().drupal_get_path('theme', 'greenmapnew').'/img/icon_map_profile.png',
