@@ -12,9 +12,10 @@ drupal_add_js('themes/greenmap/gallery.js');
 // query database to get all photos for selected album, and set up array of path, caption & nid ?>
 
 <?php $currentnid=$node->nid; ?>
-<?php $resultgallery = db_query("SELECT p.field_photo_alt, n.title, n.nid
+<?php $resultgallery = db_query("SELECT ndfp.field_photo_alt, n.title, n.nid
 								FROM node_content_photo p 
 									INNER JOIN node n on p.nid = n.nid
+                  INNER JOIN node_data_field_photo ndfp ON ndfp.nid = n.nid
 								WHERE p.field_album_via_computed_value = $currentnid  
 								ORDER BY n.nid  
 								LIMIT 100"); 

@@ -203,8 +203,6 @@ function sync_open_mysql_connect($db_user,$db_pass,$db,$server = 'localhost'){
       mysql_close($link); // close connect
     return false;
   }
-
-  mysql_set_charset('utf8', $link);
   return $link;
 }
 
@@ -661,9 +659,10 @@ function sess_regene($link) {
   }
 
   return true;
+
 }
 
-function _sync_ogm_maps() {
+function sync_fetch_all_ogm_maps() {
   require_once('sync.inc.php');
   if (!$link = sync_open_mysql_connect($db_user,$db_pass,$db)) {
     watchdog('error', t('Error S6: Couldnt do sync_open_mysql_connect in sync.module'));
@@ -671,14 +670,13 @@ function _sync_ogm_maps() {
   }
 
   // fetch the public, published ogm maps for this gm user, including url alias
-  $query = sprintf("SELECT n.nid, n.uid, title, dst AS alias, field_greenhouse_map_nid_value AS gm_nid
-    FROM node n
+  $query = sprintf("SELECT n.nid, n.uid, title, dst
+    FROM node n 
     INNER JOIN og ON og.nid=n.nid
-    INNER JOIN content_type_green_map ctgm on ctgm.vid = n.vid
     LEFT JOIN url_alias ON src = CONCAT('node/', n.nid)
-    WHERE type = 'green_map'
-    AND status = 1
-    AND og_private = 0
+    WHERE type = 'green_map' 
+    AND status = 1 
+    AND og_private = 0 
     ORDER BY nid", $uid);
 
   if(!$result = mysql_query($query,$link)) {
@@ -688,29 +686,14 @@ function _sync_ogm_maps() {
     return false;
   }
 
+  $ogm_maps = array();
   db_query('TRUNCATE TABLE {sync_ogm_green_maps}');
   while ($ogm_map = mysql_fetch_object($result)) {
-    db_query("INSERT INTO {sync_ogm_green_maps} (ogm_nid, ogm_uid, gm_nid, title, alias)
-        VALUES (%d, %d, %d, '%s', '%s')",
-        $ogm_map->nid,
-        $ogm_map->uid,
-        $ogm_map->gm_nid ? $ogm_map->gm_nid : 0,
-        $ogm_map->title,
-        $ogm_map->alias);
+    $ogm_maps[] = $ogm_map;
+    db_query("INSERT INTO {sync_ogm_green_maps} (ogm_nid, ogm_uid, title, alias) VALUES (%d, %d, '%s', '%s')", $ogm_map->nid, $ogm_map->uid, $ogm_map->title, $ogm_map->dst);
   }
 
   mysql_close($link);
-  return true;
-}
-
-function sync_fetch_all_ogm_maps() {
-  $ogm_maps = array();
-  $result = db_query("SELECT ogm_uid, ogm_nid, gm_nid, title, alias FROM sync_ogm_green_maps");
-  while ($ogm_map = db_fetch_object($result)) {
-    if ($gm_nid = $ogm_map->gm_nid) {
-      $ogm_maps[$gm_nid] = $ogm_map;
-    }
-  }
   return $ogm_maps;
 }
 
@@ -723,9 +706,10 @@ function sync_fetch_ogm_maps($uid = 0) {
   while ($ogm_map = db_fetch_object($result)) {
     $ogm_maps[] = $ogm_map;
   }
+
   return $ogm_maps;
 }
 
 function sync_cron() {
-  _sync_ogm_maps();
+  sync_fetch_all_ogm_maps();
 }

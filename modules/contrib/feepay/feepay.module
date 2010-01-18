@@ -587,7 +587,6 @@ function _feepay_admin_mail() {
  * Wrapper for user_mail
  */
 function _feepay_mail($subject, $message, $period, $user = NULL, $user_list = NULL) {
-  $testing_site = variable_get('testing_site', FALSE);
   global $base_url;
   if ($user_list) {
     $to = _feepay_admin_mail();
@@ -602,15 +601,7 @@ function _feepay_mail($subject, $message, $period, $user = NULL, $user_list = NU
     $headers = "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: <$from>\nErrors-to: $from\n";
     $recipients = explode(',', $to);
     foreach ($recipients as $recipient) {
-      if ($testing_site) {
-        watchdog('user', 'TEST SITE: not sending mail to %user (subject: %subject)',
-              array('%user' => trim($recipient), '%subject' => $subject),
-              WATCHDOG_NOTICE,
-              l(t('edit user'), "admin/user/edit/$user->uid"));
-      }
-      else {
-        user_mail(trim($recipient), $subject, wordwrap(strtr($message, $variables), 80), $headers);
-      }
+      user_mail(trim($recipient), $subject, wordwrap(strtr($message, $variables), 80), $headers);
     }
   }
 }

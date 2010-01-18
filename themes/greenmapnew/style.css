@@ -109,11 +109,11 @@ float:right;
 	margin-bottom: -8px;
 	min-width: 1049px;
 	overflow: hidden;
-	background-color: transparent;
+background-color: transparent;
 }
 
 #sitelogo {
-	margin-left: -12px;
+margin-left: -12px;
 	float: left;
 	position:absolute;
 	z-index: 3;
@@ -404,6 +404,9 @@ ul.secondary a:hover {
 	}
 
 
+
+
+
 #content h1, #content h2, #content h3 {
 margin:0 0 1em 0;
 padding:0;
@@ -413,7 +416,7 @@ letter-spacing: 0.05em;
 }
 
 #content h1 {
-	color: #F89938;
+	color: #F78F1E;
 	font-size: 1.8em;
 }
 
@@ -438,9 +441,9 @@ letter-spacing: 0.05em;
 }
 
 #content img {
-  border:none;
-  float:right;
-  padding:5px;
+border:none;
+float:right;
+padding:5px;
 }
 
 #content img.maplist {
@@ -524,10 +527,9 @@ display: inline;
 #leftprofile{
 	float:left;
 	margin-right:10px;
-	margin-top: 10px;
-	width:500px;
-}
+	width:140px;
 
+}
 
 #leftprofile img{
 	border:none;
@@ -537,38 +539,20 @@ display: inline;
 	float:none;
 }
 
-#leftprofile_topleft {
-	float:left;
-	margin-right:10px;
-	margin-top: 10px;
-	width:150px;
-}
-
-#leftprofile_topright {
-	float:left;
-	margin-right:10px;
-	margin-top: 10px;
-	width:350px;
-}
-
 #rightprofile{
-	margin-left: 500px;
-	margin-top: 10px;
-	width:320px;
+	margin-left: 160px;
 }
 
-#rightprofile #gmap {
-	width:220px;
-	height:150px;
-}
+
+
 
 /***** TT - map profile styles *****/
 
 #leftmap{
 	float:left;
 	margin-right:10px;
-	margin-top: 10px;
-	width:500px;
+	width:300px;
+
 }
 
 #leftmap img{
@@ -579,9 +563,11 @@ display: inline;
 	float:none;
 }
 
-#rightmap #gmap {
-	width:200px;
+#leftmap #gmap {
+	width:100%;
 	height:150px;
+	margin-top: 0px;
+	margin-bottom: 0px;
 }
 
 #albums a.img, #albums img {
@@ -596,9 +582,7 @@ display: inline;
 }
 
 #rightmap{
-	margin-left: 500px;
-	margin-top: 10px;
-	width:320px;
+	margin-left: 320px;
 }
 
 .item div label{
@@ -625,8 +609,7 @@ display: inline;
 	margin: 0;
 	padding: 0;
 	display: inline;
-
-	list-style:none;
+	list-style: none;
 }
 
 .item .data li {
@@ -1725,7 +1708,23 @@ div.wbx-gw-wrapper {
 
 div.breadcrumb { display: none; }
 
+/*** End of file ***/
+
 .ogm-maps div.item-list ul li a {
   color: #F89938;
 }
 
+a.external {
+  background: url(img/external.png) center right no-repeat;
+  padding-right: 13px;
+}
+
+a.pdf {
+  background: url(img/pdf.png) center right no-repeat !important;
+  padding-right: 13px !important;
+}
+
+a.img_file {
+  background: url(img/img.png) center right no-repeat !important;
+  padding-right: 13px !important;
+}
