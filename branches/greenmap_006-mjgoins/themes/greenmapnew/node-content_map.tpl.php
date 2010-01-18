@@ -163,11 +163,12 @@ if ($currentnid > '') {  // in some cases nid isn't set (ie when first adding a 
 	 $currentuid=$node->uid; // get nid for current map ?>
 	<?php  // do query to get all albums & photos associated with map
 	$resultgallery = db_query("
-									SELECT p.field_photo_alt, ng.title, ng.nid
+									SELECT ndfp.field_photo_alt, ng.title, ng.nid
 									From node_content_photo p
 										INNER JOIN node np on p.nid = np.nid
 										INNER JOIN node ng on p.field_album_via_computed_value = ng.nid
 										INNER JOIN node_content_gallery am on am.nid = ng.nid
+										INNER JOIN node_data_field_photo ndfp ON ndfp.nid = np.nid
 									WHERE am.field_associated_map_nid = $currentnid
 									ORDER BY ng.title, p.nid
 									LIMIT 100
@@ -178,11 +179,12 @@ if ($currentnid > '') {  // in some cases nid isn't set (ie when first adding a 
 	// if there's no associated albums, then check if the user has any other albums not associated with a map
 	if ($number == 0) {
 		$resultgallery = db_query("
-									SELECT p.field_photo_alt, ng.title, ng.nid
+									SELECT ndfp.field_photo_alt, ng.title, ng.nid
 									From {node_content_photo} p
 										INNER JOIN {node} np on p.nid = np.nid
 										INNER JOIN {node} ng on p.field_album_via_computed_value = ng.nid
 										INNER JOIN {node_content_gallery} am on am.nid = ng.nid
+										INNER JOIN {node_data_field_photo} ndfp ON ndfp.nid = np.nid
 									WHERE am.field_associated_map_nid = 0 AND ng.uid = %d
 									ORDER BY ng.title, p.nid
 									LIMIT 100
