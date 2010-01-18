@@ -404,10 +404,11 @@ if ($allowed_editor) {
 <?php $currentuid=$user->uid; // get nid for current profile ?>
 <?php  // do query to get all albums & photos associated with map
 $resultgallery = db_query("
-								SELECT p.field_photo_alt, ng.title, ng.nid
+								SELECT ndfp.field_photo_alt, ng.title, ng.nid
 								From node_content_photo p
 									INNER JOIN node np on p.nid = np.nid
 									INNER JOIN node ng on p.field_album_via_computed_value = ng.nid
+									INNER JOIN node_data_field_photo ndfp ON ndfp.nid = np.nid
 								WHERE ng.uid = $currentuid
 								ORDER BY ng.title, p.nid
 								LIMIT 100

@@ -34,9 +34,10 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
 <?php // $current_album_nid = $field_album_via_computed_value[0]['view']; ?>
 <?php $current_album_nid = $field_album_via_computed[0]['value']; ?>
 
-<?php $resultgallery = db_query("SELECT p.field_photo_alt, n.title, n.nid
+<?php $resultgallery = db_query("SELECT ndfp.field_photo_alt, n.title, n.nid
 								FROM node_content_photo p 
 									INNER JOIN node n on p.nid = n.nid
+									INNER JOIN node_data_field_photo ndfp ON ndfp.nid = n.nid
 								WHERE p.field_album_via_computed_value = $current_album_nid  
 								ORDER BY n.nid  
 								LIMIT 100"); 
