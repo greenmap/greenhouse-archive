@@ -1,0 +1,527 @@
+<?php
+// $Id: invoice.module,v 1.5.2.6 2007/02/27 03:46:10 sime Exp $
+/**
+ * This module is designed to create invoices which can be sent to members
+ * for NAVA
+ */
+
+/**
+ * Implementation of hook_help()
+ */
+function invoice_help($section) {
+  switch ($section) {
+    case 'admin/modules#description':
+      return t('<b>EC:</b> Create invoices for customers in the backend of the system');
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_perm()
+ */
+function invoice_perm() {
+  return array('create invoice');
+}
+
+/**
+ * Implementation of hook_menu()
+ */
+function invoice_menu($may_cache) {
+  if ($may_cache) {
+    $items[] = array(
+      'path' => 'admin/store/invoice',
+      'title' => t('invoice'),
+      'callback' => 'invoice_page',
+      'access' => user_access('create invoice'),
+      'type' => MENU_NORMAL_ITEM
+    );
+    $items[] = array(
+      'path' => 'admin/store/invoice/list',
+      'title' => t('list'),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => -1,
+    );
+    $items[] = array(
+      'path' => 'admin/store/invoice/add',
+      'title' => 'add invoice',
+      'callback' => 'invoice_add',
+      'type' => MENU_CALLBACK
+    );
+    $items[] = array(
+      'path' => 'admin/store/invoice/edit',
+      'title' => 'edit invoice',
+      'callback' => 'invoice_edit_existing',
+      'type' => MENU_CALLBACK
+    );
+    $items[] = array(
+      'path' => 'admin/store/settings/invoice',
+      'title' => 'invoice',
+      'callback' => 'invoice_ec_settings',
+      'access' => user_access('administer store'),
+      'type' => MENU_NORMAL_ITEM,
+    );
+  }
+  else {
+
+    if (substr($_GET['q'], 0, 19) == 'admin/store/invoice') {
+      $items[] = array(
+        'path' => 'admin/store/invoice/'. arg(3) .'/edit',
+        'title' => t('Invoice Summary'),
+        'callback' => 'invoice_edit',
+        'callback arguments' => array(arg(3)),
+        'type' => MENU_LOCAL_TASK,
+      );
+      $items[] = array(
+        'path' => 'admin/store/invoice/'. arg(3) .'/delete',
+        'title' => t('Delete Pending Invoice'),
+        'callback' => 'invoice_delete_confirm',
+        'callback arguments' => array(arg(3)),
+        'type' => MENU_CALLBACK,
+      );
+      $extra = _invoice_gen_menu(arg(3), $invoice);
+      if (is_array($extra)) {
+        $items = array_merge($items, $extra);
+      }
+    }
+  }
+  return $items;
+}
+
+/**
+ * Implementation of hook_ec_settings()
+ */
+function invoice_ec_settings() {
+  $form['ec_invoice_screens'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Order of Invoice Screens'),
+    '#tree' => true,
+    '#theme' => 'invoice_settings_order_form',
+  );
+  foreach (invoice_get_screens() as $key => $module) {
+    $form['ec_invoice_screens'][$module] = array(
+      '#type' => 'textfield',
+      '#default_value' => $key,
+      '#size' => 5,
+      '#maxlength' => 2,
+    );
+  }
+  $form['ec_invoice_terms'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Invoice Terms'),
+    '#size' => 60,
+    '#default_value' => variable_get('ec_invoice_terms', '4 Weeks'),
+    '#description' => t('Enter the terms for any invoice that is created. Values like "4 Weeks" or "Next Month" can be used. See %help_url1 or %help_url2 for more information.<br />The current value will return a due date of %due from %now', array('%help_url1' => l('http://php.net/strtotime', 'http://php.net/strtotime'), '%help_url2' => l('http://www.gnu.org/software/tar/manual/html_node/tar_109.html', 'http://www.gnu.org/software/tar/manual/html_node/tar_109.html'), '%due' => format_date(strtotime(variable_get('ec_invoice_terms', '4 Weeks'))), '%now' => format_date(time()))),
+  );
+  $form['#submit'] = array(
+    'invoice_settings_form_submit' => array(), 
+    'system_settings_form_submit' => array()
+  );
+  return system_settings_form('invoice_ec_settings_form', $form);
+}
+
+function theme_invoice_settings_order_form($form) {
+  $header = array(
+    array('data' => 'module'),
+    array('data' => 'screen order'),
+  );
+  
+  foreach (element_children($form) as $module) {
+    $rows[] = array(
+      array('data' => $module),
+      array('data' => form_render($form[$module])),
+    );
+  }
+  $output.= theme('table', $header, $rows);
+  $output.= form_render($form);
+  return $output;
+}
+
+function invoice_settings_form_submit($form_id, &$form_values) {
+  uasort($form_values['ec_invoice_screens'], create_function('$a, $b', 'return $a < $b ? -1 : 1;'));
+  $form_values['ec_invoice_screens'] = array_keys($form_values['ec_invoice_screens']);
+}
+
+/**
+ * Call backs
+ */
+function invoice_page() {
+  global $user;
+
+  drupal_set_title(t('Pending Invoices'));
+  
+  $header = array(
+    array('data' => 'Invoice'),
+    array('data' => 'Created', 'field' => 'i.created', 'sort' => 'ASC'),
+    array('data' => 'Changed', 'field' => 'i.changed'),
+    array('data' => 'Last Changed by', 'field' => 'u.uid'),
+    array('data' => 'Operations'),
+  );
+  $sql = "SELECT i.*, u.name FROM {ec_invoice} i LEFT JOIN {users} u ON i.uid = u.uid";
+  $sql.= tablesort_sql($header);
+  $result = pager_query($sql, 50);
+  
+  while ($data = db_fetch_object($result)) {
+    $invoice = unserialize($data->invoice);
+    $rows[] = array(
+      array('data' => isset($invoice->address['billing']->firstname) ? "{$invoice->address['billing']->firstname} {$invoice->address['billing']->lastname}" : $invoice->invoice_id),
+      array('data' => format_date($data->created)),
+      array('data' => format_date($data->changed)),
+      array('data' => l($data->name, "user/$data->uid")),
+      array('data' => l(t('edit'), "admin/store/invoice/{$invoice->invoice_id}/edit") .' '. l(t('delete'), "admin/store/invoice/{$invoice->invoice_id}/delete")),
+    );
+  }
+
+  $output.= theme('table', $header, $rows);
+  $output.= theme('pager', NULL, 50, 0);
+  return $output;
+}
+
+/**
+ * invoice_add()
+ *
+ * Create the basics of the invoice
+ */
+function invoice_add($id) {
+  if ($invoice = invoice_get($id)) {
+    if (isset($_REQUEST['destination']) || isset($_REQUEST['edit']['destination'])) {
+      $invoice->destination = isset($_REQUEST['destination']) ? $_REQUEST['destination'] : $_REQUEST['edit']['destination'];
+      unset($_REQUEST['destination'], $_REQUEST['edit']['destination']);
+    }
+    else {
+      unset($invoice->destination);
+    }
+    invoice_save($id, $invoice);
+    // we already have an invoice for this contact, go and edit it.
+    drupal_goto("admin/store/invoice/{$id}/edit"); // TODO: Fix destination.
+  }
+  
+  $invoice = new StdClass;
+  $invoice->invoice_id = $id;
+  $invoice->type = 'invoice';
+  if (isset($_REQUEST['destination']) || isset($_REQUEST['edit']['destination'])) {
+    $invoice->destination = isset($_REQUEST['destination']) ? $_REQUEST['destination'] : $_REQUEST['edit']['destination'];
+    unset($_REQUEST['destination'], $_REQUEST['edit']['destination']);
+  }
+
+  foreach (invoice_get_screens() as $module) {
+    invoice_invoke($module, $invoice, 'create', $id);
+  }
+
+  if (!form_get_errors()) {
+    invoice_save($invoice->invoice_id, $invoice);
+    drupal_goto("admin/store/invoice/{$id}/edit");
+  }
+  else {
+    drupal_goto();
+  }
+}
+
+/**
+ * invoice_edit_existing()
+ */
+function invoice_edit_existing($txnid = NULL) {
+  $id = "txnid_{$txnid}";
+  if ($invoice = invoice_get($id)) {
+    if (isset($_REQUEST['destination']) || isset($_REQUEST['edit']['destination'])) {
+      $invoice->destination = isset($_REQUEST['destination']) ? $_REQUEST['destination'] : $_REQUEST['edit']['destination'];
+      unset($_REQUEST['destination'], $_REQUEST['edit']['destination']);
+    }
+    else {
+      unset($invoice->destination);
+    }
+    invoice_save($id, $invoice);
+    // we already have an invoice for this contact, go and edit it.
+    drupal_goto("admin/store/invoice/{$id}/edit"); // TODO: Fix destination.
+  }
+
+  if ($invoice = store_transaction_load($txnid)) {
+    $invoice->invoice_id = $id;
+    if (isset($_REQUEST['destination']) || isset($_REQUEST['edit']['destination'])) {
+      $invoice->destination = isset($_REQUEST['destination']) ? $_REQUEST['destination'] : $_REQUEST['edit']['destination'];
+      unset($_REQUEST['destination'], $_REQUEST['edit']['destination']);
+    }
+
+    if ($invoice->items) {
+      $items = array();
+      foreach ($invoice->items as $item) {
+        $items[$item->nid] = $item;
+      }
+      $invoice->items = $items;
+    }
+
+    invoice_save($invoice->invoice_id, $invoice);
+    drupal_goto("admin/store/invoice/{$id}/edit");
+  }
+  else {
+    drupal_not_found();
+    exit();
+  }
+}
+
+/**
+ * invoice_edit()
+ */
+function invoice_edit($invoice_id, $module = 'review') {
+  if (!($invoice = invoice_get($invoice_id))) {
+     drupal_not_found();
+     exit();
+  }
+
+  drupal_set_title(t('Build Invoice for %name', array('%name' => isset($invoice->address['billing']->firstname) ? "{$invoice->address['billing']->firstname} {$invoice->address['billing']->lastname}" : $invoice->invoice_id)));
+  
+  if ($module == 'review') {
+    $form = invoice_edit_review($invoice_id, $invoice);
+    $form[] = array('#type' => 'submit', '#value' => isset($invoice->txnid) ? t('Update Invoice') : t('Create Invoice'));
+    $form[] = array('#type' => 'submit', '#value' => t('Discard Invoice'));
+  }
+  else {
+    $form = invoice_invoke($module, $invoice, 'form');
+    $form['module'] = array('#type' => 'value', '#value' => $module);
+  }
+
+  $form['invoice_id'] = array('#type' => 'value', '#value' => $invoice_id);
+  $form['invoice'] = array('#type' => 'value', '#value' => $invoice);
+  $form['#token'] = "ecommerce_invoice:{$module}:{$invoice->uid}:{$invoice_id}";
+  
+  return drupal_get_form('invoice_form_'. $module, $form, 'invoice_form');
+}
+
+function invoice_form_validate($form_id, $form_values) {
+  $invoice = _invoice_get_from_form($form_values);
+  invoice_invoke($form_values['module'], $invoice, 'validate');
+}
+
+function invoice_form_submit($form_id, $form_values) {
+  $invoice = _invoice_get_from_form($form_values);
+  $path = invoice_invoke($form_values['module'], $invoice, 'submit');
+  invoice_save($form_values['invoice_id'], $invoice);
+  return $path ? $path : "admin/store/invoice/{$form_values['invoice_id']}/edit";
+}
+
+function invoice_edit_review($invoice_id, &$invoice) {
+  foreach (invoice_get_screens() as $module) {
+    invoice_invoke($module, $invoice, 'post_update');
+  }
+  foreach (invoice_get_screens() as $module) {
+    if ($extra = invoice_invoke($module, $invoice, 'review')) {
+      $form[$module] = $extra;
+    }
+  }
+  return $form;
+}
+
+function invoice_form_review_validate($form_id, $form_values) {
+  $invoice = _invoice_get_from_form($form_values);
+  foreach (invoice_get_screens() as $module) {
+    invoice_invoke($module, $invoice, 'review_validate');
+  }
+}
+
+function invoice_form_review_submit($form_id, $form_values) {
+  $invoice = _invoice_get_from_form($form_values);
+  foreach (invoice_get_screens() as $module) {
+    invoice_invoke($module, $invoice, 'review_submit');
+  }
+
+  if ($_POST['op'] == t('Create Invoice') || $_POST['op'] == t('Update Invoice')) {
+    if (!isset($invoice->duedate)) {
+      $invoice->duedate = strtotime(variable_get('ec_invoice_terms', '4 Weeks'));
+    }
+    $txnid = store_transaction_save($invoice);
+    drupal_set_message(t('Invoice %txnid has been created.', array('%txnid' => $txnid)));
+    invoice_delete($form_values['invoice_id']);
+    if ($txn = store_transaction_load($txnid)) {
+      foreach ($invoice as $key => $value) {
+        if (!isset($txn->$key)) {
+          $txn->$key = $value;
+        }
+      }
+      foreach (invoice_get_screens() as $module) {
+        $goto = invoice_invoke($module, $txn, 'after_create');
+
+        if ($goto) {
+          $redirect = $goto;
+        }
+      }
+    }
+    return $redirect ? $redirect : ($invoice->destination ? $invoice->destination : 'store/transaction/view/'. $txnid);
+  }
+  elseif ($_POST['op'] == t('Discard Invoice')) {
+    drupal_goto("admin/store/invoice/{$form_values['invoice_id']}/delete", $invoice->destination ? 'destination='. urlencode($invoice->destination) : '');
+  }
+  else {
+    invoice_save($form_values['invoice_id'], $invoice);
+  }
+}
+
+/**
+ * invoice_delete_confirm()
+ */
+function invoice_delete_confirm($invoice_id) {
+  if (!($invoice = invoice_get($invoice_id))) {
+    drupal_not_found();
+    exit();
+  }
+  $form['invoice_id'] = array('#type' => 'value', '#value' => $invoice_id);
+  $form['invoice'] = array('#type' => 'value', '#value' => $invoice);
+
+  return confirm_form($form, t('Delete pending invoice for %contact_name', array('%contact_name' => $invoice->address['billing']->firstname ? "{$invoice->address['billing']->firstname} {$invoice->address['billing']->lastname}" : $invoice->id)), $_GET['destination'] ? $_GET['destination'] : 'admin/store/invoice', t('This action is permanant'), t('Delete'));
+}
+
+function invoice_delete_confirm_submit($form_id, &$form_values) {
+  if ($form_values['confirm']) {
+    invoice_delete($form_values['invoice_id']);
+    drupal_set_message(t('pending invoice for %contact_name deleted', array('%contact_name' => $form_values['invoice']->address['billing']->firstname ? "{$form_values['invoice']->address['billing']->firstname} {$form_values['invoice']->address['billing']->lastname}" : $invoice->id)));
+  }
+  return 'admin/store/invoice';
+}
+
+/**
+ * Functions
+ */
+/**
+ * invoice_create()
+ *
+ * Automatically create an invoice based upon the information past to this
+ * function.
+ */
+function invoice_create($id, $items = null) {
+  $invoice = new StdClass;
+  $invoice->invoice_id = $id;
+  $invoice->type = 'invoice_auto';
+
+  /* Create initial Invoice */
+  foreach (invoice_get_screens() as $module) {
+    invoice_invoke($module, $invoice, 'create', $id);
+  }
+  
+  /* Add any thing that needs to be added for an automatic Invoice before
+   * products are added. */
+  foreach (invoice_get_screens() as $module) {
+    invoice_invoke($module, $invoice, 'auto_pre');
+  }
+
+  /* add any products */
+  foreach ($items as $nid => $data) {
+    product_invoice_add($invoice, $nid, $data);
+  }
+
+  /* Make any other additions */
+  foreach (invoice_get_screens() as $module) {
+    invoice_invoke($module, $invoice, 'post_update');
+  }
+
+  return store_transaction_save($invoice);
+}
+
+/**
+ * invoice_get_screens()
+ */
+function invoice_get_screens() {
+  $old_screens = $screens = variable_get('ec_invoice_screens', array());
+
+  foreach (module_implements('invoiceapi') as $module) {
+    if (!in_array($module, $screens)) {
+      $screens[] = $module;
+    }
+    else {
+      unset($old_screens[array_search($module, $old_screens)]);
+    }
+  }
+
+  // remove any screens that don't exist anymore.
+  foreach ($old_screens as $module) {
+    if (($i = array_search($module, $screens)) !== false) {
+      unset($screens[$i]);
+    }
+  }
+
+  return $screens;
+}
+
+/**
+ * invoice_get()
+ *
+ * Load the invoice from the database
+ */
+function invoice_get($invoice_id) {
+  if ($invoice = db_result(db_query("SELECT invoice FROM {ec_invoice} WHERE invoice_id = '%s'", $invoice_id))) {
+    return unserialize($invoice);
+  }
+  else {
+    return false;
+  }
+}
+
+/**
+ * invoice_save()
+ *
+ * Save the current pending invoices into the database
+ */
+function invoice_save($invoice_id, $invoice) {
+  global $user;
+
+  $data = serialize($invoice);
+  if ($created = db_result(db_query("SELECT created FROM {ec_invoice} WHERE invoice_id = '%s'", $invoice_id))) {
+    db_query("UPDATE {ec_invoice} SET changed = %d, invoice = '%s', uid = %d WHERE invoice_id = '%s'", time(), $data, $user->uid, $invoice_id);
+  }
+  else {
+    db_query("INSERT INTO {ec_invoice} (uid, invoice_id, created, changed, invoice) VALUES (%d, '%s', %d, %d, '%s')", $user->uid, $invoice_id, time(), time(), $data);
+  }
+}
+
+/**
+ *
+ */
+function invoice_invoke($module, &$invoice, $op, $a3 = null, $a4 = null) {
+  $f = $module .'_invoiceapi';
+
+  if (function_exists($f)) {
+    return $f($invoice, $op, $a3, $a4);
+  }
+  return false;
+}
+
+/**
+ * invoice_delete()
+ *
+ * Discard an invoice.
+ */
+function invoice_delete($invoice_id) {
+  db_query("DELETE FROM {ec_invoice} WHERE invoice_id = '%s'", $invoice_id);
+}
+
+/**
+ * Private functions
+ */
+function _invoice_gen_menu($invoice_id, $invoice) {
+  $items = array();
+
+  foreach (invoice_get_screens() as $module) {
+    if ($title = module_invoke($module, 'invoiceapi', $module, 'form')) {
+      $items[] = array(
+        'path' => "admin/store/invoice/{$invoice_id}/edit/$module",
+        'title' => $title,
+        'callback arguments' => array($invoice_id, $module),
+        'type' => MENU_LOCAL_TASK, 
+        'weight' => $i++,
+      );
+    }
+  }
+
+  return $items;
+}
+
+function _invoice_get_from_form($form_values) {
+  if (is_object($form_values['invoice'])) {
+    $invoice = $form_values['invoice'];
+    unset($form_values['invoice']);
+
+    foreach ($form_values as $key => $value) {
+      $invoice->$key = $value;
+    }
+    
+    return $invoice;
+  }
+  return false;
+}
