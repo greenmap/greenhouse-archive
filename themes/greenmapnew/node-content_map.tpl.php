@@ -1216,13 +1216,13 @@ $dictc = array(
 }
 
 #content h1 {
-margin-left: 34px;
-margin-top: -3px;
+  margin-left: 34px;
+  margin-top: -3px;
 }
 
 #content legend {
-font-size: 15px;
-margin-left: -3px;
+  font-size: 15px;
+  margin-left: -3px;
 }
 
 #content {
@@ -1267,7 +1267,7 @@ html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
 
 
 #content .item-list ul li {
-  list-style: none;
+ 
   margin-left: -1px;
 }
 
