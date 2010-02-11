@@ -1471,7 +1471,7 @@ if ($allowed_editor && !$new_user) {
 ?>
 
 <?php 
-$recent_photo = ' <img src="' . $base_path . gm_getrecent_photo($userid) .'">';
+$recent_photo = ' <img src="' . $base_path . gm_getrecent_photo($userid) .'" height="100px">';
 print l($recent_photo,'mapmaker_albums/' . $userid, null, null, null, null, true);
 
 ?>
