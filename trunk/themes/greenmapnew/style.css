@@ -368,18 +368,18 @@ ul.secondary li {
 ul.secondary a {
   padding: 0;
   text-decoration: none;
-  color: #007185;
+  color: #2E67B1;
   padding: 1px 0.5em 2px 0.5em;
   margin: 0;
 }
 ul.secondary a.active {
-  background-color: #007185;
+  background-color: #2E67B1;
   color: #fff;
   border: 0;
 }
 ul.secondary a:hover {
   background-color: #e2f3f7;
-  color: #007185;
+  color: #2E67B1;
 }
 
 /*** Content ***/
@@ -588,14 +588,10 @@ display: inline;
 	display: inline;
 	margin-right: 1px;
 	margin-bottom: 1px;
-	
+	float: left;
 }
 
-#albums a {
-	display: block;	
-}
-
-#rightmap{
+#rightmap {
 	margin-left: 500px;
 	margin-top: 10px;
 	width:320px;
@@ -977,7 +973,7 @@ a.rss:hover, #content a.rss:hover {
 /***** TT - mapmakers styles in blue *****/
 
 .mapmakers, div.mapmakers, #content .mapmakers a, #content div.data a.mapmakers, #content div.newsarticle a.mapmakers {
-	color: #007185;
+	color: #2E67B1;
 }
 
 .mapmakersbg {
@@ -985,12 +981,12 @@ a.rss:hover, #content a.rss:hover {
 }
 
 #block-menu-301, #block-menu-301 a {
-	color: #007185;
+	color: #2E67B1;
 }
 
 #leftside div#block-menu-301 H1 {
 	background-repeat: no-repeat;
-	color: #007185;
+	color: #2E67B1;
 	background-image: url(img/text_bar_blue_2.gif);
 }
 #block-menu-301 li.expanded {
@@ -1012,7 +1008,7 @@ fieldset.required legend a, fieldset.required legend, a.required, #content field
 
 #content fieldset.required div.data a {
 	text-decoration: none;
-	color: #007185;
+	color: #2E67B1;
 }
 
 #content fieldset.required {
