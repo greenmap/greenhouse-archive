@@ -3,13 +3,14 @@
 
 <?php
 drupal_add_js('misc/collapse.js');
+
 ?>
 
 
 
 <?php
-
-
+$author = user_load(array('uid' => $node->uid));
+global $base_path;
 
 
 // if viewing list of map thumbnails then show that - used at the main maps overview page, and a dedicated views page
@@ -37,8 +38,9 @@ elseif ($teaser) {
 
 <?php
  // Load author details
-$author = user_load(array('uid' => $node->uid));
+
 $lapsed_roles = array('lapsed user');
+
 
 if (is_array($author->roles)) {
   if (count(array_intersect($author->roles, $lapsed_roles)) > 0) {
@@ -47,11 +49,11 @@ if (is_array($author->roles)) {
     $lapsed = FALSE;
 }}
 
-
-
 ?>
 
  <div class="item">
+
+ 
   <div><label><?php print t('Created by'); ?>:</label></div>
     <div class="data"> <?php print $author->name ?> </div>
  </div>
@@ -934,37 +936,6 @@ elseif (content_format('field_scale', $field_scale[0]) > '') { ?>
 
 <div id="rightmap">
 
-<!-- > LOCATION MAP -->
-
-<?php
-  $latitude = $locations[0]['latitude'];
-  $longitude = $locations[0]['longitude'];
-?>
-<?php if ((($latitude > '') && ($longitude > '')) || $allowed_editor) : ?>
-<fieldset><legend><?php print t('Location'); ?></legend>
-  <div id="gmap">
-  <?php
-
-  if(($latitude > '') && ($longitude > '')) {
-
-    $macro = '[gmap |id=map |center=' . $latitude . ', ' . $longitude ;
-    $macro .= ' |zoom=0 |width=100% |height=150 |control=Small |type=Map |tcontrol=off | markers=greenhouse/icon_greenmap_google::';
-    $macro .= $latitude . ',' . $longitude . ']';
-
-    $mymap = gmap_parse_macro($macro);
-    print gmap_draw_map($mymap);
-   } elseif ($allowed_editor) {
-      $url = $nid . '/edit#edit[locations][0][country]'; ?>
-      <div class="mapmakersbg"><?php print t('You have not set the location of this map. If you do not set the location, this Map will not show up
-    on the homepage of GreenMap.org!'); ?> <a class="mapmakers" href="<?php print $url; ?>"><?php print t('Click here to add the location'); ?></a>.</div>
-  <?php } ?>
-  </div>
-</fieldset>
-<?php endif ?>
-
-
-
-
 <!-- > ALBUMS -->
 
 <?php $currentnid=$node->nid; // get nid for current map
@@ -1050,23 +1021,6 @@ if ($currentnid > '') {  // in some cases nid isn't set (ie when first adding a 
   ?>
 
 
-<!-- > SEE MAPMAKER PROFILE -->
-
-<?php if (content_format('field_outcomes_on_community', $field_outcomes_on_community[0]) > '') : ?>
-<fieldset>
-
-<legend><?php print t('See Mapmaker Profile'); ?></legend>
-
-<div class="link_to_profile">
-<?php 
-$user_profile = user_load(array('uid'=>$node->uid));
-print theme('user_picture', $user_profile);
-?>
-</div>
-
-</fieldset>
-<?php endif; ?>
-
 
 
 <!-- > MORE MAPS BY MAPMAKER -->
@@ -1079,26 +1033,39 @@ print theme('user_picture', $user_profile);
   $maplist_view->args[0]=$node->uid;  // pass uid as argument
   $maplist_view->args[1]=$currentnid; // pass current nid to exclude current map from list
   $viewmaplist = views_get_view('maps_list_user');
+  
   $maplist = views_build_view('embed', $viewmaplist, $maplist_view->args, false, false);
 
   $rows = array();
   $output = '';
   $ogm_maps = sync_fetch_ogm_maps($node->uid);
+  
+  
+  
   if (is_array($ogm_maps) && count($ogm_maps)) {
+    print "Open Green Maps";
     foreach ($ogm_maps as $ogm_map) {
       $rows[] = l($ogm_map->title, 'http://www.opengreenmap/'. $ogm_map->alias,
-          array('class' => 'external', 'target' => '_blank', 'title' => t('Open Green Map')));
+          array('class' => 'external', 'target' => '_blank'));
     }
     $output = theme_item_list($rows);
     $output = '<div class="plain-list ogm-maps">'.$output.'</div>';
   }
-
+  
+  
   if ($maplist > '' || $output) { ?>
       <fieldset><legend><?php print t('More Maps by ') . $node->name; ?></legend>
+      
+      <div class="plain-list">
+      <?php print "Green Maps"; ?>
+      
       <?php print $output; ?>
       <?php print $maplist; ?>
+      
+      </div>
     </fieldset>
   <?php }
+  
 
  // Load author details
 $author = user_load(array('uid' => $node->uid));
@@ -1124,6 +1091,89 @@ if (is_array($author->roles)) {
 <?php } ?>
 
 
+
+<!-- > SEE MAPMAKER PROFILE -->
+
+<?php if (content_format('field_outcomes_on_community', $field_outcomes_on_community[0]) > '') : ?>
+<fieldset>
+
+<legend><?php print t('See Mapmaker Profile'); ?></legend>
+
+<div class="link_to_profile">
+<?php 
+$user_profile = user_load(array('uid'=>$node->uid));
+print theme('user_picture', $user_profile);
+?>
+</div>
+
+</fieldset>
+<?php endif; ?>
+
+
+
+
+<!-- > LOCATION MAP -->
+
+
+
+<?php
+  $latitude = $locations[0]['latitude'];
+  $longitude = $locations[0]['longitude'];
+?>
+
+<?php if ((($latitude > '') && ($longitude > '')) || $allowed_editor) : ?>
+<fieldset><legend><?php print t('Location'); ?></legend>
+
+  <div class="data">
+  <?php print check_plain($author->profile_project_area_local) . " -"?>
+  <?php print check_plain($author->profile_state) . " -"?>
+  <?php print check_plain($author->profile_project_country) . " -" ?>
+
+   
+  <?php if($author->profile_project_continent) { ?>
+<?php
+$dictc = array(
+ 'Africa' => 'maps/list/continent/africa',
+ 'Europe' => 'maps/list/continent/europe',
+ 'Latin America' => 'maps/list/continent/latin america',
+ 'North America' => 'maps/list/continent/north america',
+ 'Oceania' => 'maps/list/continent/oceania',
+ );
+?>
+
+
+   <?php print l(check_plain(ucwords(check_plain($author->profile_project_continent))),
+           $dictc[$author->profile_project_continent]);
+   ?>
+<?php }?>
+</div>
+
+
+
+  <div id="gmap">
+  <?php
+
+  if(($latitude > '') && ($longitude > '')) {
+
+    $macro = '[gmap |id=map |center=' . $latitude . ', ' . $longitude ;
+    $macro .= ' |zoom=0 |width=100% |height=150 |control=Small |type=Map |tcontrol=off | markers=greenhouse/icon_greenmap_google::';
+    $macro .= $latitude . ',' . $longitude . ']';
+
+    $mymap = gmap_parse_macro($macro);
+    print gmap_draw_map($mymap);
+   } elseif ($allowed_editor) {
+      $url = $nid . '/edit#edit[locations][0][country]'; ?>
+      <div class="mapmakersbg"><?php print t('You have not set the location of this map. If you do not set the location, this Map will not show up
+    on the homepage of GreenMap.org!'); ?> <a class="mapmakers" href="<?php print $url; ?>"><?php print t('Click here to add the location'); ?></a>.</div>
+  <?php } ?>
+  </div>
+</fieldset>
+<?php endif ?>
+
+
+
+
+
 <!-- > TAXONOMY -->
 <fieldset>
 <legend><?php print t('Related Maps by Theme'); ?></legend>
@@ -1134,6 +1184,7 @@ if (is_array($author->roles)) {
 <?php
 } ?>
 </fieldset>
+
 
 
 <div class="links">
@@ -1205,10 +1256,15 @@ html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
 }
 
 .plain-list ul li {
-  list-style-image: url(img/list.gif);
+  list-style-image: url("<?php print $base_path ?>images/list.gif");
   margin: 0 0 0.15em;
   padding: 1px 0;
 }
+
+.plain-list ul {
+	margin-left: 13px;
+}
+
 
 #content .item-list ul li {
   list-style: none;
