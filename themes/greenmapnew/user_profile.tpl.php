@@ -3,11 +3,14 @@
 drupal_add_js('misc/collapse.js');
 global $i18n_langpath;
 
+global $base_path;
+
 // we set $_SESSION['just_logged_in'] at sync_user function (hook_user)
 // it just makes sure that drupal_goto is run only once.
 // we can't call drupal_goto from hook_user (for some reason)
 
 $new_roles = array('new unauthenticated user');
+
 
 if (is_array($user->roles)) {
   if (!count(array_intersect($user->roles, $new_roles)) > 0) {
@@ -321,7 +324,9 @@ $dictc = array(
 <?php // print user picture
     if($user_picture) {print $user_picture;}
     elseif($allowed_editor || $new_user) { ?>
-        <fieldset><legend><?php print t('Picture'); ?></legend><div class="required">
+        <fieldset>
+        <legend><?php print t('Picture'); ?></legend>
+        <div class="required">
         <?php print l(t('Add a photo to your profile*'),'user/' . $user->uid . '/edit', $attributes_required); ?></div></fieldset>
 <?php   }
 
@@ -600,7 +605,7 @@ $add_a_map = '<br /><a class="mapmakers" href="' . base_path() . $i18n_langpath 
 
 <fieldset>
 <?php if($profile_introduction || $allowed_editor) { ?>
-<?php if (!$profile_introduction) { print 'required'; } ?><legend><?php print t('About Mapmaker'); ?></legend>
+<?php if (!$profile_introduction) { print 'required'; } ?><legend><?php print t('About this Mapmaker'); ?></legend>
 
 <div class="item">
   <?php if ($profile_introduction) { print check_markup($profile_introduction); }
@@ -713,314 +718,9 @@ $num_rows = db_num_rows($result);?>
 
 <div id="rightprofile">
 
-<!-- > MAPS BY MAPMAKER -->
-
-<?php if(!$new_user) { // don't show maps box if they're a new user ?>
-<fieldset><legend><?php print t('Maps by Mapmaker'); ?></legend>
-
-<?php
-$userid=$user->uid;
-
-// $result = pager_query($sql, $nlimitmap);
-$result = db_query("SELECT n.created, n.title, n.nid, n.changed FROM node n WHERE n.uid = $userid AND n.type = 'content_map' AND n.status = 1 ORDER BY n.changed DESC LIMIT 10");
-
-$num_rows = db_num_rows($result);
-$num_rows_map = $num_rows;
-
-$rows = array();
-$ogm_maps = sync_fetch_ogm_maps($user->uid);
-if (is_array($ogm_maps) && count($ogm_maps)) {
-  foreach ($ogm_maps as $ogm_map) {
-    $rows[] = l($ogm_map->title, 'http://www.opengreenmap.org/'. $ogm_map->alias,
-        array('class' => 'external', 'target' => '_blank', 'title' => t('Open Green Map')));
-  }
-  $output = theme_item_list($rows);
-  print '<div class="plain-list ogm-maps">'.$output.'</div>';
-}
-
-$rows = array();
-if($num_rows > 0) {
-  while ($this_node = db_fetch_object($result)) {
-    // $this_node = node_load(array('nid' => $this_node->nid));
-    $rows[] = l($this_node->title,'node/' . $this_node->nid);
-  }
-
-  $output = theme_item_list($rows);
-  ?>
-  <div class="plain-list">
-  <?php
-  print ($output);
-  if($num_rows > 9) {
-    print l(t('more') . '...','maps/by/user/' . $userid);
-  }
-  print $add_a_map;
-  ?>
-
-  </div>
-  <?php
-}
-else {
-  print t('No Maps Added') . '<br />' . $add_first_map ;
-}
-?>
-</fieldset>
-<?php } // end if that's hiding maps for new user ?>
-
-
-<!-- > LOCATION MAP -->
-
-<?php if ($location_set || $allowed_editor) : ?>
-<fieldset <?php if (!$location_set) { print 'required'; } ?> ><legend><?php print t('Location'); ?></legend>
-  <div id="gmap">
-  <?php
-
-  if($location_set) {
-
-    $macro = '[gmap |id=map |center=' . $latitude . ', ' . $longitude ;
-    $macro .= ' |zoom=0 |width=100% |height=150 |control=Small |type=Map |tcontrol=off | markers=greenhouse/icon_greenmap_google::';
-    $macro .= $latitude . ',' . $longitude . ']';
-
-    $mymap = gmap_parse_macro($macro);
-    print gmap_draw_map($mymap);
-   } elseif ($allowed_editor) {
-      $url = base_path() . $i18n_langpath . '/user/' . $user->uid . '/edit/gmap_user'; ?>
-      <?php print t('You have not set your location on the map.'); ?> <a class="mapmakers required" href="<?php print $url; ?>"><?php print t('Click here to set your location*'); ?></a>
-  <?php } ?>
-  </div>
-</fieldset>
-<?php endif ?>
 
 
 
-
-
-
-
-<!-- > ORGANIZATION DETAILS -->
-
-
-<fieldset <?php if (!$organization_complete) { print 'required'; } ?>>
-<legend><?php print t('Related Organization'); ?></legend>
-
-
-<div class="related_org">
-<?php if($profile_organization_type || $allowed_editor) { ?>
-
-<?php
-
-$dict = array(
- 'business' => 'mapmakers/list/organization/business',
- 'community/grass roots' => 'mapmakers/list/organization/community',
- 'governmental agency' => 'mapmakers/list/organization/individual',
- 'individual' => 'mapmakers/list/organization/individual',
- 'non-profit' => 'mapmakers/list/organization/nonprofit',
- 'school' => 'mapmakers/list/organization/school',
- 'tourism agency' => 'mapmakers/list/organization/tourism',
- 'university/college' => 'mapmakers/list/organization/university',
- 'youth' => 'mapmakers/list/organization/youth',
- 'other ' => 'mapmakers/list/organization/other',
-);
-?>
-
-<div class="item <?php if (!$profile_organization_type && $allowed_editor) { print 'required'; } ?>">
-  <div class="data">
-    <?php
-     print l(check_plain(ucwords(check_plain($profile_organization_type))),
-           $dict[$profile_organization_type]);
-    ?>
-    <?php if (!$profile_organization_type && $allowed_editor) { print l(t('Add your organization type*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
-  </div>
-</div>
-
-<?php } else {
-  print t('No Organization Type Added');
-}
-?>
-
-</div>
-</fieldset>
-
-
-<!-- > SOCIAL NETWORK CONNECT -->
-
-<?php // Social Networks Fieldset in User profile?>
-<?php if( $profile_facebook || $profile_twitter || $profile_youtube || $profile_flickr || $profile_hi5 || $profile_othersocial1 || $profile_othersocial2 || $profile_othersocial3)
-  print t('<fieldset ><legend>Connect with Mapmaker</legend>' ); ?>
-
-<div id="socialnetwork_img">
-<?php if( $profile_facebook )
-  print t('<div><a href="'.$profile_facebook.'"><img src="<?php print $base_path ?>images/facebook.png"></a></div>'); ?>
-<?php if( $profile_twitter )
-  print t('<div><a href="'.$profile_twitter.'"><img src="<?php print $base_path ?>images/twitter.png"></a></div>'); ?>
-<?php if( $profile_youtube )
-  print t('<div><a href="'.$profile_youtube.'"><img src="<?php print $base_path ?>images/youtube.png"></a></div>'); ?>
-<?php if( $profile_flickr )
-  print t('<div><a href="'.$profile_flickr.'"><img src="<?php print $base_path ?>images/flickr.png"></a></div>'); ?>
-<?php if( $profile_hi5 )
-  print t('<div><a href="'.$profile_hi5.'">Hi5</a></div>'); ?>
-<?php if( $profile_othersocial1 )
-  print t('<div><a href="'.$profile_othersocial1.'">'.$profile_othersocial1.'</a></div>'); ?>
-<?php if( $profile_othersocial2 )
-  print t('<div><a href="'.$profile_othersocial2.'">'.$profile_othersocial2.'</a></div>'); ?>
-<?php if( $profile_othersocial3 )
-  print t('<div><a href="'.$profile_othersocial3.'">'.$profile_othersocial3.'</a></div>'); ?>
-</div>
-
-<?php if( $profile_facebook || $profile_twitter || $profile_youtube || $profile_flickr || $profile_hi5 || $profile_othersocial1 || $profile_othersocial2 || $profile_othersocial3)
-  print t( '</fieldset>'); ?>
-<?php // end Social Newtorks collapsible ?>
-
-
-
-
-<?php if ($lapsed_user && !$allowed_editor) { ?>
-  <fieldset class="collapsible required"><legend><?php print t('No Longer an Active Project'); ?></legend>
-    <div class="required">
-      <?php print t('This is no longer an active project. If you would like to start a Green Map project in this community, please go to the %link section of the website and register.', array('%link' => l(t('Participate'),'participate'))) ; ?>
-    </div>
-  </fieldset>
-<?php } ?>
-
-<?php if ($lapsed_user && $allowed_editor) { ?>
-  <fieldset class="collapsible required"><legend><?php print t('YOUR PROJECT IS NO LONGER ACTIVE'); ?></legend>
-    <div class="required">
-      <p>
-      <?php print t('As your project is no longer active and your Mapmaker Fee has not been paid, other people will now be able to make a Green Map
-            in this community. If you wish to resume your project, or if you believe there has been a mistake, please ') . l(t('contact us'),'contact'); ?>
-      </p>
-      <p>
-      <?php print t('Your Mapmaker License Agreement is now terminated. As agreed when you registered with Green Map System, this means that you no longer
-              have rights to use GMSs Licensed Materials, nor have the right to print or publish any new versions or editions as an official Green
-              Map. Any Green Map created during your Licensed Term can be displayed and disseminated "as is", without any updating. From your notice
-              of termination, you may not promote, announce or solicit funds or develop your Green Map. You may not in any way profit from your
-              terminated license (although you may offer your research, base maps, expertise, etc. on a voluntary basis to a new Mapmaker in your area).'); ?>
-      </p>
-      <p>
-      <?php print t('If you wish to re-start this project please ') . l(t('contact us'),'contact'); ?>
-      </p>
-    </div>
-  </fieldset>
-<?php } ?>
-
-
-<?php if ($lapsing_user && $allowed_editor) { ?>
-  <fieldset class="collapsible required"><legend><?php print t('YOUR MAPMAKER FEE IS NOW DUE'); ?></legend>
-    <div class="required">
-      <p><?php print t('Your Mapmaker Fee is now due. Please follow the instructions below. If you believe there has been a mistake, please ') . l(t('contact us'),'contact'); ?></p>
-      <p><?php print t('If your project is complete and you wish to terminate your Mapmaker License, please %link. Otherwise follow the steps below to continue:', array('%link' => l(t('click here'),'user/terminate'))); ?></p>
-      <ol>
-        <li><?php print t('Use the calculator to check your Mapmaker Fee for this year. The figure below shows the Fee you calculated last year: ') . l(t('Click to use the calculator'),'user/' . $user->uid . '/edit/F.+Fees'); ?></li>
-        <li><?php print t('Use the link below to pay the Mapmaker Fee that you have calculated. If you are unable to pay using Visa/Mastercard/Paypal please ') . l(t('contact us'),'contact'); ?>
-          <?php // find some way to insert the paypal link ?>
-          <div>
-            <form action="http://www.paypal.com/cgi-bin/webscr" method="post" >
-
-            <input name="amount"  id="donationinput" value="<?php print $profile_fee_total; ?>"/>
-            <input type="submit" name="submit" value="Pay" />
-            <input type="hidden" name="cmd" value="_xclick">
-            <input type="hidden" name="business" value="info@greenmap.org">
-            <input type="hidden" name="item_name" value="Mapmaker Fee Renewal Payment for Green Map System - <?php print $user->name; ?>">
-            <input type="hidden" name="notify_url" value="http://greenmap.org/greenhouse/lm_paypal/ipn">
-            <input type="hidden" name="no_shipping" value="1">
-            <input type="hidden" name="return" value="http://greenmap.org/greenhouse/pay/thanks">
-            <input type="hidden" name="currency_code" value="USD">
-            <input type="hidden" name="custom" value="<?php print $user->uid; ?>">
-
-            </form>
-          </div>
-        </li>
-        <li><?php print t('If you are unable to pay your full Mapmaker Fee, please complete the form below to tell us about what services you have provided in the last year to Green Map System, and what services you will be able to provide next year. Green Map System will respond within a week. Things you can help with include translation, outreach, poster design, newsletter design, etc. Please give details about languages and technical skills. ') ?>
-          <div>
-            <?php // insert form ?>
-            <?php $block = module_invoke('feepay', 'block', 'view', 0);
-            print $block['content']; ?>
-          </div>
-        </li>
-      </ol>
-    </div>
-  </fieldset>
-<?php } ?>
-
-<?php if ($allowed_editor && $new_user) { // message for new users ?>
-  <fieldset class="collapsible"><legend><?php print t('INSTRUCTIONS'); ?></legend>
-  <div><strong>
-  <?php if (!$complete && !$profile_pending) { ?>
-    <?php print t('IMPORTANT: Your application has not been submitted yet. You need to fill in the information below.'); ?><br><br>
-    <?php print t('Everything with a red asterisk is information that is required. Everything in blue is optional. You can edit your information at any time.'); ?><br><br>
-    <?php print t('Once all the required information is complete you will be able to click the "Submit to Green Map" button at the bottom of the page. '); ?>
-  <?php } elseif ($complete && !$profile_pending) { ?>
-    <?php print t('Your application is now complete. You must click the "Submit to Green Map" button at the bottom of the page.'); ?><br><br>
-  <?php } elseif ($complete && $profile_pending && !($profile_pending_reason > '')) { ?>
-    <?php print t('Your application has been submitted for review by Green Map Sytem. If you have not heard back in two working days please email greenhouse@greenmap.org.'); ?><br><br>
-  <?php }  elseif ($complete && $profile_pending && ($profile_pending_reason == 'Payment requested') ) { ?>
-    <?php print t('You have been emailed by Green Map System with instructions on how to pay your Mapmaker Fee. Once Green Map System has received your payment your account will be approved.  If you have not received the email please contact greenhouse@greenmap.org.'); ?><br><br>
-  <?php }  elseif ($complete && $profile_pending && ($profile_pending_reason > '') ) { ?>
-    <?php print t('You have been emailed by Green Map System with instructions on how to complete your application. Once you have made these changes please click the <em>Resubmit</em> button below. If you have done this and not heard back from Green Map within two working days please email greenhouse@greenmap.org.'); ?><br><br>
-    <?php // insert Resubmit button here
-    $block = module_invoke('greenmap', 'block', 'view', 3);
-    print $block['content'];?>
-  <?php } ?>
-  </strong></div>
-  </fieldset>
-<?php } // end of new user message ?>
-
-<?php if ($allowed_editor && !$new_user) { ?>
-  <fieldset class="collapsible mapmakersbg"><legend><?php print t('Things You Need to Do'); ?></legend>
-
-  <?php
-  $todo = 0;
-
-  // add message to tell user to add self to Greenmap discussion in Organic Groups
-
-    $groups = $user->og_groups;
-  if($groups){
-    $joined = FALSE;
-    foreach($groups as $group){
-      if($group[nid] == 2929) {
-        $joined = TRUE;
-      }
-    }
-  }
-  else {
-    $joined = FALSE;
-  }
-
-  if(!$joined) {
-    ?><p class="mapmakers"><?php print t('You have not joined the Mapmakers Discussion group. This is where you can ask questions of other mapmakers, and
-    share ideas. Posts here are automatically emailed to everyone in the group, so it is a great way to get help. ')
-    . l(t('Click here to join'),'og/subscribe/2929',NULL,'destination=node/2929'); ?></p><?php
-  }
-
-
-
-//  $num_rows_map = mysql_num_rows($resultmap);
-  if ($num_rows_map == 0) {
-    $url = base_path() . $i18n_langpath . '/node/add/content_map'; ?>
-  <p class="mapmakers"><?php print t('You have not added any Green Maps to your profile. Even if you just started developing your map, you can let everyone
-  (including potential supporters) know about the goals of your work in progress.'); ?>
-  <a href="<?php print $url; ?>"><?php print t('Click here to add a Green Map'); ?></a>.</p>
-  <?php $todo = $todo + 1; ?>
-  <?php }
-
-  if(!($latitude > '') || !($longitude > '')) {
-      $url = base_path() . $i18n_langpath . '/user/' . $user->uid . '/edit/gmap_user'; ?>
-      <p class="mapmakers"><?php print t('You have not set your location on the map.'); ?> <a href="<?php print $url; ?>"><?php print t('Click here to set your location'); ?></a>.</p>
-    <?php $todo = $todo + 1; ?>
-  <?php } ?>
-
-  <?php if (!($user->profile_exchange_consulting) && !($user->profile_exchange_offline) && !($user->profile_exchange_visiting)) {
-    $url = base_path() . $i18n_langpath . '/user/' . $user->uid . '/edit/H.+Exchange+Services'; ?>
-  <p class="mapmakers"><?php print t('You have not added anything to the Green Map Exchange. Adding this information lets other Green Mapmakers know about consultancy and other services that you offer, as well as any hospitality you can offer to visiting Mapmakers. '); ?>
-  <a href="<?php print $url; ?>"><?php print t('Click here to add your Mapmakers Exchange information'); ?></a>.</p>
-  <?php $todo = $todo + 1; ?>
-  <?php } ?>
-
-  <?php if($todo == 0) { ?>
-    <p class="mapmakers"><?php print t('You have done all of the things that you need to do - thanks! You can still write more blog articles and add photos to your albums.'); ?></p>
-  <?php } ?>
-
-    </fieldset>
-<?php } // end fieldset for things the user needs to do ?>
 
 
 <?php // Set up a collapsible block for admins showing all info they need for a new user ?>
@@ -1493,74 +1193,351 @@ $dict = array(
 <?php } ?>
 
 
-<!-- > ALBUMS -->
 
 
-<?php if(!$new_user) { // don't show photos box if they're a new user ?>
-<?php $currentuid=$user->uid; // get nid for current profile ?>
-<?php  // do query to get all albums & photos associated with map
-  $resultgallery = db_query("
-                SELECT p.field_photo_alt, ng.title, ng.nid
-                From node_content_photo p
-                  INNER JOIN node np on p.nid = np.nid
-                  INNER JOIN node ng on p.field_album_via_computed_value = ng.nid
-                WHERE ng.uid = $currentuid
-                ORDER BY ng.title, p.nid
-                LIMIT 100
-              ");
-
-  $number = mysql_numrows($resultgallery);
 
 
-// if there's still no albums or photos then hide the whole photos fieldset, unless the viewer is the page owner or an admin, in which case print a message allowing them to add an album
-if (($number != 0) || $allowed_editor) {
+<!-- > MAPS BY MAPMAKER -->
+
+<?php if(!$new_user) { // don't show maps box if they're a new user ?>
+<fieldset><legend><?php print t('Maps by this Mapmaker'); ?></legend>
+
+<?php
+$userid=$user->uid;
+
+// $result = pager_query($sql, $nlimitmap);
+$result = db_query("SELECT n.created, n.title, n.nid, n.changed FROM node n WHERE n.uid = $userid AND n.type = 'content_map' AND n.status = 1 ORDER BY n.changed DESC LIMIT 10");
+
+$num_rows = db_num_rows($result);
+$num_rows_map = $num_rows;
+
+$rows = array();
+$ogm_maps = sync_fetch_ogm_maps($user->uid);
+
+
+
+if (is_array($ogm_maps) && count($ogm_maps)) {
+  print "Open Green Maps";
+  foreach ($ogm_maps as $ogm_map) {
+    $rows[] = l($ogm_map->title, 'http://www.opengreenmap.org/'. $ogm_map->alias,
+        array('class' => 'external', 'target' => '_blank'));
+  }
+  $output = theme_item_list($rows);
+  print '<div class="plain-list ogm-maps">'.$output.'</div>';
+}
+
+$rows = array();
+if($num_rows > 0) {
+  while ($this_node = db_fetch_object($result)) {
+    // $this_node = node_load(array('nid' => $this_node->nid));
+    $rows[] = l($this_node->title,'node/' . $this_node->nid);
+  }
+
+  $output = theme_item_list($rows);
   ?>
 
+  
+  <div class="plain-list">
+   
+  <?php
+  print "Green Maps";
+ 
+  print ($output);
+  if($num_rows > 9) {
+    print l(t('more') . '...','maps/by/user/' . $userid);
+  }
+  print $add_a_map;
+  ?>
+
+  </div>
+  <?php
+}
+else {
+  print t('No Maps Added') . '<br />' . $add_first_map ;
+}
+?>
+</fieldset>
+<?php } // end if that's hiding maps for new user ?>
+
+
+<!-- > LOCATION MAP -->
+
+<?php if ($location_set || $allowed_editor) : ?>
+<fieldset <?php if (!$location_set) { print 'required'; } ?> ><legend><?php print t('Location'); ?></legend>
+  <div id="gmap">
+  <?php
+
+  if($location_set) {
+
+    $macro = '[gmap |id=map |center=' . $latitude . ', ' . $longitude ;
+    $macro .= ' |zoom=0 |width=100% |height=150 |control=Small |type=Map |tcontrol=off | markers=greenhouse/icon_greenmap_google::';
+    $macro .= $latitude . ',' . $longitude . ']';
+
+    $mymap = gmap_parse_macro($macro);
+    print gmap_draw_map($mymap);
+   } elseif ($allowed_editor) {
+      $url = base_path() . $i18n_langpath . '/user/' . $user->uid . '/edit/gmap_user'; ?>
+      <?php print t('You have not set your location on the map.'); ?> <a class="mapmakers required" href="<?php print $url; ?>"><?php print t('Click here to set your location*'); ?></a>
+  <?php } ?>
+  </div>
+</fieldset>
+<?php endif ?>
+
+
+<!-- > ORGANIZATION DETAILS -->
+
+
+<fieldset <?php if (!$organization_complete) { print 'required'; } ?>>
+<legend><?php print t('Related Organization'); ?></legend>
+
+
+<div class="related_org">
+<?php if($profile_organization_type || $allowed_editor) { ?>
+
+<?php
+
+$dict = array(
+ 'business' => 'mapmakers/list/organization/business',
+ 'community/grass roots' => 'mapmakers/list/organization/community',
+ 'governmental agency' => 'mapmakers/list/organization/individual',
+ 'individual' => 'mapmakers/list/organization/individual',
+ 'non-profit' => 'mapmakers/list/organization/nonprofit',
+ 'school' => 'mapmakers/list/organization/school',
+ 'tourism agency' => 'mapmakers/list/organization/tourism',
+ 'university/college' => 'mapmakers/list/organization/university',
+ 'youth' => 'mapmakers/list/organization/youth',
+ 'other ' => 'mapmakers/list/organization/other',
+);
+?>
+
+<div class="item <?php if (!$profile_organization_type && $allowed_editor) { print 'required'; } ?>">
+  <div class="data">
+    <?php
+     print l(check_plain(ucwords(check_plain($profile_organization_type))),
+           $dict[$profile_organization_type]);
+    ?>
+    <?php if (!$profile_organization_type && $allowed_editor) { print l(t('Add your organization type*'),'user/'. $user -> uid .'/edit/A.+Organization+details',$attributes_required);  } ?>
+  </div>
+</div>
+
+<?php } else {
+  print t('No Organization Type Added');
+}
+?>
+
+</div>
+</fieldset>
+
+
+
+<!-- > SOCIAL NETWORK CONNECT -->
+
+<?php // Social Networks Fieldset in User profile?>
+<?php if( $profile_facebook || $profile_twitter || $profile_youtube || $profile_flickr || $profile_hi5 || $profile_othersocial1 || $profile_othersocial2 || $profile_othersocial3)
+  print t('<fieldset ><legend>Connect with Mapmaker</legend>' ); ?>
+
+<div id="socialnetwork_img">
+
+
+<?php if( $profile_facebook )
+  print '<div><a href="'. $profile_facebook .'"><img src="'. $base_path . 'images/facebook.png'.'"></a></div>' ;?>
+
+<?php if( $profile_twitter )
+  print t('<div><a href="'.$profile_twitter.'"><img src="<?php print $base_path ?>images/twitter.png"></a></div>'); ?>
+<?php if( $profile_youtube )
+  print t('<div><a href="'.$profile_youtube.'"><img src="<?php print $base_path ?>images/youtube.png"></a></div>'); ?>
+<?php if( $profile_flickr )
+  print t('<div><a href="'.$profile_flickr.'"><img src="<?php print $base_path ?>images/flickr.png"></a></div>'); ?>
+<?php if( $profile_hi5 )
+  print t('<div><a href="'.$profile_hi5.'">Hi5</a></div>'); ?>
+<?php if( $profile_othersocial1 )
+  print t('<div><a href="'.$profile_othersocial1.'">'.$profile_othersocial1.'</a></div>'); ?>
+<?php if( $profile_othersocial2 )
+  print t('<div><a href="'.$profile_othersocial2.'">'.$profile_othersocial2.'</a></div>'); ?>
+<?php if( $profile_othersocial3 )
+  print t('<div><a href="'.$profile_othersocial3.'">'.$profile_othersocial3.'</a></div>'); ?>
+</div>
+
+<?php if( $profile_facebook || $profile_twitter || $profile_youtube || $profile_flickr || $profile_hi5 || $profile_othersocial1 || $profile_othersocial2 || $profile_othersocial3)
+  print t( '</fieldset>'); ?>
+<?php // end Social Newtorks collapsible ?>
+
+
+
+
+<?php if ($lapsed_user && !$allowed_editor) { ?>
+  <fieldset class="collapsible required"><legend><?php print t('No Longer an Active Project'); ?></legend>
+    <div class="required">
+      <?php print t('This is no longer an active project. If you would like to start a Green Map project in this community, please go to the %link section of the website and register.', array('%link' => l(t('Participate'),'participate'))) ; ?>
+    </div>
+  </fieldset>
+<?php } ?>
+
+<?php if ($lapsed_user && $allowed_editor) { ?>
+  <fieldset class="collapsible required"><legend><?php print t('YOUR PROJECT IS NO LONGER ACTIVE'); ?></legend>
+    <div class="required">
+      <p>
+      <?php print t('As your project is no longer active and your Mapmaker Fee has not been paid, other people will now be able to make a Green Map
+            in this community. If you wish to resume your project, or if you believe there has been a mistake, please ') . l(t('contact us'),'contact'); ?>
+      </p>
+      <p>
+      <?php print t('Your Mapmaker License Agreement is now terminated. As agreed when you registered with Green Map System, this means that you no longer
+              have rights to use GMSs Licensed Materials, nor have the right to print or publish any new versions or editions as an official Green
+              Map. Any Green Map created during your Licensed Term can be displayed and disseminated "as is", without any updating. From your notice
+              of termination, you may not promote, announce or solicit funds or develop your Green Map. You may not in any way profit from your
+              terminated license (although you may offer your research, base maps, expertise, etc. on a voluntary basis to a new Mapmaker in your area).'); ?>
+      </p>
+      <p>
+      <?php print t('If you wish to re-start this project please ') . l(t('contact us'),'contact'); ?>
+      </p>
+    </div>
+  </fieldset>
+<?php } ?>
+
+
+<?php if ($lapsing_user && $allowed_editor) { ?>
+  <fieldset class="collapsible required"><legend><?php print t('YOUR MAPMAKER FEE IS NOW DUE'); ?></legend>
+    <div class="required">
+      <p><?php print t('Your Mapmaker Fee is now due. Please follow the instructions below. If you believe there has been a mistake, please ') . l(t('contact us'),'contact'); ?></p>
+      <p><?php print t('If your project is complete and you wish to terminate your Mapmaker License, please %link. Otherwise follow the steps below to continue:', array('%link' => l(t('click here'),'user/terminate'))); ?></p>
+      <ol>
+        <li><?php print t('Use the calculator to check your Mapmaker Fee for this year. The figure below shows the Fee you calculated last year: ') . l(t('Click to use the calculator'),'user/' . $user->uid . '/edit/F.+Fees'); ?></li>
+        <li><?php print t('Use the link below to pay the Mapmaker Fee that you have calculated. If you are unable to pay using Visa/Mastercard/Paypal please ') . l(t('contact us'),'contact'); ?>
+          <?php // find some way to insert the paypal link ?>
+          <div>
+            <form action="http://www.paypal.com/cgi-bin/webscr" method="post" >
+
+            <input name="amount"  id="donationinput" value="<?php print $profile_fee_total; ?>"/>
+            <input type="submit" name="submit" value="Pay" />
+            <input type="hidden" name="cmd" value="_xclick">
+            <input type="hidden" name="business" value="info@greenmap.org">
+            <input type="hidden" name="item_name" value="Mapmaker Fee Renewal Payment for Green Map System - <?php print $user->name; ?>">
+            <input type="hidden" name="notify_url" value="http://greenmap.org/greenhouse/lm_paypal/ipn">
+            <input type="hidden" name="no_shipping" value="1">
+            <input type="hidden" name="return" value="http://greenmap.org/greenhouse/pay/thanks">
+            <input type="hidden" name="currency_code" value="USD">
+            <input type="hidden" name="custom" value="<?php print $user->uid; ?>">
+
+            </form>
+          </div>
+        </li>
+        <li><?php print t('If you are unable to pay your full Mapmaker Fee, please complete the form below to tell us about what services you have provided in the last year to Green Map System, and what services you will be able to provide next year. Green Map System will respond within a week. Things you can help with include translation, outreach, poster design, newsletter design, etc. Please give details about languages and technical skills. ') ?>
+          <div>
+            <?php // insert form ?>
+            <?php $block = module_invoke('feepay', 'block', 'view', 0);
+            print $block['content']; ?>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </fieldset>
+<?php } ?>
+
+<?php if ($allowed_editor && $new_user) { // message for new users ?>
+  <fieldset class="collapsible"><legend><?php print t('INSTRUCTIONS'); ?></legend>
+  <div><strong>
+  <?php if (!$complete && !$profile_pending) { ?>
+    <?php print t('IMPORTANT: Your application has not been submitted yet. You need to fill in the information below.'); ?><br><br>
+    <?php print t('Everything with a red asterisk is information that is required. Everything in blue is optional. You can edit your information at any time.'); ?><br><br>
+    <?php print t('Once all the required information is complete you will be able to click the "Submit to Green Map" button at the bottom of the page. '); ?>
+  <?php } elseif ($complete && !$profile_pending) { ?>
+    <?php print t('Your application is now complete. You must click the "Submit to Green Map" button at the bottom of the page.'); ?><br><br>
+  <?php } elseif ($complete && $profile_pending && !($profile_pending_reason > '')) { ?>
+    <?php print t('Your application has been submitted for review by Green Map Sytem. If you have not heard back in two working days please email greenhouse@greenmap.org.'); ?><br><br>
+  <?php }  elseif ($complete && $profile_pending && ($profile_pending_reason == 'Payment requested') ) { ?>
+    <?php print t('You have been emailed by Green Map System with instructions on how to pay your Mapmaker Fee. Once Green Map System has received your payment your account will be approved.  If you have not received the email please contact greenhouse@greenmap.org.'); ?><br><br>
+  <?php }  elseif ($complete && $profile_pending && ($profile_pending_reason > '') ) { ?>
+    <?php print t('You have been emailed by Green Map System with instructions on how to complete your application. Once you have made these changes please click the <em>Resubmit</em> button below. If you have done this and not heard back from Green Map within two working days please email greenhouse@greenmap.org.'); ?><br><br>
+    <?php // insert Resubmit button here
+    $block = module_invoke('greenmap', 'block', 'view', 3);
+    print $block['content'];?>
+  <?php } ?>
+  </strong></div>
+  </fieldset>
+<?php } // end of new user message ?>
+
+
+
+
+<!-- > ALBUMS -->
 <fieldset><legend><?php print t('Albums'); ?></legend>
 <div id="albums">
 
-  <?php $i = 0; // used to loop through all the photos from teh database query
-  $current_gallery = 0; // this variable checks as we loop to see if we've moved onto new gallery, and shows title & Link if so.
-  $album_photo_number = 0; // this counts how many photos have been shown for that album. Use it to limit how many listed per album
-
-  while($number > $i){
-
-    $item[$i]['value'] = 'files/albumphotos/' . mysql_result($resultgallery,$i,"field_photo_alt"); // photo url
-    $item[$i]['title'] = mysql_result($resultgallery,$i,"title"); // gallery title
-    $item[$i]['nid'] = mysql_result($resultgallery,$i,"nid"); // gallery nid
-
-    if($item[$i]['nid'] != $current_gallery) {
-      // print gallery title & link & set album_photo_number to 1?>
-      <?php print l($item[$i]['title'], 'node/' . $item[$i]['nid']) ?>
-      <?php $current_gallery = $item[$i]['nid']; ?>
-      <?php $album_photo_number = 1; ?>
-    <?php }
-
-    // print photo thumbnail unless album_photo_number is greater than 2 ?>
-    <?php if($album_photo_number < 3) { ?>
-        <a href="<?php print base_path() . $i18n_langpath ?>/node/
-        <?php print $item[$i]['nid'] ?>" title="click to view album" class="img">
-        <?php print theme('imagecache', gallerythumb, $item[$i]['value'])   ?></a>
-    <?php } ?>
-
-  <?php // end looping row
-  $i++;
-  $album_photo_number++;
-  }
-
+<?php
 if ($allowed_editor && !$new_user) {
     // give link to add an album
   print l(t('Add an album'),'node/add/content_gallery',array('class' => 'mapmakers'));
 }
 ?>
+
+<?php 
+$recent_photo = ' <img src="' . $base_path . gm_getrecent_photo($userid) .'">';
+print l($recent_photo,'mapmaker_albums/' . $userid, null, null, null, null, true);
+
+?>
 </div>
 </fieldset>
-<?php // end hiding of fieldset if no photos present
-} ?>
-<?php } // end if that's hiding photos for new user ?>
+
+
+<!-- > THINGS YOU NEED TO DO (for logged in users) -->
+
+<?php if ($allowed_editor && !$new_user) { ?>
+  <fieldset class="collapsible mapmakersbg"><legend><?php print t('Things You Need to Do'); ?></legend>
+
+  <?php
+  $todo = 0;
+
+  // add message to tell user to add self to Greenmap discussion in Organic Groups
+
+    $groups = $user->og_groups;
+  if($groups){
+    $joined = FALSE;
+    foreach($groups as $group){
+      if($group[nid] == 2929) {
+        $joined = TRUE;
+      }
+    }
+  }
+  else {
+    $joined = FALSE;
+  }
+
+  if(!$joined) {
+    ?><p class="mapmakers"><?php print t('You have not joined the Mapmakers Discussion group. This is where you can ask questions of other mapmakers, and
+    share ideas. Posts here are automatically emailed to everyone in the group, so it is a great way to get help. ')
+    . l(t('Click here to join'),'og/subscribe/2929',NULL,'destination=node/2929'); ?></p><?php
+  }
 
 
 
+//  $num_rows_map = mysql_num_rows($resultmap);
+  if ($num_rows_map == 0) {
+    $url = base_path() . $i18n_langpath . '/node/add/content_map'; ?>
+  <p class="mapmakers"><?php print t('You have not added any Green Maps to your profile. Even if you just started developing your map, you can let everyone
+  (including potential supporters) know about the goals of your work in progress.'); ?>
+  <a href="<?php print $url; ?>"><?php print t('Click here to add a Green Map'); ?></a>.</p>
+  <?php $todo = $todo + 1; ?>
+  <?php }
+
+  if(!($latitude > '') || !($longitude > '')) {
+      $url = base_path() . $i18n_langpath . '/user/' . $user->uid . '/edit/gmap_user'; ?>
+      <p class="mapmakers"><?php print t('You have not set your location on the map.'); ?> <a href="<?php print $url; ?>"><?php print t('Click here to set your location'); ?></a>.</p>
+    <?php $todo = $todo + 1; ?>
+  <?php } ?>
+
+  <?php if (!($user->profile_exchange_consulting) && !($user->profile_exchange_offline) && !($user->profile_exchange_visiting)) {
+    $url = base_path() . $i18n_langpath . '/user/' . $user->uid . '/edit/H.+Exchange+Services'; ?>
+  <p class="mapmakers"><?php print t('You have not added anything to the Green Map Exchange. Adding this information lets other Green Mapmakers know about consultancy and other services that you offer, as well as any hospitality you can offer to visiting Mapmakers. '); ?>
+  <a href="<?php print $url; ?>"><?php print t('Click here to add your Mapmakers Exchange information'); ?></a>.</p>
+  <?php $todo = $todo + 1; ?>
+  <?php } ?>
+
+  <?php if($todo == 0) { ?>
+    <p class="mapmakers"><?php print t('You have done all of the things that you need to do - thanks! You can still write more blog articles and add photos to your albums.'); ?></p>
+  <?php } ?>
+
+    </fieldset>
+<?php } // end fieldset for things the user needs to do ?>
 
 
 <?php if($new_user && $allowed_editor) { // print a form for the "Submit to Green Map" button ?>
