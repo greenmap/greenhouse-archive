@@ -698,8 +698,9 @@ $num_rows = db_num_rows($result);?>
     print l(t('see all blogs') . '...','mapmaker_blogs/' . $userid);
   }
   ?>
+  </div>
 <?php } // end if that's hiding blogs for new user ?>
-</div>
+
 </fieldset>
 
 
