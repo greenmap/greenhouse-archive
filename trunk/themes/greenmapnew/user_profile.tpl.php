@@ -1339,16 +1339,15 @@ $dict = array(
 
 <div id="socialnetwork_img">
 
-
 <?php if( $profile_facebook )
   print '<div><a href="'. $profile_facebook .'"><img src="'. $base_path . 'images/facebook.png'.'"></a></div>' ;?>
 
 <?php if( $profile_twitter )
-  print t('<div><a href="'.$profile_twitter.'"><img src="'. $base_path . 'images/twitter.png'.'</a></div>'); ?>
+  print '<div><a href="'. $profile_twitter.'"><img src="'. $base_path . 'images/twitter.png'.'"</a></div>'; ?>
 <?php if( $profile_youtube )
-  print t('<div><a href="'.$profile_youtube.'"><img src="'. $base_path . 'images/youtube.png'.'</a></div>'); ?>
+  print '<div><a href="'. $profile_youtube.'"><img src="'. $base_path . 'images/youtube.png'.'"</a></div>'; ?>
 <?php if( $profile_flickr )
-  print t('<div><a href="'.$profile_flickr.'"><img src="'. $base_path . 'images/flickr.png'.'</a></div>'); ?>
+  print '<div><a href="'. $profile_flickr.'"><img src="'. $base_path . 'images/flickr.png'.'"</a></div>'; ?>
 <?php if( $profile_hi5 )
   print t('<div><a href="'.$profile_hi5.'">Hi5</a></div>'); ?>
 <?php if( $profile_othersocial1 )
