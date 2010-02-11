@@ -270,8 +270,14 @@ function gm_getrecent_photo($uid) {
 
 function greenmapnew_user_picture($account) {
   
+  global $user;
+  $ret = NULL;
+  $max_h = 140; //max pixels
    
   if (variable_get('user_pictures', 0)) {
+    
+    $imageinfo = image_get_info($account->picture);
+ 
     if ($account->picture && file_exists($account->picture)) {
       $picture = file_create_url($account->picture);
     }
@@ -281,18 +287,33 @@ function greenmapnew_user_picture($account) {
 
     if (isset($picture)) {
       $alt = t('%user\'s picture', array('%user' => $account->name ? $account->name : variable_get('anonymous', 'Anonymous')));
-      $picture = theme('image', $picture, $alt, $alt, '', false);
+      
+      $attributes = array();
+      
+      if ($imageinfo['height'] > $max_h) {
+      	$attributes['height'] = $max_h;
+      }
+      
+      $picture = theme('image', $picture, $alt, $alt, $attributes, false);
       if (!empty($account->uid) && user_access('access user profiles')) {
         $picture = l($picture, "user/$account->uid", array('title' => t('View user profile.')), NULL, NULL, FALSE, TRUE);
       }
-      return "<div class=\"picture\">$picture</div>";
+      
+      $ret = "<div class=\"picture\">$picture</div>";
     }
     else {
       $picture = "images/placeholder.jpg";
       $picture = theme('image', $picture, $alt, $alt, '', false);
-      return "<div class=\"picture\">$picture</div>";
+      
+      if($account->uid == $user->uid){
+       $ret = l("<div class=\"picture\">$picture</div>", "user/" . $user->uid . '/edit', array('title' => t('click to add a profile picture')), NULL, NULL, NULL, TRUE);
+      }
+      else{
+      	$ret = "<div class=\"picture\">$picture</div>";
+      }
     }
   }
+  return $ret;
 }
 
 
