@@ -257,3 +257,46 @@ function phptemplate_cart_view($form) {
   $output.= form_render($form);
   return $output;
 }
+
+
+function gm_getrecent_photo($uid) {
+	$result = db_query("SELECT nid FROM {node} WHERE type='content_photo' AND uid=%d ORDER BY created LIMIT 1", $uid);
+	$nid = db_result($result);
+	$node = node_load($nid);
+	return $node->field_photo[0][filepath];
+}
+
+
+
+function greenmapnew_user_picture($account) {
+  
+   
+  if (variable_get('user_pictures', 0)) {
+    if ($account->picture && file_exists($account->picture)) {
+      $picture = file_create_url($account->picture);
+    }
+    else if (variable_get('user_picture_default', '')) {
+      $picture = variable_get('user_picture_default', '');
+    }
+
+    if (isset($picture)) {
+      $alt = t('%user\'s picture', array('%user' => $account->name ? $account->name : variable_get('anonymous', 'Anonymous')));
+      $picture = theme('image', $picture, $alt, $alt, '', false);
+      if (!empty($account->uid) && user_access('access user profiles')) {
+        $picture = l($picture, "user/$account->uid", array('title' => t('View user profile.')), NULL, NULL, FALSE, TRUE);
+      }
+      return "<div class=\"picture\">$picture</div>";
+    }
+    else {
+      $picture = "images/placeholder.jpg";
+      $picture = theme('image', $picture, $alt, $alt, '', false);
+      return "<div class=\"picture\">$picture</div>";
+    }
+  }
+}
+
+
+
+
+
+
