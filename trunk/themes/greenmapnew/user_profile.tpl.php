@@ -581,13 +581,7 @@ $add_a_map = '<br /><a class="mapmakers" href="' . base_path() . $i18n_langpath 
 
 
 
-<?php {?>
-<div class="item">
-  <div><label><?php print t('Contact'); ?>:</label></div>
-  <div class="data">
-  <?php print t('Use contact box at the bottom');  ?></div>
-</div>
-<?php }?>
+
 
 
 </fieldset>
@@ -705,21 +699,14 @@ $num_rows = db_num_rows($result);?>
 
 
 
-
-
-
-
-
-
-
 <!-- > RIGHT PROFILE -->
 
 <div id="rightprofile">
 
 
-
-
-
+<fieldset>
+<?php print l(t('Edit Your Profile'), 'user/' . $user->uid . '/edit');?>
+</fieldset>
 
 <?php // Set up a collapsible block for admins showing all info they need for a new user ?>
 
