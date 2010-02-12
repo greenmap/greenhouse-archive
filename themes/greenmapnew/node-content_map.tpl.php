@@ -137,6 +137,7 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
   </div>
 </div>
 
+
 <!-- > (HOW TO) GET THIS MAP -->
 
 <?php if ((content_format('field_other_ways_to_get_this_ma', $field_other_ways_to_get_this_ma[0]) > '') ||
@@ -202,17 +203,6 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
   <?php print t('This map is not available for download yet'); ?>
  </div>
 <?php endif; ?>
-
-
-<?php // insert add/edit link if this person is allowed to do so ?>
-<?php if ($allowed_editor) { ?>
-  <div class="item mapmakers">
-    <?php $url = 'node/' . $nid . '/edit'; ?>
-    <?php $attributes = array("class" => "mapmakers"); ?>
-    <div class="data" ><?php print l(t('Add or edit these details'),$url,$attributes); ?></div>
-  </div>
-
-<?php } ?>
 
 
 <?php if (content_format('field_more_details_of_how_to_ge', $field_more_details_of_how_to_ge[0]) > '') : ?>
@@ -914,6 +904,7 @@ elseif (content_format('field_scale', $field_scale[0]) > '') { ?>
 <?php }?>
 
 
+
 <!-- > LOCAL LANGUAGE OVERVIEW -->
 
 
@@ -936,7 +927,88 @@ elseif (content_format('field_scale', $field_scale[0]) > '') { ?>
 
 <div id="rightmap">
 
-<!-- > ALBUMS -->
+
+
+<?php // insert add/edit link if this person is allowed to do so ?>
+<?php if ($allowed_editor) { ?>
+    <fieldset>
+    <?php $url = 'node/' . $nid . '/edit'; ?>
+    <?php $attributes = array("class" => "mapmakers"); ?>
+    <?php print l(t('Edit Map Profile'),$url,$attributes); ?>
+    </fieldset>
+
+<?php } ?>
+
+<!-- > MORE MAPS BY MAPMAKER -->
+
+<?php 
+// print a list of all the mapmaker's other maps by inserting a view
+// show all the maps for this user by inserting a view 'maps_list_user'
+
+  global $maplist_view;
+  $currentnid=$node->nid; // get nid for current map
+
+
+  $maplist_view->args[0]=$node->uid;  // pass uid as argument
+  $maplist_view->args[1]=$currentnid; // pass current nid to exclude current map from list
+  $viewmaplist = views_get_view('maps_list_user');
+  
+  $maplist = views_build_view('embed', $viewmaplist, $maplist_view->args, false, false);
+
+  $rows = array();
+  $output = '';
+  $ogm_maps = sync_fetch_ogm_maps($node->uid);
+  
+  
+  
+  if (is_array($ogm_maps) && count($ogm_maps)) {
+    print "Open Green Maps";
+    foreach ($ogm_maps as $ogm_map) {
+      $rows[] = l($ogm_map->title, 'http://www.opengreenmap/'. $ogm_map->alias,
+          array('class' => 'external', 'target' => '_blank'));
+    }
+    $output = theme_item_list($rows);
+    $output = '<div class="plain-list ogm-maps">'.$output.'</div>';
+  }
+  
+  
+  if ($maplist > '' || $output) { ?>
+      <fieldset><legend><?php print t('More Maps by ') . $node->name; ?></legend>
+      
+      <div class="plain-list">
+      <?php print "Green Maps"; ?>
+      
+      <?php print $output; ?>
+      <?php print $maplist; ?>
+      
+      </div>
+    </fieldset>
+  <?php }
+  
+
+ // Load author details
+$author = user_load(array('uid' => $node->uid));
+$lapsed_roles = array('lapsed user');
+
+if (is_array($author->roles)) {
+  if (count(array_intersect($author->roles, $lapsed_roles)) > 0) {
+    $lapsed = TRUE;
+  } else {
+    $lapsed = FALSE;
+}}
+
+?>
+
+<?php if($lapsed){ ?>
+
+  <fieldset class="collapsible required"><legend><?php print t('No Longer an Active Project'); ?></legend>
+    <div class="required">
+      <?php print t('This is no longer an active project. If you would like to start a Green Map project in this community, please go to the %link section of the website and register.', array('%link' => l(t('Participate'),'participate'))) ; ?>
+    </div>
+  </fieldset>
+
+<?php } ?>
+
 
 <?php $currentnid=$node->nid; // get nid for current map
 
@@ -1021,74 +1093,6 @@ if ($currentnid > '') {  // in some cases nid isn't set (ie when first adding a 
   ?>
 
 
-
-
-<!-- > MORE MAPS BY MAPMAKER -->
-
-<?php 
-// print a list of all the mapmaker's other maps by inserting a view
-// show all the maps for this user by inserting a view 'maps_list_user'
-
-  global $maplist_view;
-  $maplist_view->args[0]=$node->uid;  // pass uid as argument
-  $maplist_view->args[1]=$currentnid; // pass current nid to exclude current map from list
-  $viewmaplist = views_get_view('maps_list_user');
-  
-  $maplist = views_build_view('embed', $viewmaplist, $maplist_view->args, false, false);
-
-  $rows = array();
-  $output = '';
-  $ogm_maps = sync_fetch_ogm_maps($node->uid);
-  
-  
-  
-  if (is_array($ogm_maps) && count($ogm_maps)) {
-    print "Open Green Maps";
-    foreach ($ogm_maps as $ogm_map) {
-      $rows[] = l($ogm_map->title, 'http://www.opengreenmap/'. $ogm_map->alias,
-          array('class' => 'external', 'target' => '_blank'));
-    }
-    $output = theme_item_list($rows);
-    $output = '<div class="plain-list ogm-maps">'.$output.'</div>';
-  }
-  
-  
-  if ($maplist > '' || $output) { ?>
-      <fieldset><legend><?php print t('More Maps by ') . $node->name; ?></legend>
-      
-      <div class="plain-list">
-      <?php print "Green Maps"; ?>
-      
-      <?php print $output; ?>
-      <?php print $maplist; ?>
-      
-      </div>
-    </fieldset>
-  <?php }
-  
-
- // Load author details
-$author = user_load(array('uid' => $node->uid));
-$lapsed_roles = array('lapsed user');
-
-if (is_array($author->roles)) {
-  if (count(array_intersect($author->roles, $lapsed_roles)) > 0) {
-    $lapsed = TRUE;
-  } else {
-    $lapsed = FALSE;
-}}
-
-?>
-
-<?php if($lapsed){ ?>
-
-  <fieldset class="collapsible required"><legend><?php print t('No Longer an Active Project'); ?></legend>
-    <div class="required">
-      <?php print t('This is no longer an active project. If you would like to start a Green Map project in this community, please go to the %link section of the website and register.', array('%link' => l(t('Participate'),'participate'))) ; ?>
-    </div>
-  </fieldset>
-
-<?php } ?>
 
 
 
@@ -1199,7 +1203,8 @@ $dictc = array(
 				print  t('Submitted by') . '&nbsp;' . theme('username', $node) . '&nbsp;' . t('on') . '&nbsp;' . format_date($node->created, 'custom', 'jS M Y') . '&nbsp;' . $rss;
 			}
 	    print '</div>';
-	    } ?>			
+	    } ?>		
+
 
 
 <style type="text/css">
