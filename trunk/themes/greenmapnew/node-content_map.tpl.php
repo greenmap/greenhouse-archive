@@ -962,7 +962,7 @@ elseif (content_format('field_scale', $field_scale[0]) > '') { ?>
   
   
   if (is_array($ogm_maps) && count($ogm_maps)) {
-    print "Open Green Maps";
+    
     foreach ($ogm_maps as $ogm_map) {
       $rows[] = l($ogm_map->title, 'http://www.opengreenmap/'. $ogm_map->alias,
           array('class' => 'external', 'target' => '_blank'));
@@ -976,9 +976,9 @@ elseif (content_format('field_scale', $field_scale[0]) > '') { ?>
       <fieldset><legend><?php print t('More Maps by ') . $node->name; ?></legend>
       
       <div class="plain-list">
-      <?php print "Green Maps"; ?>
-      
+      <?php print "Open Green Maps"; ?>    
       <?php print $output; ?>
+      <?php print "Green Maps"; ?>
       <?php print $maplist; ?>
       
       </div>
