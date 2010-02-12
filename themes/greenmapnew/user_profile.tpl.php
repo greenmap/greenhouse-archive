@@ -703,10 +703,11 @@ $num_rows = db_num_rows($result);?>
 
 <div id="rightprofile">
 
-
-<fieldset>
-<?php print l(t('Edit Your Profile'), 'user/' . $user->uid . '/edit');?>
-</fieldset>
+<?php if ($allowed_editor) { ?>
+    <fieldset>
+    <?php print l(t('Edit Your Profile'), 'user/' . $user->uid . '/edit');?>
+    </fieldset>
+<?php } ?>
 
 <?php // Set up a collapsible block for admins showing all info they need for a new user ?>
 
