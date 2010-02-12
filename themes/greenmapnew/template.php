@@ -272,7 +272,7 @@ function greenmapnew_user_picture($account) {
   
   global $user;
   $ret = NULL;
-  $max_h = 140; //max pixels
+  $max_h = 130; //max pixels
 
  
   if (variable_get('user_pictures', 0)) {
