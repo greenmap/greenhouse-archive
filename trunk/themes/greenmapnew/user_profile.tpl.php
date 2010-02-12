@@ -129,7 +129,7 @@ elseif ($not_hidden) {
 
 // Get all variables for user, and set to false if not completed, or set to their printed value if available. Set up flags if that variable makes a group red or green. Set up flag if all OK.
 
-$user_picture = $user->picture ? theme('user_picture',$user) : FALSE;
+
 
 $latitude = $user -> gmap_location_latitude;
 $longitude = $user -> gmap_location_longitude;
@@ -322,13 +322,10 @@ $dictc = array(
 <!-- > USER PROFILE PICTURE -->
 
 <?php // print user picture
-    if($user_picture) {print $user_picture;}
-    elseif($allowed_editor || $new_user) { ?>
-        <fieldset>
-        <legend><?php print t('Picture'); ?></legend>
-        <div class="required">
-        <?php print l(t('Add a photo to your profile*'),'user/' . $user->uid . '/edit', $attributes_required); ?></div></fieldset>
-<?php   }
+
+$user_picture = theme('user_picture',$user);
+print $user_picture;
+   
 
 
 // set the messages to allow them to add another map, or add 1st map, if user is viewing own account
