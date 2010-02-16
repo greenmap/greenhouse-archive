@@ -939,6 +939,24 @@ elseif (content_format('field_scale', $field_scale[0]) > '') { ?>
 
 <?php } ?>
 
+
+
+<!-- > NO LONGER ACTIVE PROJECT -->
+
+
+<?php if($lapsed){ ?>
+
+  <fieldset class="collapsible required"><legend><?php print t('No Longer an Active Project'); ?></legend>
+    <div class="required">
+      <?php print t('This is no longer an active project. If you would like to start a Green Map project in this community, please go to the %link section of the website and register.', array('%link' => l(t('Participate'),'participate'))) ; ?>
+    </div>
+  </fieldset>
+
+<?php } ?>
+
+
+
+
 <!-- > MORE MAPS BY MAPMAKER -->
 
 <?php 
@@ -998,18 +1016,6 @@ if (is_array($author->roles)) {
 }}
 
 ?>
-
-<?php if($lapsed){ ?>
-
-  <fieldset class="collapsible required"><legend><?php print t('No Longer an Active Project'); ?></legend>
-    <div class="required">
-      <?php print t('This is no longer an active project. If you would like to start a Green Map project in this community, please go to the %link section of the website and register.', array('%link' => l(t('Participate'),'participate'))) ; ?>
-    </div>
-  </fieldset>
-
-<?php } ?>
-
-
 
 
 <!-- > SEE MAPMAKER PROFILE -->
