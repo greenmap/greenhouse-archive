@@ -703,11 +703,80 @@ $num_rows = db_num_rows($result);?>
 
 <div id="rightprofile">
 
+<?php if ($lapsing_user){print l(t('lapsing user yes'));}?>
+
 <?php if ($allowed_editor) { ?>
     <fieldset>
     <?php print l(t('Edit Your Profile'), 'user/' . $user->uid . '/edit');?>
     </fieldset>
 <?php } ?>
+
+
+<?php if ($lapsing_user && $allowed_editor) { ?>
+  <fieldset class="collapsible required"><legend><?php print t('YOUR MAPMAKER FEE IS NOW DUE'); ?></legend>
+    <div class="required">
+      <p><?php print t('Your Mapmaker Fee is now due. Please follow the instructions below. If you believe there has been a mistake, please ') . l(t('contact us'),'contact'); ?></p>
+      <p><?php print t('If your project is complete and you wish to terminate your Mapmaker License, please %link. Otherwise follow the steps below to continue:', array('%link' => l(t('click here'),'user/terminate'))); ?></p>
+      <ol>
+        <li><?php print t('Use the calculator to check your Mapmaker Fee for this year. The figure below shows the Fee you calculated last year: ') . l(t('Click to use the calculator'),'user/' . $user->uid . '/edit/F.+Fees'); ?></li>
+        <li><?php print t('Use the link below to pay the Mapmaker Fee that you have calculated. If you are unable to pay using Visa/Mastercard/Paypal please ') . l(t('contact us'),'contact'); ?>
+          <?php // find some way to insert the paypal link ?>
+          <div>
+            <form action="http://www.paypal.com/cgi-bin/webscr" method="post" >
+
+            <input name="amount"  id="donationinput" value="<?php print $profile_fee_total; ?>"/>
+            <input type="submit" name="submit" value="Pay" />
+            <input type="hidden" name="cmd" value="_xclick">
+            <input type="hidden" name="business" value="info@greenmap.org">
+            <input type="hidden" name="item_name" value="Mapmaker Fee Renewal Payment for Green Map System - <?php print $user->name; ?>">
+            <input type="hidden" name="notify_url" value="http://greenmap.org/greenhouse/lm_paypal/ipn">
+            <input type="hidden" name="no_shipping" value="1">
+            <input type="hidden" name="return" value="http://greenmap.org/greenhouse/pay/thanks">
+            <input type="hidden" name="currency_code" value="USD">
+            <input type="hidden" name="custom" value="<?php print $user->uid; ?>">
+
+            </form>
+          </div>
+        </li>
+        <li><?php print t('If you are unable to pay your full Mapmaker Fee, please complete the form below to tell us about what services you have provided in the last year to Green Map System, and what services you will be able to provide next year. Green Map System will respond within a week. Things you can help with include translation, outreach, poster design, newsletter design, etc. Please give details about languages and technical skills. ') ?>
+          <div>
+            <?php // insert form ?>
+            <?php $block = module_invoke('feepay', 'block', 'view', 0);
+            print $block['content']; ?>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </fieldset>
+<?php } ?>
+
+<?php if ($allowed_editor && $new_user) { // message for new users ?>
+  <fieldset class="collapsible"><legend><?php print t('INSTRUCTIONS'); ?></legend>
+  <div><strong>
+  <?php if (!$complete && !$profile_pending) { ?>
+    <?php print t('IMPORTANT: Your application has not been submitted yet. You need to fill in the information below.'); ?><br><br>
+    <?php print t('Everything with a red asterisk is information that is required. Everything in blue is optional. You can edit your information at any time.'); ?><br><br>
+    <?php print t('Once all the required information is complete you will be able to click the "Submit to Green Map" button at the bottom of the page. '); ?>
+  <?php } elseif ($complete && !$profile_pending) { ?>
+    <?php print t('Your application is now complete. You must click the "Submit to Green Map" button at the bottom of the page.'); ?><br><br>
+  <?php } elseif ($complete && $profile_pending && !($profile_pending_reason > '')) { ?>
+    <?php print t('Your application has been submitted for review by Green Map Sytem. If you have not heard back in two working days please email greenhouse@greenmap.org.'); ?><br><br>
+  <?php }  elseif ($complete && $profile_pending && ($profile_pending_reason == 'Payment requested') ) { ?>
+    <?php print t('You have been emailed by Green Map System with instructions on how to pay your Mapmaker Fee. Once Green Map System has received your payment your account will be approved.  If you have not received the email please contact greenhouse@greenmap.org.'); ?><br><br>
+  <?php }  elseif ($complete && $profile_pending && ($profile_pending_reason > '') ) { ?>
+    <?php print t('You have been emailed by Green Map System with instructions on how to complete your application. Once you have made these changes please click the <em>Resubmit</em> button below. If you have done this and not heard back from Green Map within two working days please email greenhouse@greenmap.org.'); ?><br><br>
+    <?php // insert Resubmit button here
+    $block = module_invoke('greenmap', 'block', 'view', 3);
+    print $block['content'];?>
+  <?php } ?>
+  </strong></div>
+  </fieldset>
+<?php } // end of new user message ?>
+
+
+
+
+
 
 <?php // Set up a collapsible block for admins showing all info they need for a new user ?>
 
@@ -1378,70 +1447,6 @@ $dict = array(
     </div>
   </fieldset>
 <?php } ?>
-
-
-<?php if ($lapsing_user && $allowed_editor) { ?>
-  <fieldset class="collapsible required"><legend><?php print t('YOUR MAPMAKER FEE IS NOW DUE'); ?></legend>
-    <div class="required">
-      <p><?php print t('Your Mapmaker Fee is now due. Please follow the instructions below. If you believe there has been a mistake, please ') . l(t('contact us'),'contact'); ?></p>
-      <p><?php print t('If your project is complete and you wish to terminate your Mapmaker License, please %link. Otherwise follow the steps below to continue:', array('%link' => l(t('click here'),'user/terminate'))); ?></p>
-      <ol>
-        <li><?php print t('Use the calculator to check your Mapmaker Fee for this year. The figure below shows the Fee you calculated last year: ') . l(t('Click to use the calculator'),'user/' . $user->uid . '/edit/F.+Fees'); ?></li>
-        <li><?php print t('Use the link below to pay the Mapmaker Fee that you have calculated. If you are unable to pay using Visa/Mastercard/Paypal please ') . l(t('contact us'),'contact'); ?>
-          <?php // find some way to insert the paypal link ?>
-          <div>
-            <form action="http://www.paypal.com/cgi-bin/webscr" method="post" >
-
-            <input name="amount"  id="donationinput" value="<?php print $profile_fee_total; ?>"/>
-            <input type="submit" name="submit" value="Pay" />
-            <input type="hidden" name="cmd" value="_xclick">
-            <input type="hidden" name="business" value="info@greenmap.org">
-            <input type="hidden" name="item_name" value="Mapmaker Fee Renewal Payment for Green Map System - <?php print $user->name; ?>">
-            <input type="hidden" name="notify_url" value="http://greenmap.org/greenhouse/lm_paypal/ipn">
-            <input type="hidden" name="no_shipping" value="1">
-            <input type="hidden" name="return" value="http://greenmap.org/greenhouse/pay/thanks">
-            <input type="hidden" name="currency_code" value="USD">
-            <input type="hidden" name="custom" value="<?php print $user->uid; ?>">
-
-            </form>
-          </div>
-        </li>
-        <li><?php print t('If you are unable to pay your full Mapmaker Fee, please complete the form below to tell us about what services you have provided in the last year to Green Map System, and what services you will be able to provide next year. Green Map System will respond within a week. Things you can help with include translation, outreach, poster design, newsletter design, etc. Please give details about languages and technical skills. ') ?>
-          <div>
-            <?php // insert form ?>
-            <?php $block = module_invoke('feepay', 'block', 'view', 0);
-            print $block['content']; ?>
-          </div>
-        </li>
-      </ol>
-    </div>
-  </fieldset>
-<?php } ?>
-
-<?php if ($allowed_editor && $new_user) { // message for new users ?>
-  <fieldset class="collapsible"><legend><?php print t('INSTRUCTIONS'); ?></legend>
-  <div><strong>
-  <?php if (!$complete && !$profile_pending) { ?>
-    <?php print t('IMPORTANT: Your application has not been submitted yet. You need to fill in the information below.'); ?><br><br>
-    <?php print t('Everything with a red asterisk is information that is required. Everything in blue is optional. You can edit your information at any time.'); ?><br><br>
-    <?php print t('Once all the required information is complete you will be able to click the "Submit to Green Map" button at the bottom of the page. '); ?>
-  <?php } elseif ($complete && !$profile_pending) { ?>
-    <?php print t('Your application is now complete. You must click the "Submit to Green Map" button at the bottom of the page.'); ?><br><br>
-  <?php } elseif ($complete && $profile_pending && !($profile_pending_reason > '')) { ?>
-    <?php print t('Your application has been submitted for review by Green Map Sytem. If you have not heard back in two working days please email greenhouse@greenmap.org.'); ?><br><br>
-  <?php }  elseif ($complete && $profile_pending && ($profile_pending_reason == 'Payment requested') ) { ?>
-    <?php print t('You have been emailed by Green Map System with instructions on how to pay your Mapmaker Fee. Once Green Map System has received your payment your account will be approved.  If you have not received the email please contact greenhouse@greenmap.org.'); ?><br><br>
-  <?php }  elseif ($complete && $profile_pending && ($profile_pending_reason > '') ) { ?>
-    <?php print t('You have been emailed by Green Map System with instructions on how to complete your application. Once you have made these changes please click the <em>Resubmit</em> button below. If you have done this and not heard back from Green Map within two working days please email greenhouse@greenmap.org.'); ?><br><br>
-    <?php // insert Resubmit button here
-    $block = module_invoke('greenmap', 'block', 'view', 3);
-    print $block['content'];?>
-  <?php } ?>
-  </strong></div>
-  </fieldset>
-<?php } // end of new user message ?>
-
-
 
 
 <!-- > ALBUMS -->
