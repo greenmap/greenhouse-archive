@@ -703,8 +703,6 @@ $num_rows = db_num_rows($result);?>
 
 <div id="rightprofile">
 
-<?php if ($lapsing_user){print l(t('lapsing user yes'));}?>
-
 <?php if ($allowed_editor) { ?>
     <fieldset>
     <?php print l(t('Edit Your Profile'), 'user/' . $user->uid . '/edit');?>
@@ -1450,6 +1448,7 @@ $dict = array(
 
 
 <!-- > ALBUMS -->
+
 <fieldset><legend><?php print t('Albums'); ?></legend>
 <div id="albums">
 
@@ -1458,12 +1457,11 @@ if ($allowed_editor && !$new_user) {
     // give link to add an album
   print l(t('Add an album'),'node/add/content_gallery',array('class' => 'mapmakers'));
 }
-?>
 
-<?php 
 $recent_photo = ' <img src="' . $base_path . gm_getrecent_photo($userid) .'" height="100px">';
+if($recent_photo){
 print l($recent_photo,'mapmaker_albums/' . $userid, null, null, null, null, true);
-
+}
 ?>
 </div>
 </fieldset>
