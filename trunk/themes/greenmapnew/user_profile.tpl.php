@@ -772,6 +772,34 @@ $num_rows = db_num_rows($result);?>
 <?php } // end of new user message ?>
 
 
+<?php if ($lapsed_user && !$allowed_editor) { ?>
+  <fieldset class="collapsible required"><legend><?php print t('No Longer an Active Project'); ?></legend>
+    <div class="required">
+      <?php print t('This is no longer an active project. If you would like to start a Green Map project in this community, please go to the %link section of the website and register.', array('%link' => l(t('Participate'),'participate'))) ; ?>
+    </div>
+  </fieldset>
+<?php } ?>
+
+<?php if ($lapsed_user && $allowed_editor) { ?>
+  <fieldset class="collapsible required"><legend><?php print t('YOUR PROJECT IS NO LONGER ACTIVE'); ?></legend>
+    <div class="required">
+      <p>
+      <?php print t('As your project is no longer active and your Mapmaker Fee has not been paid, other people will now be able to make a Green Map
+            in this community. If you wish to resume your project, or if you believe there has been a mistake, please ') . l(t('contact us'),'contact'); ?>
+      </p>
+      <p>
+      <?php print t('Your Mapmaker License Agreement is now terminated. As agreed when you registered with Green Map System, this means that you no longer
+              have rights to use GMSs Licensed Materials, nor have the right to print or publish any new versions or editions as an official Green
+              Map. Any Green Map created during your Licensed Term can be displayed and disseminated "as is", without any updating. From your notice
+              of termination, you may not promote, announce or solicit funds or develop your Green Map. You may not in any way profit from your
+              terminated license (although you may offer your research, base maps, expertise, etc. on a voluntary basis to a new Mapmaker in your area).'); ?>
+      </p>
+      <p>
+      <?php print t('If you wish to re-start this project please ') . l(t('contact us'),'contact'); ?>
+      </p>
+    </div>
+  </fieldset>
+<?php } ?>
 
 
 
@@ -1414,37 +1442,6 @@ $dict = array(
   print t( '</fieldset>'); ?>
 <?php // end Social Newtorks collapsible ?>
 
-
-
-
-<?php if ($lapsed_user && !$allowed_editor) { ?>
-  <fieldset class="collapsible required"><legend><?php print t('No Longer an Active Project'); ?></legend>
-    <div class="required">
-      <?php print t('This is no longer an active project. If you would like to start a Green Map project in this community, please go to the %link section of the website and register.', array('%link' => l(t('Participate'),'participate'))) ; ?>
-    </div>
-  </fieldset>
-<?php } ?>
-
-<?php if ($lapsed_user && $allowed_editor) { ?>
-  <fieldset class="collapsible required"><legend><?php print t('YOUR PROJECT IS NO LONGER ACTIVE'); ?></legend>
-    <div class="required">
-      <p>
-      <?php print t('As your project is no longer active and your Mapmaker Fee has not been paid, other people will now be able to make a Green Map
-            in this community. If you wish to resume your project, or if you believe there has been a mistake, please ') . l(t('contact us'),'contact'); ?>
-      </p>
-      <p>
-      <?php print t('Your Mapmaker License Agreement is now terminated. As agreed when you registered with Green Map System, this means that you no longer
-              have rights to use GMSs Licensed Materials, nor have the right to print or publish any new versions or editions as an official Green
-              Map. Any Green Map created during your Licensed Term can be displayed and disseminated "as is", without any updating. From your notice
-              of termination, you may not promote, announce or solicit funds or develop your Green Map. You may not in any way profit from your
-              terminated license (although you may offer your research, base maps, expertise, etc. on a voluntary basis to a new Mapmaker in your area).'); ?>
-      </p>
-      <p>
-      <?php print t('If you wish to re-start this project please ') . l(t('contact us'),'contact'); ?>
-      </p>
-    </div>
-  </fieldset>
-<?php } ?>
 
 
 <!-- > ALBUMS -->
