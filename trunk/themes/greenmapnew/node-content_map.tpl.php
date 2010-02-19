@@ -994,10 +994,8 @@ elseif (content_format('field_scale', $field_scale[0]) > '') { ?>
       <fieldset><legend><?php print t('More Maps by ') . $node->name; ?></legend>
       
       <div class="plain-list">
-      <?php print "Open Green Maps"; ?>    
-      <?php print $output; ?>
-      <?php print "Green Maps"; ?>
-      <?php print $maplist; ?>
+      <?php if ($output){ print "Open Green Maps";print $output; } ?>
+      <?php if ($maplist){ print "Green Maps";print $maplist; } ?>
       
       </div>
     </fieldset>
