@@ -315,7 +315,7 @@ $dictc = array(
 </div>
 
 
-
+<dic id="whole">
 <div id="leftprofile_topleft">
 
 
@@ -578,10 +578,6 @@ $add_a_map = '<br /><a class="mapmakers" href="' . base_path() . $i18n_langpath 
   </div>
 </div>
 <?php }?>
-
-
-
-
 
 
 </fieldset>
@@ -1279,7 +1275,6 @@ $num_rows = db_num_rows($result);?>
 
 
 <!-- > MAPS BY MAPMAKER -->
-
 <?php if(!$new_user) { // don't show maps box if they're a new user ?>
 <fieldset><legend><?php print t('Maps by this Mapmaker'); ?></legend>
 
@@ -1340,7 +1335,6 @@ else {
 </fieldset>
 <?php } // end if that's hiding maps for new user ?>
 
-
 <!-- > LOCATION MAP -->
 
 <?php if ($location_set || $allowed_editor) : ?>
@@ -1358,7 +1352,9 @@ else {
     print gmap_draw_map($mymap);
    } elseif ($allowed_editor) {
       $url = base_path() . $i18n_langpath . '/user/' . $user->uid . '/edit/gmap_user'; ?>
-      <?php print t('You have not set your location on the map.'); ?> <a class="mapmakers required" href="<?php print $url; ?>"><?php print t('Click here to set your location*'); ?></a>
+      <?php print t('You have not set your location on the map.'); ?> 
+      <a class="mapmakers required" href="<?php print $url; ?>">
+      <?php print t('Click here to set your location*'); ?></a>
   <?php } ?>
   </div>
 </fieldset>
@@ -1445,21 +1441,25 @@ $dict = array(
 
 
 <!-- > ALBUMS -->
+<?php
+$recent_photo = ' <img src="' . $base_path . gm_getrecent_photo($userid) .'" height="100px">';
+ ?>
 
-<fieldset><legend><?php print t('Albums'); ?></legend>
-<div id="albums">
+<div id="albums"><fieldset>
 
 <?php
-if ($allowed_editor && !$new_user) {
-    // give link to add an album
-  print l(t('Add an album'),'node/add/content_gallery',array('class' => 'mapmakers'));
-}
 
-$recent_photo = ' <img src="' . $base_path . gm_getrecent_photo($userid) .'" height="100px">';
-if($recent_photo){
+if($recent_photo){?>
+<legend><?php print t('Albums'); ?></legend>
+
+<?php
 print l($recent_photo,'mapmaker_albums/' . $userid, null, null, null, null, true);
-}
-?>
+} 
+
+if ($allowed_editor && !$new_user) {
+  		print l(t('Add an album'),'node/add/content_gallery',array('class' => 'mapmakers'));
+	} ?>
+
 </div>
 </fieldset>
 
@@ -1545,6 +1545,8 @@ print l($recent_photo,'mapmaker_albums/' . $userid, null, null, null, null, true
 <p></p>
 </div>
 
+</div> 
+
 <?php
 // end else, for showing full page view.
 }
@@ -1575,7 +1577,8 @@ font-size: 15px;
 margin-left: -3px;
 }
 
-#content fieldset legend, #content fieldsetrequired legend, #content fieldsetc legend {
+#content fieldset legend, 
+#content fieldsetrequired legend{
 font-size: 15px;
 margin-left: -3px;
 color: #8CC63F;
@@ -1591,11 +1594,8 @@ color: #8CC63F;
 	margin-top: 6px;
 	padding-top: 25px;
 	position: absolute;
-	width: 75%;
-	min-width: 600px;
+	width: 820px;
 	float: left;
-	
-	
 	background-image: url("<?php print $base_path ?>images/mapmaker_icon.gif");
 	background-repeat: no-repeat;
 	background-position: 9px 19px; 
@@ -1604,6 +1604,7 @@ color: #8CC63F;
 html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
   border: none;
 }
+
 
 html.js #content fieldset.required {
   border: none;
@@ -1658,6 +1659,8 @@ ul.primary {
   padding: 5px;
   border: solid 1px #999;
 }
+
+
 
 .related_org .item .data {
   margin-left: 0px;
