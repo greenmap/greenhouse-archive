@@ -108,7 +108,6 @@ float:right;
 	margin-left: 5px;
 	margin-bottom: -8px;
 	min-width: 1049px;
-	overflow: hidden;
 	background-color: transparent;
 }
 
@@ -303,7 +302,6 @@ background: url(img/rightshadow.gif) repeat-y right;
 	float:right;
 	height: 100%;
 	margin-top: -220;
-	position: abosolute;
 	z-index: -100;
 	padding-right: 45px;
 	min-height: 625px;
@@ -521,13 +519,13 @@ display: inline;
 
 /***** TT - user_profile styles *****/
 
+
 #leftprofile{
 	float:left;
 	margin-right:10px;
 	margin-top: 10px;
 	width:500px;
 }
-
 
 #leftprofile img{
 	border:none;
@@ -549,6 +547,7 @@ display: inline;
 	margin-right:10px;
 	margin-top: 10px;
 	width:350px;
+	min-height: 180px; 
 }
 
 #rightprofile{
@@ -1069,7 +1068,8 @@ a.cart_link {
 #ttnewsletter .newsletter {
 	float: right;
 	display: inline;
-	margin-left:0px;
+	margin-left:-5px;
+	margin-right: 5px;
 }
 
 #emailaddress {
@@ -1077,7 +1077,7 @@ a.cart_link {
 	width: 120px;
 	height: 15px;
 	color: #666666;
-	padding-left: 0.5em;
+	padding-left: 0.3em;
 }
 
 /***** TT - Who's Online Styles *****/
