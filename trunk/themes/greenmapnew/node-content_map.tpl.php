@@ -149,6 +149,7 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
 
 <fieldset class="get_this_map"><legend><?php print t('Get this Map'); ?></legend>
 
+ <div id="getmap_space">
 
 <?php if ($field_pdf_of_map[0]['fid']) : ?>
  <div class="item">
@@ -180,6 +181,7 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
 
 
 <?php if (content_format('field_your_website_about_this_m', $field_your_website_about_this_m[0]) > '') : ?>
+
  <div class="item">
  
    <?php foreach ($field_your_website_about_this_m as $item) { ?>
@@ -193,7 +195,7 @@ if ((user_access('administer users') || $GLOBALS['user']->uid == $node->uid)) {
  </div>
 <?php endif; ?>
 
-
+</div>
 <?php if (  !(content_format('field_pdf_of_map', $field_pdf_of_map[0]) > '') &&
     !(content_format('field_link_to_online_map', $field_link_to_online_map[0]) > '') ) : // print a message if the map's not available yet ?>
  <div class="item">
@@ -1258,6 +1260,10 @@ ul.primary {
 
 #content .link_to_profile {
 	float: left;
+}
+
+#getmap_space {
+	margin-bottom: 18px;
 }
 
 </style>
