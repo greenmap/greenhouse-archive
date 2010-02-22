@@ -262,6 +262,9 @@ function phptemplate_cart_view($form) {
 function gm_getrecent_photo($uid) {
 	$result = db_query("SELECT nid FROM {node} WHERE type='content_photo' AND uid=%d ORDER BY created LIMIT 1", $uid);
 	$nid = db_result($result);
+	if (!$nid){
+		return false;
+	}
 	$node = node_load($nid);
 	return $node->field_photo[0][filepath];
 }
