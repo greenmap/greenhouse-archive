@@ -1441,33 +1441,45 @@ $dict = array(
 
 
 <!-- > ALBUMS -->
-<?php
-$recent_photo = ' <img src="' . $base_path . gm_getrecent_photo($userid) .'" height="100px">';
- ?>
-
 <div id="albums"><fieldset>
 
 <?php
+$photo_link = gm_getrecent_photo($userid);
 
-if($recent_photo){?>
-<legend><?php print t('Albums'); ?></legend>
+if ($photo_link) {
+	$recent_photo = ' <img src="' . $base_path . $photo_link .'" height="100px">';
+}else{
+	$recent_photo = false;
+}
 
-<?php
-print l($recent_photo,'mapmaker_albums/' . $userid, null, null, null, null, true);
-} 
+
+
+print "<legend>";
+print t('Albums'); 
+print "</legend>";
+
 
 if ($allowed_editor && !$new_user) {
-  		print l(t('Add an album'),'node/add/content_gallery',array('class' => 'mapmakers'));
-	} ?>
+  	print l(t('Add an album'),'node/add/content_gallery',array('class' => 'mapmakers'));
+} 
 
-</div>
-</fieldset>
+	
+if($recent_photo){
+   print l($recent_photo,'mapmaker_albums/' . $userid, null, null, null, null, true);
+}  else {
+   print "<br/>";
+   print t("No Albums yet");
+}
+?>
+
+</fieldset></div>
+
 
 
 <!-- > THINGS YOU NEED TO DO (for logged in users) -->
 
 <?php if ($allowed_editor && !$new_user) { ?>
-  <fieldset class="collapsible mapmakersbg"><legend><?php print t('Things You Need to Do'); ?></legend>
+  <fieldset class="collapsible mapmakersbg"><legend><?php print t('Things You Need to Do'); ?> </legend>
 
   <?php
   $todo = 0;
