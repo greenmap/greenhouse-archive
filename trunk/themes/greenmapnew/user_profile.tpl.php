@@ -1291,7 +1291,7 @@ $rows = array();
 $ogm_maps = sync_fetch_ogm_maps($user->uid);
 
 
-
+// Loading OGM maps
 if (is_array($ogm_maps) && count($ogm_maps)) {
   print "Open Green Maps";
   foreach ($ogm_maps as $ogm_map) {
@@ -1302,6 +1302,7 @@ if (is_array($ogm_maps) && count($ogm_maps)) {
   print '<div class="plain-list ogm-maps">'.$output.'</div>';
 }
 
+// Loading GM maps
 $rows = array();
 if($num_rows > 0) {
   while ($this_node = db_fetch_object($result)) {
@@ -1311,14 +1312,13 @@ if($num_rows > 0) {
 
   $output = theme_item_list($rows);
   ?>
-
   
   <div class="plain-list">
    
   <?php
   print "Green Maps";
- 
   print ($output);
+  
   if($num_rows > 9) {
     print l(t('more') . '...','maps/by/user/' . $userid);
   }
@@ -1329,7 +1329,7 @@ if($num_rows > 0) {
   <?php
 }
 else {
-  print t('No Maps Added') . '<br />' . $add_first_map ;
+  print t('No Green Maps Added') . '<br />' . $add_first_map ;
 }
 ?>
 </fieldset>
@@ -1468,13 +1468,13 @@ print "</legend>";
 
 if ($allowed_editor && !$new_user) {
   	print l(t('Add an album'),'node/add/content_gallery',array('class' => 'mapmakers'));
+  	print "<br/>";
 } 
 
 	
 if($recent_photo){
    print l($recent_photo,'mapmaker_albums/' . $userid, null, null, null, null, true);
 }  else {
-   print "<br/>";
    print t("No Albums yet");
 }
 ?>
