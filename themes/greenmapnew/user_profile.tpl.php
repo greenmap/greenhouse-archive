@@ -1420,18 +1420,25 @@ $dict = array(
 
 <?php if( $profile_twitter )
   print '<div><a href="'. $profile_twitter.'"><img src="'. $base_path . 'images/twitter.png'.'"</a></div>'; ?>
+  
 <?php if( $profile_youtube )
   print '<div><a href="'. $profile_youtube.'"><img src="'. $base_path . 'images/youtube.png'.'"</a></div>'; ?>
+  
 <?php if( $profile_flickr )
   print '<div><a href="'. $profile_flickr.'"><img src="'. $base_path . 'images/flickr.png'.'"</a></div>'; ?>
+  
 <?php if( $profile_hi5 )
-  print t('<div><a href="'.$profile_hi5.'">Hi5</a></div>'); ?>
+  print '<div><a href="'. $profile_hi5.'"><img src="'. $base_path . 'images/other_sns_bubble.png'.'"</a></div>'; ?>
+
 <?php if( $profile_othersocial1 )
-  print t('<div><a href="'.$profile_othersocial1.'">'.$profile_othersocial1.'</a></div>'); ?>
+  print '<div><a href="'. $profile_othersocial1.'"><img src="'. $base_path . 'images/other_sns_bubble.png'.'"</a></div>'; ?>
+
 <?php if( $profile_othersocial2 )
-  print t('<div><a href="'.$profile_othersocial2.'">'.$profile_othersocial2.'</a></div>'); ?>
+  print '<div><a href="'. $profile_othersocial2.'"><img src="'. $base_path . 'images/other_sns_bubble.png'.'"</a></div>'; ?>
+
 <?php if( $profile_othersocial3 )
-  print t('<div><a href="'.$profile_othersocial3.'">'.$profile_othersocial3.'</a></div>'); ?>
+  print '<div><a href="'. $profile_othersocial3.'"><img src="'. $base_path . 'images/other_sns_bubble.png'.'"</a></div>'; ?>
+
 </div>
 
 <?php if( $profile_facebook || $profile_twitter || $profile_youtube || $profile_flickr || $profile_hi5 || $profile_othersocial1 || $profile_othersocial2 || $profile_othersocial3)
