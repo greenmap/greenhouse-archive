@@ -1475,7 +1475,7 @@ if ($allowed_editor && !$new_user) {
 if($recent_photo){
    print l($recent_photo,'mapmaker_albums/' . $userid, null, null, null, null, true);
 }  else {
-   print t("No Albums yet");
+   print t("No Albums Added");
 }
 ?>
 
