@@ -1611,6 +1611,7 @@ color: #8CC63F;
 	font-size: 11.5px;
 	margin-left: 40px;
 	*margin-left: -160px;
+	_margin-left: -450px;
 	margin-top: 6px;
 	padding-top: 25px;
 	position: absolute;
@@ -1623,6 +1624,7 @@ color: #8CC63F;
 
 #rightprofile {
 	*margin-top: -716px;
+	_margin-top: -680px;
 }
 
 html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
