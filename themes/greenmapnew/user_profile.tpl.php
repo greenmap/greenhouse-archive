@@ -1610,6 +1610,7 @@ color: #8CC63F;
 	height: auto;
 	font-size: 11.5px;
 	margin-left: 40px;
+	*margin-left: -160px;
 	margin-top: 6px;
 	padding-top: 25px;
 	position: absolute;
@@ -1618,6 +1619,10 @@ color: #8CC63F;
 	background-image: url("<?php print $base_path ?>images/mapmaker_icon.gif");
 	background-repeat: no-repeat;
 	background-position: 9px 19px; 
+}
+
+#rightprofile {
+	*margin-top: -716px;
 }
 
 html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
