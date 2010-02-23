@@ -1623,6 +1623,7 @@ color: #8CC63F;
 }
 
 #rightprofile {
+    margin-top: 10px;
 	*margin-top: -716px;
 	_margin-top: -680px;
 }
