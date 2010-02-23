@@ -1159,18 +1159,21 @@ $dictc = array(
 	height: auto;
 	font-size: 11.5px;
 	margin-left: 40px;
+	*margin-left: -150px;
 	margin-top: 6px;
 	padding-top: 25px;
 	position: absolute;
 	width: 75%;
 	min-width: 600px;
 	float: left;
-	
 	background-image: url("<?php print $base_path ?>images/map_icon.gif");
 	background-repeat: no-repeat;
 	background-position: 9px 20px; 
 }
 
+#rightmap {
+	*margin-top: 1050px;
+}
 
 html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
   border: none;
@@ -1260,6 +1263,7 @@ ul.primary {
 
 #content .link_to_profile {
 	float: left;
+	*float: none;
 }
 
 #getmap_space {
