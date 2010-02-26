@@ -1159,7 +1159,6 @@ $dictc = array(
 	height: auto;
 	font-size: 11.5px;
 	margin-left: 40px;
-	*margin-left: -150px;
 	margin-top: 6px;
 	padding-top: 25px;
 	position: absolute;
@@ -1172,16 +1171,23 @@ $dictc = array(
 }
 
 *+html #content {
-	margin-left: -155px !important;
+	margin-left: -150px !important;
 	}
+
+* html #content { 
+	margin-left: -440px !important;
+} 	
 
 #rightmap {
     margin-top: 10px;
-	*margin-top: -1050px;
 }
 
 *+html #rightmap {
 	margin-top: -260px !important;
+	}
+	
+* html #rightmap {
+	margin-top: -960px !important;
 	}
 
 html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
