@@ -1610,8 +1610,6 @@ color: #8CC63F;
 	height: auto;
 	font-size: 11.5px;
 	margin-left: 40px;
-	*margin-left: -160px;
-	
 	margin-top: 6px;
 	padding-top: 25px;
 	position: absolute;
@@ -1624,13 +1622,24 @@ color: #8CC63F;
 
 *+html #content {
 	margin-left: -155px !important;
-	}
+}
+	
+* html #content { 
+	margin-left: -440px !important;
+} 	
 
 #rightprofile {
     margin-top: 10px;
-	*margin-top: -716px;
-	_margin-top: -680px;
 }
+
+*+html #rightprofile {
+	margin-top: -680px !important;
+}
+
+* html #rightprofile { 
+	margin-top: -716px !important;
+} 
+
 
 html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
   border: none;
