@@ -398,7 +398,7 @@ ul.secondary a:hover {
 }
 
 *+html #content {
-	margin-left: -40px !important;
+	margin-left: -40px;
 	}
 
 
