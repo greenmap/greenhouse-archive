@@ -1611,7 +1611,7 @@ color: #8CC63F;
 	font-size: 11.5px;
 	margin-left: 40px;
 	*margin-left: -160px;
-	_margin-left: -450px;
+	
 	margin-top: 6px;
 	padding-top: 25px;
 	position: absolute;
@@ -1621,6 +1621,10 @@ color: #8CC63F;
 	background-repeat: no-repeat;
 	background-position: 9px 19px; 
 }
+
+*+html #content {
+	margin-left: -155px !important;
+	}
 
 #rightprofile {
     margin-top: 10px;
