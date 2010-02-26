@@ -1178,8 +1178,11 @@ $dictc = array(
 #rightmap {
     margin-top: 10px;
 	*margin-top: -1050px;
-	_margin-top: -1000px;
 }
+
+*+html #rightmap {
+	margin-top: -260px !important;
+	}
 
 html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
   border: none;
