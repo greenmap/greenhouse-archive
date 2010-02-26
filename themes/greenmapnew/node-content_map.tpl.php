@@ -1160,7 +1160,6 @@ $dictc = array(
 	font-size: 11.5px;
 	margin-left: 40px;
 	*margin-left: -150px;
-	_margin-left: -450px;
 	margin-top: 6px;
 	padding-top: 25px;
 	position: absolute;
@@ -1171,6 +1170,10 @@ $dictc = array(
 	background-repeat: no-repeat;
 	background-position: 9px 20px; 
 }
+
+*+html #content {
+	margin-left: -155px !important;
+	}
 
 #rightmap {
     margin-top: 10px;
