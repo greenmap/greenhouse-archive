@@ -397,8 +397,8 @@ ul.secondary a:hover {
 	float: left;
 }
 
-*:first-child+html #content {
-	margin-left:0px;
+*+html #content {
+	margin-left: -40px !important;
 	}
 
 
