@@ -1620,26 +1620,9 @@ color: #8CC63F;
 	background-position: 9px 19px; 
 }
 
-*+html #content {
-	margin-left: -155px !important;
-}
-	
-* html #content { 
-	margin-left: -440px !important;
-} 	
-
 #rightprofile {
     margin-top: 10px;
 }
-
-*+html #rightprofile {
-	margin-top: -680px !important;
-}
-
-* html #rightprofile { 
-	margin-top: -716px !important;
-} 
-
 
 html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
   border: none;
@@ -1707,4 +1690,32 @@ ul.primary {
 }
 
 </style>
+
+<!--[if IE 6]>
+	<style type="text/css">
+#content {
+	margin-left: -70px !important;
+	margin-top: -15px !important;
+	width:900px;
+	}
+	
+#rightprofile {margin-top: -330px;}
+
+	</style>
+<![endif]-->
+
+<!--[if IE 7]>
+	<style type="text/css">
+#content {
+	left: 100px !important;
+	margin-top: -15px !important;
+	width:900px;
+	background: transparent;
+	}
+	
+#rightprofile {margin-top: -330px;}
+
+	</style>
+<![endif]-->
+
 <!--/user_profile.tpl.php-->
