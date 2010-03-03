@@ -1129,6 +1129,32 @@ $dictc = array(
 
 
 
+<!--[if IE 6]>
+	<style type="text/css">
+#content {
+	margin-top: -15px !important;
+	width:870px;
+	left: 0;
+	}
+	
+#rightmap {
+	margin-top: 0px !important;
+}	
+	</style>
+<![endif]-->
+	
+<!--[if IE 7]>
+	<style type="text/css">
+#content {
+margin-left: -150px !important;
+	}
+	
+#rightmap {
+	margin-top: 0px !important;
+	}
+	</style>
+<![endif]-->
+
 <style type="text/css">
 
 
@@ -1153,7 +1179,7 @@ $dictc = array(
 }
 
 #content {
-	background-color:#ffffff;
+	background-color:transparent;
 	color: #4D4D4D;
 	line-height: 1.5em;
 	height: auto;
@@ -1163,32 +1189,16 @@ $dictc = array(
 	padding-top: 25px;
 	position: absolute;
 	width: 75%;
-	min-width: 600px;
+	min-width: 830px;
 	float: left;
 	background-image: url("<?php print $base_path ?>images/map_icon.gif");
 	background-repeat: no-repeat;
 	background-position: 9px 20px; 
-}
-
-*+html #content {
-	margin-left: -150px !important;
-	}
-
-* html #content { 
-	margin-left: -440px !important;
-} 	
+}	
 
 #rightmap {
     margin-top: 10px;
 }
-
-*+html #rightmap {
-	margin-top: -260px !important;
-	}
-	
-* html #rightmap {
-	margin-top: -960px !important;
-	}
 
 html.js fieldset.collapsible, html.js fieldset.fakecollapsible {
   border: none;
