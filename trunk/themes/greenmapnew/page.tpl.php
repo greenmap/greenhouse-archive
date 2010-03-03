@@ -27,8 +27,10 @@ return;
 
 <!--[if IE 6]>
 <style type="text/css">
-#content { margin: -380px; margin-top: 0px; margin-right: 0;}
+#content { margin: -380px; margin-top: 0px; margin-right: 0; margin-left: 50px; left: 130px;}
+body {min-width:1000px !important;}
 #rightside { width: 165px; }
+#sitename {margin-top: 0px !important;}
 </style>
 <![endif]-->
 
