@@ -1689,6 +1689,10 @@ ul.primary {
   margin-left: 0px;
 }
 
+#footer_gh {
+visibility: hidden;
+}
+
 </style>
 
 <!--[if IE 6]>
