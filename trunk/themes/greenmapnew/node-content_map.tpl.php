@@ -1296,5 +1296,9 @@ ul.primary {
 	margin-bottom: 18px;
 }
 
+#footer_gh {
+visibility: hidden;
+}
+
 </style>
 <!--/node-content_map.tpl.php-->
