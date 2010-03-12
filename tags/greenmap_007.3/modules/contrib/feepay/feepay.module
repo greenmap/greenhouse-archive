@@ -1,0 +1,645 @@
+<?php
+// $Id: feepay.module,v 1.0 2008/01/21 00:16:22 tom_o_t Exp $
+
+// Things marked ************* need to be fixed
+// Things marked ########### need to be changed when  going live
+// need to enable two blocks and make visible to appropriate user types when enable this module
+
+/**
+ * Implementation of hook_help
+ */
+function feepay_help($section) {
+  switch($section) {
+    case 'admin/modules#description':
+      return t('Automatic reminder of paying fee.');
+  }
+}
+
+/**
+ * Implementation of hook_perm
+ */
+function feepay_perm() {
+  return array('change feepay settings');
+}
+
+/**
+ * Implementation of hook_menu
+ */
+function feepay_menu($may_cache) {
+  if ($may_cache) {
+    $items[] = array(
+      'path' => 'admin/settings/feepay',
+      'title' => t('feepay'),
+      'access' => user_access('change feepay settings'),
+      'callback' => 'feepay_custom_settings',
+    );
+	$items[] = array(
+      'path' => 'user/terminate',
+      'title' => t('Mapmaker License Termination'),
+      'callback' => 'feepay_termination_form',
+	  'type' => 'MENU_CALLBACK',
+    );
+    return $items;
+  }
+}
+
+/**
+ * Custom settings page: menu callback
+ * (we're using a custom callback to enable a nicer menu title, without underscore 
+ */
+function feepay_custom_settings() {
+  if (user_access('change feepay settings')) {
+    $period = array(0 => 'disabled') + drupal_map_assoc(array(604800, 1209600, 1814400, 2419200, 3628800, 2592000, 7776000, 15552000, 23328000, 31536000, 47088000, 63072000), '_format_interval');
+    $warn_period = array(0 => 'disabled') + drupal_map_assoc(array(86400, 172800, 259200, 604800, 1209600, 1814400, 2592000), '_format_interval');
+    $mail_variables = ' %username, %useremail, %expiry, %period, %sitename, %siteurl, %profileurl';
+
+    // set administrator e-mail
+    $form['feepay_admin_email_fieldset'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Administrator e-mail'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['feepay_admin_email_fieldset']['feepay_admin_email'] = array(
+      '#type' => 'textfield',
+      '#title' => t('E-mail addresses'),
+      '#default_value' => _feepay_admin_mail(),
+      '#description' => t('Supply a comma-separated list of e-mail addresses that will receive administrator alerts. Spaces between addresses are allowed.'),
+      '#maxlength' => 256,
+      '#required' => TRUE,
+    );
+
+    // inactive user notification
+	// notify when payment date is approaching
+    $form['feepay_notification'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Warn Users of Approaching Fee Payment'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['feepay_notification']['feepay_notify'] = array(
+      '#type' => 'select',
+      '#title' => t('Notify users when they due to pay in'),
+      '#default_value' => variable_get('feepay_notify', 0),
+      '#options' => $period,
+      '#description' => t('Generate an email to notify users when they due to pay in the specified amount of time.  Requires crontab.'),
+    );
+    $form['feepay_notification']['feepay_notify_text'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Body of user notification e-mail'),
+      '#default_value' => variable_get('feepay_notify_text', _feepay_mail_text('notify_text')),
+      '#cols' => 70,
+      '#rows' => 10,
+      '#description' => t('Customize the body of the notification e-mail sent to the user.') . ' ' . t('Available variables are:') . $mail_variables,
+      '#required' => TRUE,
+    );
+    $form['feepay_notification']['feepay_notify_admin'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Notify administrator'),
+      '#default_value' => variable_get('feepay_notify_admin', 0),
+      '#description' => t('Generate an email to notify the site administrator that a user is due to pay.  Requires crontab.'),
+    );
+	
+	// warn users when they pass their payment date
+	$form['feepay_passed_date'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Notify Users that Payment Date Has Passed'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['feepay_passed_date']['feepay_auto_block_warn'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Warn users when their payment date has passed'),
+      '#default_value' => variable_get('feepay_auto_block_warn', 0),
+      '#description' => t('Generate an email to notify a user that his/her payment date has passed.'),
+    );
+    $form['feepay_passed_date']['feepay_block_warn_text'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Body of user warning e-mail'),
+      '#default_value' => variable_get('feepay_block_warn_text', _feepay_mail_text('block_warn_text')),
+      '#cols' => 70,
+      '#rows' => 10,
+      '#description' => t('Customize the body of the notification e-mail sent to the user when their payment date has passed.') . ' ' . t('Available variables are:') . $mail_variables,
+      '#required' => TRUE,
+    );	
+	
+	// warn users x time after they pass their payment date
+	$form['feepay_last_warning'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Give Users a Last Warning of Fee Payment'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );	
+    $form['feepay_last_warning']['feepay_last_warning_period'] = array(
+      '#type' => 'select',
+      '#title' => t('Give a last warning when they have passed their payment date by'),
+      '#default_value' => variable_get('feepay_last_warning_period', 0),
+      '#options' => $period,
+      '#description' => t('Generate an email to provide a last warning before account is automatically changed to Lapsed User.  Requires crontab.'),
+    );	
+    $form['feepay_last_warning']['feepay_last_warning_text'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Body of user warning e-mail'),
+      '#default_value' => variable_get('feepay_last_warning_text', _feepay_mail_text('last_warning_text')),
+      '#cols' => 70,
+      '#rows' => 10,
+      '#description' => t('Customize the body of the notification e-mail sent to the user when their account is about to be blocked.') . ' ' . t('Available variables are:') . $mail_variables,
+      '#required' => TRUE,
+    );
+	
+	
+    // automatically block inactive users
+    $form['block_feepay'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Automatically Block Lapsed Users'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['block_feepay']['feepay_auto_block'] = array(
+      '#type' => 'select',
+      '#title' => t('Block users that haven\'t paid for more than'),
+      '#default_value' => variable_get('feepay_auto_block', 0),
+      '#options' => $period,
+      '#description' => t('Automatically block user accounts that haven\'t paid in the specified amount of time.  Requires crontab.'),
+    );
+    $form['block_feepay']['feepay_notify_block'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Notify user'),
+      '#default_value' => variable_get('feepay_notify_block', 0),
+      '#description' => t('Generate an email to notify a user that his/her account has been automatically blocked.'),
+    );
+    $form['block_feepay']['feepay_block_notify_text'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Body of blocked user acount e-mail'),
+      '#default_value' => variable_get('feepay_block_notify_text', _feepay_mail_text('block_notify_text')),
+      '#cols' => 70,
+      '#rows' => 10,
+      '#description' => t('Customize the body of the notification e-mail sent to the user when their account has been blocked.') . ' ' . t('Available variables are:') . $mail_variables,
+      '#required' => TRUE,
+    );
+    $form['block_feepay']['feepay_notify_block_admin'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Notify administrator'),
+      '#default_value' => variable_get('feepay_notify_block_admin', 0),
+      '#description' => t('Generate an email to notify the site administrator when a user is automatically blocked.'),
+    );
+	// message for when users terminate their own accounts
+	$form['feepay_terminate'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Message for When Users Terminate Their Accounts'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['feepay_terminate']['feepay_terminate_text'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Body of termination confirmation e-mail'),
+      '#default_value' => variable_get('feepay_terminate_text', _feepay_mail_text('terminate_text')),
+      '#cols' => 70,
+      '#rows' => 10,
+      '#description' => t('Customize the body of the confirmation e-mail sent to the user when they terminate their own Mapmaker License Fee.') . ' ' . t('Available variables are:') . $mail_variables,
+      '#required' => TRUE,
+    );	
+
+  }
+  return system_settings_form('feepay_custom_settings', $form);
+}
+
+function feepay_custom_settings_validate($form_id, $edit) {
+  $mails = explode(',', $edit['feepay_admin_email']);
+  foreach ($mails as $mail) {
+    if ($mail && !valid_email_address(trim($mail))) {
+      $invalid[] = $mail;
+      $count++;
+    }
+  }
+  if ($count ==  1) {
+    form_set_error('feepay_admin_email', t('%mail is not a valid e-mail address', array('%mail' => theme('placeholder', $invalid[0]))));
+  }
+  elseif ($count > 1) {
+    form_set_error('feepay_admin_email', t('The following e-mail addresses are invalid: %mail', array('%mail' => theme('placeholder', implode(', ',$invalid)))));
+  }
+}
+
+/**
+ * Implementation of hook_cron 
+ */
+function feepay_cron() {
+  // checks if it's been more than 1 week since last cron run (604800 seconds)
+  if ((time() - variable_get('feepay_timestamp', '0')) >= 604800) {
+    variable_set('feepay_timestamp', time());
+    unset($user_list);
+	
+	// pull in the different notification time periods from the variables table - set in module's setting page
+	$notify_user = variable_get('feepay_notify', 0); // time before expiry to notify user that pament is due
+	$notify_admin = variable_get('feepay_notify_admin', 0); // y/n notify admin that user's been sent notification to pay
+	$auto_block_warn = variable_get('feepay_auto_block_warn', 0); // y/n Warn users when their payment date has passed
+	$last_warning_period = variable_get('feepay_last_warning_period', 0); // time after expiry to give last warning
+	$auto_block = variable_get('feepay_auto_block', 0); // time after expiry to block users
+	$notify_block = variable_get('feepay_notify_block', 0); // y/n notify users that they've been blocked
+	$notify_block_admin = variable_get('feepay_notify_block_admin', 0); // y/n notify admin that a user's been blocked
+	
+	// reset all users flagged as 'lapsing' (role 9 in users_roles) 	
+	db_query('DELETE FROM {users_roles} WHERE rid = 9');
+
+	
+	
+		// can't get profile_values from table here as data is usually serialised in user data 
+	  // First query to get all users (uid, name, mail) who are not admin, lapsed, new unauthenticated or staff
+	  // this query isn't quite right as staff shouldn't be included in this result, but they are if they're a translater (RID 8)
+
+      $query = 'SELECT u.uid, u.name, u.mail FROM {users} u LEFT JOIN {users_roles} r ON u.uid = r.uid WHERE u.uid != 0 AND (r.rid IS NULL OR r.rid = 8 OR r.rid = 9) '; // this works
+
+	  $result = db_query($query);
+	  
+	  // for each user, get FID 45 - when fee is due
+	  while ($user = db_fetch_object($result)) {
+	  	$result_fid = db_query('SELECT p.value FROM {profile_values} p WHERE p.fid = 45 AND p.uid = %d',$user->uid);
+		
+		if (db_fetch_object($result_fid)) {
+			$user_expires = db_fetch_object($result_fid);
+			$user_expires = $user_expires->value;
+			
+		} else {
+			// if this field is empty - get the user data and unserialize it - see code at http://drupal.org/node/150958
+			$userdata = db_query("SELECT data FROM {users} WHERE uid = %d", $user->uid);
+			$test = db_fetch_object($userdata);
+			$userdata = unserialize($test->data);
+			$user_expires_day = $userdata['profile_admin_renewal_due']['day'];
+			$user_expires_month = $userdata['profile_admin_renewal_due']['month'];
+			$user_expires_year = $userdata['profile_admin_renewal_due']['year'];
+			// make a timestamp of the date their fee expires
+			$user_expires = mktime(0, 0, 0, $user_expires_month, $user_expires_day, $user_expires_year);
+			$user->expiry = $user_expires;
+			
+			// save unserialized data to proper place to speed things up in future - need to serialize again though ***********************************
+			
+			// couldn't get this to work ****
+			
+			// $expiry_array = array('day' => $user_expires_day, 'month' => $user_expires_month, 'year' => $user_expires_year);
+			// $expiry_serialized = serialize($expiry_array);
+			// @db_query('INSERT INTO {profile_values} (fid, uid, value) VALUES(45, %d, %d)', $user->uid, $user_expires);
+
+		}
+		
+		// get $time_to_expire =  value time() - $user_expires
+		$time_to_expire = $user_expires - time() ; // time to expiry in seconds. a negative value means they've expired
+		
+		// first check they're going to get some kind of notification and add them to role 9 (lapsing) in users_roles table
+		// this allows different things to show up in their user profile and I'll probably display a help block too.
+		// then after this we'll figure out exactly what action to take.
+		if($time_to_expire < $notify_user) {
+		
+			  db_query('UPDATE {users_roles} SET rid = 9 WHERE uid = %d AND rid = 9', $user->uid);
+			  if (!db_affected_rows()) {
+				// must create a new row
+				@db_query('INSERT INTO {users_roles} (uid, rid) VALUES (%d, 9)', $user->uid);
+			  }		
+		}
+		
+		// SHOULD INSERT AN ELSE THAT SAVES GOING THROUGH THE REST HERE AND JUMPS TO NEXT USER IN THE LOOP ************************************************
+		
+		// if $time_to_expire > -something (over 3 months since expired) then change role to 'lapsed user', send message - add to different array
+		if($auto_block && ($time_to_expire < -$auto_block)) {
+			// change role 
+			  db_query('UPDATE {users_roles} SET rid = 6 WHERE uid = %d AND rid = 6', $user->uid);
+			  if (!db_affected_rows()) {
+				// must create a new row
+				@db_query('INSERT INTO {users_roles} (uid, rid) VALUES (%d, 6)', $user->uid);
+			  }
+			// check if notification = y and email them  $notify_block
+			if($notify_block) {
+				_feepay_mail(t('[%sitename] Account Expiry - Final Notice', array('%sitename' => variable_get('site_name', 'drupal'))), variable_get('feepay_block_notify_text', _feepay_mail_text('block_notify_text')), $auto_block, $user, NULL);
+				watchdog('user', t('user %user blocked due to non-payment', array('%user' => theme('placeholder', $user->name))), WATCHDOG_NOTICE, l(t('edit user'), "admin/user/edit/$user->uid"));
+			}
+			// check if admin notification = y and add to list  $notify_block_admin
+			if($notify_block_admin) {
+				$user_block_list .= "$user->name ($user->mail)\n";
+			}
+		} elseif($last_warning_period && ($time_to_expire < -$last_warning_period)) { 
+			// 6 week notification
+			_feepay_mail(t('[%sitename] Account Expiry - Last Warning', array('%sitename' => variable_get('site_name', 'drupal'))), variable_get('feepay_last_warning_text', _feepay_mail_text('last_warning_text')), $last_warning_period, $user, NULL);
+			watchdog('user', t('user %user received last warning about non-payment', array('%user' => theme('placeholder', $user->name))), WATCHDOG_NOTICE, l(t('edit user'), "admin/user/edit/$user->uid"));		
+			
+		} elseif ($auto_block_warn && ($time_to_expire < 0)) { // if $time_to_expire is between 0 and -something (i.e. they've expired for under two weeks) - send different message - add to different array
+			// send notification 
+			_feepay_mail(t('[%sitename] Account Expiry - Expiry Notice', array('%sitename' => variable_get('site_name', 'drupal'))), variable_get('feepay_block_warn_text', _feepay_mail_text('block_warn_text')), $auto_block, $user, NULL);
+			watchdog('user', t('user %user warned passed payment date', array('%user' => theme('placeholder', $user->name))), WATCHDOG_NOTICE, l(t('edit user'), "admin/user/edit/$user->uid"));
+			
+		} elseif (notify_user && ($time_to_expire < $notify_user)) { // if $time_to_expire < $notify_time then send an alert (will happen weekly) - add them to appropriate array
+			// send notification 
+			_feepay_mail(t('[%sitename] Account Expiry - Advance Notice', array('%sitename' => variable_get('site_name', 'drupal'))), variable_get('feepay_notify_text', _feepay_mail_text('notify_text')), $notify_user, $user, NULL);
+			watchdog('user', t('user %user notified of Mapmaker Fee renewal', array('%user' => theme('placeholder', $user->name))), WATCHDOG_NOTICE, l(t('edit user'), "admin/user/edit/$user->uid"));
+		
+			// check if admin notificatin = y and add to list  notify_admin
+			if($notify_admin) { 
+				$user_notify_list .= "$user->name ($user->mail) \n";
+			}
+		}
+		
+		
+		
+	  } // end while loop that's processing each user
+	
+	// email admin emails based on lists of expiring/blocked users ***** $user_block_list and $user_notify_list
+	if($notify_admin){
+        _feepay_mail(t('[%sitename] Expiring users', array('%sitename' => variable_get('site_name', 'drupal'))), _feepay_mail_text('notify_admin_text'), $notify_user, NULL, $user_notify_list);
+	}
+	if($notify_block_admin){
+          _feepay_mail(t('[%sitename] Blocked users', array('%sitename' => variable_get('site_name', 'drupal'))), _feepay_mail_text('block_notify_admin_text'), $auto_block, NULL, $user_block_list);
+	}
+	  
+	  
+
+
+  }
+}
+
+function feepay_block($op = "list", $delta = 0) {
+  if ($op == 'list') {
+    $blocks[0]['info'] = t('Feepay Contact Green Map System');
+	$blocks[1]['info'] = t('Feepay Sidebar Reminder');
+	$blocks[2]['info'] = t('Auto Logout of Lapsed Mapmakers');
+    return $blocks;
+  }
+  elseif ($op == 'view') {
+      switch ($delta) {
+      	case 0:
+		  $block['subject'] = 'Service Form';
+		  $block['content'] = feepay_form();
+
+		 break;
+		 
+		 case 1:
+		 	 $attributes_required = array('class' => 'required');
+		     $block['subject'] = t('Mapmake Fee Due');
+    		 $block['content'] = l(t('Your Mapmaker Fee is now due. Click here to go to your profile page to pay or offer a service.'),'user',$attributes_required) ; 
+		 break;
+		 
+		 case 2:
+		     $block['subject'] = t('Logout');
+    		 $block['content'] = user_logout() ; 
+		 break;		 
+		
+		}
+		return $block;
+  }
+}
+
+function feepay_form($edit = null) {
+// this form is called by user_profile.tpl.php on user's profile to display service request form
+  $form['afford'] = array(
+    '#type' => 'textfield',
+    '#title' => t('How much can you afford to pay'),
+    '#required' => TRUE,
+	'#size' => '30',
+  );
+  $form['lastyear'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Please tell us about the services you provided to Green Map System in the last year'),
+    '#required' => TRUE,
+	'#description' => t('Please email any photos, videos, documents or links')
+  );
+  $form['nextyear'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Please tell us about the services you will provide this year'),
+	'#description' => t('Please provide as much detail as possible, especially about any languages you speak and any computer programs you can use'),
+    '#required' => TRUE
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit to Green Map'),
+    '#submit' => TRUE,
+  );
+  return drupal_get_form('feepay_form', $form);
+}
+
+function feepay_form_submit($form_id, $form_values) {
+
+// need to email greenhouse@greenmap.org to inform of service request.
+$registration_email = 'User ' . $GLOBALS['user']->name . ' has submitted a Service Request for their Mapmaker Fee renewal. ';
+$registration_email .= '<a href="http://www.greenmap.org' . base_path() . 'user/' . $GLOBALS['user']->uid . '">View their account</a><br><br>';
+$registration_email .= 'Can Pay: ' . $form_values['afford'] . '<br>';
+$registration_email .= 'Last Year: ' . $form_values['lastyear'] . '<br>';
+$registration_email .= 'This Year: ' . $form_values['nextyear'] . '<br>';
+$registration_email .= 'Their Email: ' . $GLOBALS['user']->mail . '<br>';
+$registration_subject = 'User ' . $GLOBALS['user']->name . ' Service Request for Account Renewal';
+
+// To send HTML mail, the Content-type header must be set
+$headers  = 'MIME-Version: 1.0' . "\n";
+$headers .= 'Content-type: text/html; charset=iso-8859-1' . "\n";
+
+// Additional headers
+$headers .= 'From: greenhouse@greenmap.org' . "\n";
+
+user_mail('greenhouse@greenmap.org',$registration_subject,$registration_email,$headers);
+drupal_goto('participate/submitted'); //the page the user should see, after submit the form.
+}
+
+
+
+// FORM FOR PEOPLE CANCELLING ACCOUNT. THE SUBMIT FUNCTION SHOULD CHANGE TO LAPSED AND SEND US AN EMAIL NOTIFICATION
+
+function feepay_termination_form($edit = null) {
+
+  $form['introduction'] = array(
+  	'#value' => '<p>' . t('If you wish to terminate your Mapmaker License, please fill out the details below and click submit.') . '<p>',
+  );
+  
+  $form['introduction2'] = array(
+  	'#value' => t('Please read the %link carefully as there are important implications for your Green Map in doing this.', array('%link' => l(t('terms and conditions'),'participate/mapmakeragreement'))),
+  );
+  
+  $form['readtc'] = array (
+  	'#type' => 'checkbox',
+	'#title' => t('I have read the terms and conditions and understand that the consequences of termination'),
+	'#required' => TRUE,
+  );
+  
+  $form['giveup'] = array (
+  	'#type' => 'checkbox',
+	'#title' => t('I understand that new Green Map projects can be undertaken by other groups in my area'),
+	'#required' => TRUE,
+  );
+  
+  $form['stopusing'] = array (
+  	'#type' => 'checkbox',
+	'#title' => t('I understand that I no longer have rights to use Green Map Systems Icons and other licensed material'),
+	'#required' => TRUE,
+  );
+  
+  $form['noprint'] = array (
+  	'#type' => 'checkbox',
+	'#title' => t('I understand that I no longer have the right to print or publish any new versions or editions of a Green Map'),
+	'#required' => TRUE,
+  );
+  
+  $form['nopromote'] = array (
+  	'#type' => 'checkbox',
+	'#title' => t('I understand that I may not promote, announce, or solicit funds or develop my Green Map'),
+	'#required' => TRUE,
+  );
+  
+  $form['why'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Why are you cancelling'),
+    '#required' => TRUE
+  );
+  
+   $form['satisfaction'] = array(
+	  '#type' => 'select',
+	  '#title' => t('How satisfied were you with your experience as a Green Mapmaker'),
+	  '#options' => array(
+		'very' => t('very satisfied'),
+		'satisfied' => t('satisfied'),
+		'neutral' => t('neutral'),
+		'dissatisfied ' => t('dissatisfied '),
+		'veryunsatisfied' => t('very unsatisfied '),
+		'noopinion' => t('no opinion'),
+	  ),
+  );
+  
+  $form['comments'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Any other comments'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+    '#submit' => TRUE
+  );
+  return drupal_get_form('feepay_termination_form', $form);
+}
+
+function feepay_termination_form_submit ($form_id, $form_values) {
+	// remove any other roles
+	db_query('DELETE FROM {users_roles} WHERE uid = %d AND rid = 9', $GLOBALS['user']->uid);
+
+	// change user type to lapsed
+	  db_query('UPDATE {users_roles} SET rid = 6 WHERE uid = %d AND rid = 6', $GLOBALS['user']->uid);
+	  if (!db_affected_rows()) {
+		// must create a new row
+		@db_query('INSERT INTO {users_roles} (uid, rid) VALUES (%d, 6)', $GLOBALS['user']->uid);
+	  }
+	
+	// email admin 
+	$registration_email = 'User ' . $GLOBALS['user']->name . ' has terminated their Mapmaker License. ';
+	$registration_email .= '<a href="http://www.greenmap.org' . base_path() . 'user/' . $GLOBALS['user']->uid . '">View their account</a><br><br>';
+	$registration_email .= 'Reason: ' . $form_values['why'] . '<br>';
+	$registration_email .= 'Comments: ' . $form_values['comments'] . '<br>';
+	$registration_email .= 'Satisfaction: ' . $form_values['satisfaction'] . '<br>';
+	$registration_subject = 'User ' . $GLOBALS['user']->name . ' has terminated their Mapmaker License';
+	
+	// To send HTML mail, the Content-type header must be set
+	$headers  = 'MIME-Version: 1.0' . "\n";
+	$headers .= 'Content-type: text/html; charset=iso-8859-1' . "\n";
+	
+	// Additional headers
+	$headers .= 'From: greenhouse@greenmap.org' . "\n";
+	
+	user_mail('tom@greenmap.org',$registration_subject,$registration_email,$headers);
+	
+	// email them confirmation 
+	_feepay_mail(t('[%sitename] Mapmaker License Terminated', array('%sitename' => variable_get('site_name', 'drupal'))), variable_get('feepay_terminate_text', _feepay_mail_text('terminate_text')), $auto_block, $user, NULL);
+
+	// set watchdog message
+	watchdog('user', t('user %user terminated their Mapmaker License', array('%user' => theme('placeholder', $user->name))), WATCHDOG_NOTICE, l(t('edit user'), "admin/user/edit/$user->uid"));
+
+	// redirect to new page with confirmation 
+	drupal_goto('participate/terminated'); //the page the user should see, after submit the form.
+}
+
+
+
+
+
+/**
+ * Slighty modified from format_interval() in common.inc to include months
+ */
+
+function _format_interval($timestamp, $granularity = 2) {
+  $units = array('1 year|%count years' => 31536000, '1 month|%count months' => 2592000, '1 week|%count weeks' => 604800, '1 day|%count days' => 86400, '1 hour|%count hours' => 3600, '1 min|%count min' => 60, '1 sec|%count sec' => 1);
+  foreach ($units as $key => $value) {
+    $key = explode('|', $key);
+    if ($timestamp >= $value) {
+      $output .= ($output ? ' ' : '') . format_plural(floor($timestamp / $value), $key[0], $key[1]);
+      $timestamp %= $value;
+      $granularity--;
+    }
+
+    if ($granularity == 0) {
+      break;
+    }
+  }
+  return ($output) ? $output : t('0 sec');
+}
+
+
+/**
+ * Get administrator e-mail address(es)
+ */
+function _feepay_admin_mail() {
+  $admin_mail = db_result(db_query('SELECT mail FROM {users} WHERE uid = 1'));
+  return variable_get('feepay_admin_email', variable_get('site_mail', $admin_mail));
+}
+
+/**
+ * Wrapper for user_mail
+ */
+function _feepay_mail($subject, $message, $period, $user = NULL, $user_list = NULL) {
+  $testing_site = variable_get('testing_site', FALSE);
+  global $base_url;
+  if ($user_list) {
+    $to = _feepay_admin_mail();
+    $variables = array('%period' => _format_interval($period), '%sitename' => variable_get('site_name', 'drupal'), '%siteurl' => "$base_url", "%userlist" => "$user_list");
+  }
+  elseif (isset($user->uid)) {
+    $to = $user->mail;
+    $variables = array('%username' => "$user->name", '%useremail' => "$user->mail", '%expiry' => format_date($user->expiry, 'custom', 'M d, Y'), '%period' => _format_interval($period), '%sitename' => variable_get('site_name', 'drupal'), '%siteurl' => "$base_url", '%profileurl' => "$base_url" . '/user/' . "$user->uid");
+  }
+  if ($to) {
+    $from = variable_get('site_mail', ini_get('sendmail_from'));
+    $headers = "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: <$from>\nErrors-to: $from\n";
+    $recipients = explode(',', $to);
+    foreach ($recipients as $recipient) {
+      if ($testing_site) {
+        watchdog('user', 'TEST SITE: not sending mail to %user (subject: %subject)',
+              array('%user' => trim($recipient), '%subject' => $subject),
+              WATCHDOG_NOTICE,
+              l(t('edit user'), "admin/user/edit/$user->uid"));
+      }
+      else {
+        user_mail(trim($recipient), $subject, wordwrap(strtr($message, $variables), 80), $headers);
+      }
+    }
+  }
+}
+
+/**
+ * Some default e-mail notification strings
+ */
+function _feepay_mail_text($message) {
+  switch ($message) {
+    case 'notify_text':
+      return t("Hello %username,\n\n  Your Green Mapmaker Service Fee at %sitename is due on %expiry. You can easily renew your Mapmaker Service Fee at %profileurl.\n\n If you have paid recently and you believe that this is an error, please let us know.\n\n If you are unable to pay the full fee you can offer to provide a service exchange instead. This can be done at %profileurl.\n\n Thank you from everyone at Green Map System!\n\n Sincerely,\n  %sitename team");
+      break;
+    case 'notify_admin_text':
+      return t("Hello,\n\n  This automatic notification is to inform you that the following users on %sitename have been sent notices to renew their Mapmaker Fee because their account expires in the next %period:\n\n%userlist");
+      break;
+    case 'block_warn_text':
+      return t("Hello %username,\n\n  Your current paid term as an official Green Mapmaker at %sitename expired on %expiry.\n\n You now have two options: \n\n 1. If you wish to continue with your project you can easily renew your Mapmaker Service Fee at %profileurl. If you are unable to pay the full fee you can offer to provide a service exchange instead. This can also be done at %profileurl. \n\n 2. If you have completed your Green Map project and no longer need access to the website or use our tools and iconography, you have three months from %expiry where you can still access the site and make sure your Map and Mapmaker Profile details are up to date. As soon as you have finalized your details please go to %profileurl and let us know that you wish to terminate your project. Your Profiles will continue to be available to the general public through GreenMap.org \n\n Please read the Terms and Conditions (linked from %profileurl) for full details on termination - essentially you will no longer have the right to create new Green Maps, use the website, its Tools or other materials or Green Map Icons you have obtained over the years. \n\n If you have paid recently and you believe that this is email has been sent in error, please let us know. \n\n We look forward to hearing from you! \n\nSincerely,\n  %sitename team");
+      break;
+    case 'last_warning_text':
+      return t("Hello %username,\n\n  As a Green Mapmaker, your current paid term at %sitename expired on %expiry. As it is now over six weeks since the expiration of your term, we wanted to let you know you are now in breach of your License Agreement.\n\n You have two options: \n\n 1. If you wish to continue with your project you can easily renew your Green Mapmaker Service Fee at %profileurl. If you are unable to pay the full fee you can offer to provide a service exchange instead. This can also be done at %profileurl.\n\n 2. If you have completed your Green Map project and no longer need access to the website or use our tools and iconography, you have three months from %expiry where you can still access the site and make sure your Map and Mapmaker Profile details are up to date. As soon as you have finalized your details please go to %profileurl and let us know that you wish to terminate your project. As stated in the Terms and Conditions (linked from %profileurl) you will no longer have rights to use Green Map System's Licensed Materials, nor have the right to print or publish any new versions or editions as an official Green Map. Read the Terms and Conditions for full details on the consequences of termination. Your Profiles will continue to be available to the general public through GreenMap.org \n\n If you have paid recently and you believe that this is email has been sent in error, please let us know. \n\n If you take no action you will receive a final email 3 months from %expiry notifying you  that your Mapmaker License Agreement is terminated. \n\n We look forward to hearing from you! \n\n Sincerely,\n  %sitename team");
+	  break;
+    case 'block_notify_text':
+      return t("Hello %username,\n\n Your current paid Green Mapmaker  term at %sitename expired on %expiry. As it is now over three months since the expiration of your term, your Green Mapmaker License Agreement is now terminated. \n\n  We will not remove your Mapmaker and Map Profiles, but an Inactive Message will show on your Profiles and a new Green Map project can be registered in your community. You no longer have rights to use Green Map System's Licensed Materials, nor have the right to print or publish any new versions or editions as an official Green Map. Any Green Map created during your Licensed Term can be displayed and disseminated 'as is', without any updating. You may not promote, announce or solicit funds or develop your Green Map. You may not in any way profit from your terminated license (although you may offer your research, base maps, expertise, etc. on a voluntary basis to a new Mapmaker in your area). \n\n 	Please read the Terms and Conditions (linked from %profileurl) for full details on the consequences of termination.\n\n Please visit us at %siteurl to have your account re-enabled. \n\n And please notify us at %siteurl if you have received this message in error. \n\n Every Green Mapmaker is important to us, so we look forward to hearing from you soon.  \n\n Sincerely,\n  %sitename team");
+	  break;
+    case 'block_notify_admin_text':
+      return t("Hello,\n\n  This automatic notification is to inform you that the following users have been automatically blocked due to non-payment of fees on %sitename for more than %period:\n\n%userlist");
+      break;
+    case 'terminate_text':
+      return t("Hello %username,\n\n This email confirms that you have terminated your Mapmaker License at %sitename.  We will not remove your Mapmaker and Map Profiles, but an Inactive Message will show on your Profiles and a new Green Map project can be registered in your community. You no longer have rights to use Green Map System's Licensed Materials, nor have the right to print or publish any new versions or editions as an official Green Map. Any Green Map created during your Licensed Term can be displayed and disseminated 'as is', without any updating. You may not promote, announce or solicit funds or develop your Green Map. You may not in any way profit from your terminated license (although you may offer your research, base maps, expertise, etc. on a voluntary basis to a new Mapmaker in your area). \n\n 	Please read the Terms and Conditions (linked from %profileurl) for full details on the consequences of termination.\n\n Please visit us at %siteurl to have your account re-enabled. \n\n And please notify us at %siteurl if you have received this message in error. \n\n Every Green Mapmaker is important to us, so we look forward to hearing from you soon.  \n\n Sincerely,\n  %sitename team");
+	  break;
+  }
+}

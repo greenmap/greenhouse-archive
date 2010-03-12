@@ -1,0 +1,317 @@
+<?php
+// $Id: ecviews.module,v 1.5.2.1 2007/02/19 04:40:07 neclimdul Exp $
+
+/**
+ * @file
+ * E-Commerce Views integration.
+ *
+ * Provides E-Commerce itegration with views.
+ */
+
+function ecviews_help($section = 'admin/help#ecviews') {
+  $output = '';
+  switch ($section) {
+    case 'admin/modules#description':
+      $output = t('<b>EC:</b> Provides Views integration for core E-Commerce Modules.');
+      break;
+  }
+  return $output;
+}
+
+/**
+ * Define plugins
+ */
+function ecviews_views_style_plugins() {
+  $items['product_list'] = array(
+    'name' => t('Product: List of products'),
+    'theme' => 'ecviews_product_list',
+    'summary_theme' => 'views_summary',
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_views_tables()
+ */
+function ecviews_views_tables() {
+  $tables['ec_product'] = array(
+    'name' => 'ec_product',
+    'join' => array(
+      'left' => array(
+        'table' => 'node',
+        'field' => 'vid'
+      ),
+      'right' => array(
+        'field' => 'vid'
+      ),
+    ),
+    'fields' => array(
+      'sku' => array(
+        'name' => t('Product: SKU'),
+        'sortable' => TRUE,
+      ),
+      'price' => array(
+        'name' => t('Product: Price'),
+        'sortable' => TRUE,
+      ),
+      'addtocartlink' => array(
+        'name' => t('Product: Add to cart link'),
+        'sortable' => FALSE,
+        'notafield' => TRUE,
+        'handler' => 'views_handler_product_add_to_cart_link',
+      ),
+    ),
+    'sorts' => array(
+      'sku' => array(
+        'name' => t('Product: SKU'),
+      ),
+      'price' => array(
+        'name' => t('Product: Price'),
+      ),
+    ),
+    'filters' => array(
+       'ptype' => array(
+        'name' => 'Product: Type',
+        'operator' => 'views_handler_operator_andor',
+        'list' => 'ecviews_views_handler_filter_product_type',
+        'list-type' => 'list',
+        'help' => 'Filter by product type',
+      ),
+      'is_product' => array(
+        'name' => 'Product: Is Product',
+        'operator' => array('=' => 'Equals'),
+        'list' => 'views_handler_operator_yesno',
+        'list-type' => 'select',
+        'handler' => 'ecviews_views_handler_filter_product',
+      ),
+      'pparent' => array(
+        'name' => 'Product: Master Product',
+        'operator' => array('=' => 'Equals'),
+        'list' => array('Product', 'Sub-Product'),
+        'list-type' => 'select',
+        'handler' => 'ecviews_views_handler_filter_product_parent',
+        'help' => t('Filter the product based upon the product being a normal product or a sub-product'),
+      ),
+    ),
+  ); // End ec_product table
+  // Will need to add ec_transaction at some point so we can filter on transaction status
+  /* TODO: Things I would like to provide.
+   *   filters
+   *     is_recurring
+   *     number of purchases
+   */
+  //
+  $tables['ec_transaction_product'] = array(
+    'name' => 'ec_transaction_product',
+    'join' => array(
+      'left' => array(
+        'table' => 'node',
+        'field' => 'nid'
+      ),
+      'right' => array(
+        'field' => 'nid'
+      ),
+    ),
+    'fields' => array(
+      'title' => array(
+        'name' => t('Purchased Product: Title'),
+        'sortable' => TRUE,
+      ),
+      'qty' => array(
+        'name' => t('Purchased Product: Quantity'),
+        'sortable' => TRUE,
+      ),
+      'price' => array(
+        'name' => t('Purchased Product: Price'),
+        'sortable' => TRUE,
+      ),
+      'product_count' => array(
+        'name' => t('Purchased Product: Number of Purchases'),
+        'notafield' => TRUE,
+        'sortable' => TRUE,
+        'query_handler' => 'views_query_handler_product_count',
+      ),
+
+    ),
+    'sorts' => array(
+      'title' => array(
+        'name' => t('Purchased Product: Title'),
+      ),
+      'qty' => array(
+        'name' => t('Purchased Product: Quantity'),
+      ),
+      'price' => array(
+        'name' => t('Purchased Product: Price'),
+      ),
+      'product_count' => array(
+        'name' => t('Purchased Product: Number of Purchases'),
+        'handler' => 'views_handler_product_count',
+      ),
+    ),
+  ); // End ec_transaction_product table
+  return $tables;
+}
+
+/**
+ * Field handler for count of purchases products
+ */
+function views_query_handler_product_count($field, $fieldinfo, $query) {
+  $alias = $field['field'];
+  $query->ensure_table($field['tablename']);
+  $query->add_field('count( ' . $field['tablename'] . '.nid )', '', $alias);
+  $query->add_groupby('node.nid');
+}
+
+/**
+ * Sort handler for count of purchased products
+ */
+function views_handler_product_count($op, &$query, $sortdata, $sort) {
+  $alias = explode('.', $sort['id']);
+  $alias = $alias[1];
+  $query->ensure_table($sortdata['table']);
+  $query->add_field('count( ' . $sortdata['table'] . '.nid )', '', $alias);
+  $query->add_groupby('node.nid');
+  $query->add_orderby('', $alias, $sort['sortorder']);
+}
+
+/**
+ * Return a list of Product Types
+ */
+function ecviews_views_handler_filter_product_type() {
+  return product_get_ptypes();
+}
+
+/**
+ * ecviews_views_handler_filter_product_parent()
+ *
+ * Filter products based upon being a parent product or not.
+ */
+function ecviews_views_handler_filter_product_parent($op, $filter, $filterinfo, &$query) {
+  switch ($op) {
+    case 'handler':
+      $query->ensure_table('ec_product');
+      switch ($filter['value'][0]) {
+        case '0':
+          $query->add_where($filter['field'] .' = 0');
+          break;
+
+        case '1':
+          $query->add_where($filter['field']);
+          break;
+      }
+      break;
+  }
+}
+
+/**
+ * Filter Nodes based on being a product.
+ */
+function ecviews_views_handler_filter_product($op, $filter, $filterinfo, &$query) {
+  switch ($op) {
+    case 'handler':
+      $query->ensure_table('ec_product');
+      switch ($filter['value'][0]) {
+        case '0':
+          $query->add_where('ec_product.ptype IS NULL');
+          break;
+
+        case '1':
+          $query->add_where('ec_product.ptype IS NOT NULL');
+          break;
+      }
+      break;
+  }
+}
+
+/**
+ * Field handler to give an add to cart link using product_link()
+ */
+function views_handler_product_add_to_cart_link($fieldinfo, $fielddata, $value, $data){
+  return array_pop(product_link('node', node_load($data->nid)));
+}
+
+/**
+ * Provides a default product view similar to the one provided in product.module in 4.7 
+ */
+function ecviews_views_default_views() {
+  // Provide a default products view similar to that available in 4.7
+  $view = new stdClass();
+  $view->name = 'Products';
+  $view->description = 'Product listing';
+  $view->access = array ();
+  $view->view_args_php = '';
+  $view->page = TRUE;
+  $view->page_title = 'products';
+  $view->page_header = '';
+  $view->page_header_format = '1';
+  $view->page_footer = '';
+  $view->page_footer_format = '1';
+  $view->page_empty = '';
+  $view->page_empty_format = '1';
+  $view->page_type = 'product_list';
+  $view->url = 'product';
+  $view->use_pager = TRUE;
+  $view->nodes_per_page = '9';
+  $view->sort = array ();
+  $view->argument = array ();
+  $view->field = array (
+    array (
+      'tablename' => 'node',
+      'field' => 'title',
+      'label' => '',
+      'handler' => 'views_handler_field_nodelink',
+      'options' => 'link',
+    ),
+    array (
+      'tablename' => 'node',
+      'field' => 'body',
+      'label' => '',
+      'handler' => 'views_handler_field_teaser',
+    ),
+  );
+  $view->filter = array (
+    array (
+      'tablename' => 'node',
+      'field' => 'status',
+      'operator' => '=',
+      'options' => '',
+      'value' => '1',
+    ),
+    array (
+      'tablename' => 'ec_product',
+      'field' => 'is_product',
+      'operator' => '=',
+      'options' => '',
+      'value' => '1',
+    ),
+  );
+  $view->exposed_filter = array ();
+  $view->requires = array(node, ec_product);
+  $views[$view->name] = $view;
+
+  return $views;
+}
+
+/**
+ * Themes a product page into a table similar to that in the previous 4.7 product page.
+ */
+function theme_ecviews_product_list($view, $nodes, $type) {
+  $teasers = TRUE;
+  $links = TRUE;
+
+  $rows = $row = array();
+  foreach ($nodes as $count => $n) {
+    $node = node_load($n->nid);
+    if (!($count % 3)) {
+      $rows[] = $row;
+      $row = array();
+    }
+    $row[] = node_view($node, $teasers, FALSE, $links);
+  }
+
+  if (!empty($row)) {
+    $rows[] = $row;
+  }
+
+  return theme('table', array(), $rows, array('class' => 'product-table'));
+}
