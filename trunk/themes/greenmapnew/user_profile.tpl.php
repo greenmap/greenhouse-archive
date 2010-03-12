@@ -246,7 +246,7 @@ $profile_local_overview = $user->profile_local_overview;
 
 // check all required variables, and set $complete = FALSE if their application is not complete
 $complete = TRUE;
-$complete = $user_picture ? $complete : FALSE;
+$complete = $user->picture ? $complete : FALSE;
 $complete = $location_set ? $complete : FALSE;
 $complete = $organization_complete ? $complete : FALSE;
 $complete = $mapmaker_complete ? $complete : FALSE;
