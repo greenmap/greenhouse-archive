@@ -504,6 +504,14 @@ function profile_save_profile(&$edit, &$user, $category) {
   if ((arg(0) == 'user' && arg(1) == 'register') || (arg(0) == 'admin' && arg(1) == 'user' && arg(2) == 'create')) {
     $result = db_query('SELECT fid, name, type FROM {profile_fields} WHERE register = 1 AND visibility != %d ORDER BY category, weight', PROFILE_HIDDEN);
   }
+  // mjgoins added this is "else if" clause Wed Mar 17 16:34:50 EDT 2010
+  //  the reason is that PROFILE_HIDDEN type fields are getting presented to
+  //  admin users as editable, but because of the "visibility !=" part of the
+  //  above query, those values would be silently ignored when it came time to
+  //  save to the database. So here, we leave out the visibility condition
+  else if ( user_access('administer users') ) {
+    $result = db_query("SELECT fid, name, type FROM {profile_fields} WHERE LOWER(category) = LOWER('%s') ", $category );
+  }  // end mjgoins patch
   else {
     $result = db_query("SELECT fid, name, type FROM {profile_fields} WHERE LOWER(category) = LOWER('%s') AND visibility != %d", $category, PROFILE_HIDDEN);
     // Use LOWER('%s') instead of PHP's strtolower() to avoid UTF-8 conversion issues.
