@@ -35,7 +35,7 @@ function profile_help($section) {
       $output .= t('<p>You can</p>
 <ul>
 <li>view user <a href="%profile">profiles</a>.</li>
-<li>administer profile settings: <a href="%admin-settings-profile">administer >> settings >> profiles</a>.</li>
+<li>administer profile settings: <a href="%admin-settings-profile">administer &gt;&gt; settings &gt;&gt; profiles</a>.</li>
 </ul>
 ', array('%profile' => url('profile'), '%admin-settings-profile' => url('admin/settings/profile')));
       $output .= '<p>'. t('For more information please read the configuration and customization handbook <a href="%profile">Profile page</a>.', array('%profile' => 'http://drupal.org/handbook/modules/profile/')) .'</p>';
@@ -94,7 +94,7 @@ function profile_block($op = 'list', $delta = 0, $edit = array()) {
     $fields = array();
     $result = db_query('SELECT name, title, weight, visibility FROM {profile_fields} WHERE visibility IN (%d, %d) ORDER BY weight', PROFILE_PUBLIC, PROFILE_PUBLIC_LISTINGS);
     while ($record = db_fetch_object($result)) {
-      $fields[$record->name] = $record->title;
+      $fields[$record->name] = check_plain($record->title);
     }
     $fields['user_profile'] = t('Link to full user profile');
     $form['profile_block_author_fields'] = array('#type' => 'checkboxes',
@@ -137,7 +137,7 @@ function profile_block($op = 'list', $delta = 0, $edit = array()) {
       }
 
       if ($output) {
-         $block['subject'] = t('About %name', array('%name' => $account->name));
+         $block['subject'] = t('About %name', array('%name' => check_plain($account->name)));
          $block['content'] = $output;
          return $block;
       }
@@ -184,7 +184,7 @@ function profile_field_form($arg = NULL) {
         drupal_not_found();
         return;
       }
-      drupal_set_title(t('edit %title', array('%title' => $edit['title'])));
+      drupal_set_title(t('edit %title', array('%title' => check_plain($edit['title']))));
       $form['fid'] = array('#type' => 'value',
         '#value' => $fid,
       );
@@ -373,7 +373,7 @@ function profile_admin_overview() {
   $result = db_query('SELECT * FROM {profile_fields} ORDER BY category, weight');
   $rows = array();
   while ($field = db_fetch_object($result)) {
-    $rows[] = array(check_plain($field->title), $field->name, _profile_field_types($field->type), $field->category, l(t('edit'), "admin/settings/profile/edit/$field->fid"), l(t('delete'), "admin/settings/profile/delete/$field->fid"));
+    $rows[] = array(check_plain($field->title), check_plain($field->name), _profile_field_types($field->type), $field->category, l(t('edit'), "admin/settings/profile/edit/$field->fid"), l(t('delete'), "admin/settings/profile/delete/$field->fid"));
   }
   if (count($rows) == 0) {
     $rows[] = array(array('data' => t('No fields defined.'), 'colspan' => '6'));
@@ -460,7 +460,7 @@ function profile_browse() {
     }
     $output .= '</div>';
 
-    drupal_set_title($title);
+    drupal_set_title(check_plain($title));
     return $output;
   }
   else if ($name && !$field->fid) {
@@ -624,10 +624,11 @@ function profile_form_profile($edit, $user, $category) {
     // Use LOWER('%s') instead of PHP's strtolower() to avoid UTF-8 conversion issues.
   }
 
+  $w = 1;
   while ($field = db_fetch_object($result)) {
     $category = $field->category;
     if (!isset($fields[$category])) {
-      $fields[$category] = array('#type' => 'fieldset', '#title' => $category, '#weight' => $w++);
+      $fields[$category] = array('#type' => 'fieldset', '#title' => check_plain($category), '#weight' => $w++);
     }
     switch ($field->type) {
       case 'textfield':
@@ -737,7 +738,7 @@ function profile_validate_profile($edit, $category) {
 function profile_categories() {
   $result = db_query("SELECT DISTINCT(category) FROM {profile_fields}");
   while ($category = db_fetch_object($result)) {
-    $data[] = array('name' => check_plain($category->category), 'title' => $category->category, 'weight' => 3);
+    $data[] = array('name' => $category->category, 'title' => $category->category, 'weight' => 3);
   }
   return $data;
 }
@@ -752,7 +753,7 @@ function theme_profile_block($account, $fields = array()) {
         $output .= "<p>$field->value</p>\n";
       }
       else {
-        $output .= "<p><strong>$field->title</strong><br />$field->value</p>\n";
+        $output .= '<p><strong>'. check_plain($field->title) ."</strong><br />$field->value</p>\n";
       }
     }
   }
