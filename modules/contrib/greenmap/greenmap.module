@@ -333,5 +333,42 @@ function hook_link($type, $node = 0, $main = 0) {
 // end of hook_link
 
 
+function greenmap_callback_from_block_25() {
+  //choose the role to list by value. 
+  // Note ID 1 = anonymous, ID 2 = authenticated user,  ID 3 = member,  ID 4 = admin-level1
+  // so valid values here are > 2.
+
+  $rid = 5;
+  print <<<EOF
+<br/>
+Click on the Field name to sort the list.<br/><br>
+Currently the fields: Profession, Membership, Gender, Age, Hobbies & Interest, and Zip code, are not sortable.
+EOF;
+
+  $header = array(
+    array('data' => t('Username'), 'field' => 'u.name'),
+    array('data' => t('Member for'), 'field' => 'u.created'),
+    array('data' => t('User Last Accessed'), 'field' => 'u.access', 'sort' => 'desc'),
+    t('Pending Reason'),
+    t('Operations')
+  );
+  $sql = "SELECT u.uid, u.name, u.status, u.created, u.access FROM {users} u INNER JOIN {users_roles} ur ON u.uid=ur.uid INNER JOIN {profile_values} pv ON pv.uid=u.uid AND pv.fid=89 WHERE ur.rid = $rid AND pv.value = 'yes'";
+  $sql .= tablesort_sql($header);
+  $result = pager_query($sql, 50);
+
+  $status = array(t('blocked'), t('active'));
+  while ($account = db_fetch_object($result)) {
+         $account = user_load(array('uid' => $account->uid));
 
 
+  $rows[] = array(theme('username', $account),
+            format_interval(time() - $account->created),
+            $account->access ? t('%time ago', array('%time' => format_interval(time() - $account->access))) : t('never'),
+            $account->profile_pending_reason,
+            l(t(' edit'), "user/$account->uid/edit/G.+Administration", array()));
+  }
+
+  $output = theme('table', $header, $rows);
+  $output .= theme('pager', NULL, 50, 0);
+  print ($output);
+}
