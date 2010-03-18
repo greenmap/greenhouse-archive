@@ -1288,7 +1288,12 @@ $num_rows = db_num_rows($result);
 $num_rows_map = $num_rows;
 
 $rows = array();
-$ogm_maps = sync_fetch_ogm_maps($user->uid);
+if ( function_exists('sync_fetch_ogm_maps') ) {
+  $ogm_maps = sync_fetch_ogm_maps($user->uid);
+}
+else {
+  watchdog('sync', "A call to a sync function in user_profile.tpl.php (in the theme) failed.");
+}
 
 
 // Loading OGM maps

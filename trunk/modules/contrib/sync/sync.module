@@ -508,8 +508,8 @@ function _sync_users_sync(&$edit, &$account,$override_update_check = false){
       }
 
       $receiver = $mail;
-      $subject = t("Your account at the Open Green has been synchronized with your new account at GreenMap.org");
-      $emailcontent = t("Your account at the Open Green has been synchronized with your new account at GreenMap.org.<br>\n ".
+      $subject = t("Your account at the Open Green Map has been synchronized with your new account at GreenMap.org");
+      $emailcontent = t("Your account at the Open Green Map has been synchronized with your new account at GreenMap.org.<br>\n ".
             "On both %ogm and GreenMap.org your details are: <br>\n ".
             "Username: %username <br>\n ".
             "Email: %email <br>\n ".
@@ -574,60 +574,6 @@ function sync_user($op, &$edit, &$account, $category = NULL){
       _sync_users_sync($edit, $account);
     break;
     case 'delete':
-      /*
-      $greenhouse_uid = $account->uid;
-      $greenhouse_profile_fields_fid = 97;
-      //  *** SET DATABASE VARIABLES ***
-      require_once('sync.inc.php');
-
-      // check the user role in greenhouse
-      if (!is_array($account->roles)) {
-        watchdog('error',t('Unable to get user roles from account. Synchronisation with Open Green Map aborted.'));
-        drupal_set_message(t('Unable to get user roles from account. Synchronisation with Open Green Map aborted.'));
-        return;
-      }
-
-      // $lapsed_roles = array('lapsed user','new unauthenticated user');
-      $lapsed_roles = array(5,6);
-
-      // if 'lapsed user' or 'new unauthenticated user' roles found user is not approved
-        $approved_user = (count(array_intersect($edit['roles'], $lapsed_roles)) > 0)?false:true;
-
-      if($approved_user == false){
-        return;
-      }
-
-      // get ogm uid from greenhouse db
-      if(!$result = db_query('SELECT value FROM {profile_values} where fid= "%d" AND uid ="%d"',$greenhouse_profile_fields_fid,$greenhouse_uid)) {
-        watchdog('error',t('Unable to get user profile data from account. Synchronisation with Open Green Map aborted.'));
-        drupal_set_message(t('Unable to get user profile data from account. Synchronisation with Open Green Map aborted.'));
-        return;
-      }
-
-      $uid = db_fetch_object($result);
-
-
-
-      // if ogm uid alredy exist in greenhouse
-      if($uid == null || !$uid || $uid == '' || $uid->value == ''){
-        watchdog('error',t('Error D001: Unable to get correct data from the database. Synchronisation with Open Green Map aborted.'));
-        drupal_set_message(t('Unable to get correct data from the database. Synchronisation with Open Green Map aborted.'));
-        mysql_close($link); // close connect
-        return;
-      }
-      if (!$link = sync_open_mysql_connect($db_user,$db_pass,$db)) {return;}
-      // remove all user roles from ogm db
-      $q = "DELETE FROM users_roles WHERE uid = '".$uid-value."'";
-      if(!mysql_query($q,$link)) {
-        watchdog('error',t('Error D002: Unable to delete data from the database. Synchronisation with Open Green Map aborted.'));
-        drupal_set_message(t('Unable to delete data from the database. Synchronisation with Open Green Map aborted.'));
-        mysql_close($link); // close connect
-        return;
-      }
-      watchdog('notice',t('Synchronisation with Open Green Map successfully completed.'));
-      drupal_set_message(t('Synchronisation with Open Green Map successfully completed.'));
-      mysql_close($link);
-      */
     break;
 
     case 'logout':
