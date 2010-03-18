@@ -825,6 +825,7 @@ function location_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
         }
       }    
     
+      if ( is_array($node->location) ) { //mjgoins Thu Mar 18 16:44:24 EDT 2010
       foreach ($node->locations as $index => $location) {
         $node->locations[$index] = location_form2api($node->locations[$index]);
       
@@ -991,7 +992,7 @@ function location_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
             location_invoke_locationapi($node->locations[$index], 'delete');
           }
         }
-      }
+      }}
       break;
       
     case 'load':
