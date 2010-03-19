@@ -1,0 +1,87 @@
+/* ======= Gallery item list ====== */
+
+.item-list ul {
+  margin: 0;
+  padding: 0;
+}
+
+.item-list ul li {
+  list-style-type: none;
+  margin: 10px 10px 10px 0;
+  padding: 0;
+}
+
+/* ======= Gallery node teaser ====== */
+
+.gallery-teaser .description {
+  vertical-align: middle;
+  padding-left: 20px;
+}
+
+.gallery-teaser td.thumbnail {
+  vertical-align: top;
+}
+
+.gallery-teaser img.thumbnail {
+  padding: 5px;
+  border: 1px solid #ccc;
+}
+
+.gallery-teaser .title {
+  margin: 0 0 0.5em 0;
+  padding-left: 0;
+}
+
+
+/* ======= Gallery node body ======= */
+
+.galleries ul {
+  list-style-type : none;
+  margin : 0;
+  padding : 0;
+}
+
+.galleries li {
+  background : #eeeeee;
+  border : 1px #cccccc solid;
+  margin : 1em 0;
+  padding : 1em;
+}
+
+.galleries li img {
+  float : left;
+  padding-right : 4px;
+  margin-right : 4px;
+}
+
+.galleries li div.count {
+  clear : both;
+}
+
+.galleries h3 {
+  margin : 0;
+  padding : 0;
+}
+
+/* ======= Image item list ======= */
+
+.images ul {
+  list-style-type : none;
+  margin : 0;
+  padding : 0;
+}
+
+.images .item-list li {
+  list-style-type : none;
+  float : left;
+  margin : 1em;
+}
+
+.image-teaser img.thumbnail {
+  padding: 5px;
+  border: 1px solid #ccc;
+}
+
+.image-teaser .description {
+  width: 100px;
+}
