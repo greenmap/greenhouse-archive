@@ -1,0 +1,20 @@
+#container{background:#f0f0f0 url(../img/bodybg-purple.jpg) repeat-x;}
+#mainmenu a:hover{background:#f0f0f0 url(../img/menuhover-purple.jpg) top left repeat-x;}
+#mainmenu a.current{background:#f0f0f0 url(../img/menuhover-purple.jpg) top left repeat-x;}
+.links li:before {
+	content: url("../img/square-purple.gif");
+	padding-right: 3px;
+}
+.styledbox {
+  border: 1px solid #8535A6;
+  padding: .5em;
+  margin-bottom: 1em;
+	background-color: #F0E5F4;
+}
+.comment .new {
+  text-align: right;
+  font-weight: bold;
+  font-size: 0.9em;
+  float: right;
+  color: #8535A6;
+}
