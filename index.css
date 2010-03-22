@@ -23,10 +23,9 @@ margin: 0 0 0 0;
 /* HEADER */ 
 	
 #top {
-	background-image:url("img2/ie_top.png");
 	background-repeat: no-repeat;
 	padding-bottom: 30px;
-  	margin: 0 0 0 30px;
+  	margin: 0 0 0 44px;
   	height: 100px;
   	width: 100%;
 }	
@@ -65,7 +64,7 @@ div.gm {
   height: 220px;
   width: 264px;
   float: left;
-  background:url("img2/gm_off.jpg") center top no-repeat;
+  background:url("img2/ogm_off.jpg") center top no-repeat;
   padding-top: -5px;
   padding-bottom: 0px;
   padding-left: 0px;
@@ -78,7 +77,7 @@ div.gm:hover {
   height: 220px;
   width: 264px;
   padding-right: 0px;
-  background:url("img2/gm_on.jpg") no-repeat center top;
+  background:url("img2/ogm_on.jpg") no-repeat center top;
   text-decoration: none;
 }
 
@@ -114,7 +113,7 @@ div.ogm {
   height: 220px;
   width: 264px;
   float: none;
-  background:url("img2/ogm_off.png") center top no-repeat;
+  background:url("img2/gm_off.jpg") center top no-repeat;
   padding-bottom: 0px;
   padding-left: 0px;
 }
@@ -126,7 +125,7 @@ div.ogm:hover {
   height: 220px;
   width: 264px;
   padding-right: 0px;
-  background:url("img2/ogm_on.png") no-repeat center top;
+  background:url("img2/gm_on.jpg") no-repeat center top;
   text-decoration: none;
 }
 
