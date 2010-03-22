@@ -266,7 +266,7 @@ background-color: transparent;
 #wrap {
 height: auto;
 font-size:0.9em;
-min-height: 800px;
+min-height: 650px;
 min-width: 1070px;
 padding:0;
 margin:0;
@@ -300,7 +300,7 @@ float: left;
 
 background: url(img/rightshadow.gif) repeat-y right;
 	float:right;
-	height: 800px;
+	height: 100%;
 	margin-top: -220;
 	z-index: -100;
 	padding-right: 45px;
@@ -1432,24 +1432,24 @@ height: 33px;
 }
 
 #footer_gh {
-/*background: url(img/bottomshadow.gif) repeat-x;*/
+background: url(img/bottomshadow.gif) repeat-x;
 clear:both;
 color:#d0d0d0;
 width: 100%;
-position:absolute;
-bottom:-150px;
+position: absolute;
+bottom: -120px;
 }
 
 #bottomleft {
 	float: left;
 	width: 61px;
-	/*background: url(img/bottomleftshadow.gif) repeat-x;*/
+	background: url(img/bottomleftshadow.gif) repeat-x;
 }
 
 #bottomright {
 	float: right;
 	width: 61px;
-	/*background: url(img/bottomrightshadow.gif) repeat-x;*/
+	background: url(img/bottomrightshadow.gif) repeat-x;
 }
 
 #footer_gh H1 {
