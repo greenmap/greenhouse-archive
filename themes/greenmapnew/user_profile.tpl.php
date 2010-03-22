@@ -749,7 +749,7 @@ $num_rows = db_num_rows($result);?>
   <div><strong>
   <?php if (!$complete && !$profile_pending) { ?>
     <?php print t('IMPORTANT: Your application has not been submitted yet. You need to fill in the information below.'); ?><br><br>
-    <?php print t('Everything with a red asterisk is information that is required. Everything in blue is optional. You can edit your information at any time.'); ?><br><br>
+    <?php print t('Everything with a red asterisk is information that is required. Uploading a profile picture  is required too (click om the default user picture on the left to upload your own picture). Everything in blue is optional. You can edit your information at any time.'); ?><br><br>
     <?php print t('Once all the required information is complete you will be able to click the "Submit to Green Map" button at the bottom of the page. '); ?>
   <?php } elseif ($complete && !$profile_pending) { ?>
     <?php print t('Your application is now complete. You must click the "Submit to Green Map" button at the bottom of the page.'); ?><br><br>
