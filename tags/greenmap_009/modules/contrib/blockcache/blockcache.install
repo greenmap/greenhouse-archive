@@ -1,0 +1,25 @@
+<?php
+
+function blockcache_install(){
+    switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {bc_blocks} (
+        my_delta int(10) NOT NULL,
+        module varchar(40) NOT NULL,
+        mod_delta varchar(40) NOT NULL,
+        PRIMARY KEY  (my_delta)
+      ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      break;
+    }
+  drupal_set_message(t('Database table for Block Cache module has been installed.'));
+}
+
+/*
+CREATE TABLE bc_blocks (
+  my_delta int(10) NOT NULL,
+  module varchar(40) NOT NULL,
+  mod_delta int(10) NOT NULL,
+  PRIMARY KEY  (my_delta)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+*/
