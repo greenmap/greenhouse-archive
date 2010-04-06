@@ -66,7 +66,7 @@ div.gm {
   height: 220px;
   width: 264px;
   float: left;
-  background:url("img2/ie_gm_off.jpg") center top no-repeat;
+  background:url("img2/ie_ogm_off.jpg") center top no-repeat;
   padding-top: -5px;
   padding-bottom: 0px;
   padding-left: 0px;
@@ -79,7 +79,7 @@ div.gm:hover {
   height: 220px;
   width: 264px;
   padding-right: 0px;
-  background:url("img2/gm_on.jpg") no-repeat center top;
+  background:url("img2/ogm_on.jpg") no-repeat center top;
   text-decoration: none;
 }
 
@@ -109,7 +109,7 @@ div.ogm {
   height: 220px;
   width: 264px;
   float: none;
-  background:url("img2/ie_ogm_off.png") center top no-repeat;
+  background:url("img2/ie_gm_off.png") center top no-repeat;
   padding-bottom: 0px;
   padding-left: 0px;
 }
@@ -121,7 +121,7 @@ div.ogm:hover {
   height: 220px;
   width: 264px;
   padding-right: 0px;
-  background:url("img2/ogm_on.png") no-repeat center top;
+  background:url("img2/gm_on.png") no-repeat center top;
   text-decoration: none;
 }
 
@@ -181,7 +181,8 @@ background:url(img2/lowertextbg.gif);
 margin: 0px 0px 0px 15px;
 width: auto;
 color: #ffffff;
-font-size: small;
+font-size: 14px;
+line-height: 15px;
 padding-top: 12px;
 }
 
