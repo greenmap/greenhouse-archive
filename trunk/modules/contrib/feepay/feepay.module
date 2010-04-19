@@ -255,8 +255,8 @@ function feepay_cron() {
 	  while ($user = db_fetch_object($result)) {
 	  	$result_fid = db_query('SELECT p.value FROM {profile_values} p WHERE p.fid = 45 AND p.uid = %d',$user->uid);
 		
-		if (db_fetch_object($result_fid)) {
-			$user_expires = db_fetch_object($result_fid);
+		if ($user_expires = db_fetch_object($result_fid)) {
+      $user_expires->value = unserialize($user_expires->value);
       if ( is_array($user_expires->value) ) {
         $user_expires = mktime(0, 0, 0, $user_expires->value['month'], $user_expires->value['day'], $user_expires->value['year']);
       }
