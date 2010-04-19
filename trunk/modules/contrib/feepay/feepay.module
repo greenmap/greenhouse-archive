@@ -257,7 +257,12 @@ function feepay_cron() {
 		
 		if (db_fetch_object($result_fid)) {
 			$user_expires = db_fetch_object($result_fid);
-			$user_expires = $user_expires->value;
+      if ( is_array($user_expires->value) ) {
+        $user_expires = mktime(0, 0, 0, $user_expires->value['month'], $user_expires->value['day'], $user_expires->value['year']);
+      }
+      else {
+        trigger_error('User with uid '. $user->uid .' has incorrect value for table profile_values, where fid = 45. Value of profile field with fid = 45 should be an array.');
+      }
 			
 		} else {
 			// if this field is empty - get the user data and unserialize it - see code at http://drupal.org/node/150958
@@ -269,6 +274,9 @@ function feepay_cron() {
 			$user_expires_year = $userdata['profile_admin_renewal_due']['year'];
 			// make a timestamp of the date their fee expires
 			$user_expires = mktime(0, 0, 0, $user_expires_month, $user_expires_day, $user_expires_year);
+      if ( $user_expires < 1 ) {
+        trigger_error('User with UID '. $user->uid .' is missing expiration date. Check field \'profile_admin_renewal_due\'');
+      }
 			$user->expiry = $user_expires;
 			
 			// save unserialized data to proper place to speed things up in future - need to serialize again though ***********************************
@@ -587,6 +595,7 @@ function _feepay_admin_mail() {
  * Wrapper for user_mail
  */
 function _feepay_mail($subject, $message, $period, $user = NULL, $user_list = NULL) {
+// argument '$user' must have property 'expiry' set to a positive integer (unix time) or trouble ensues
   $testing_site = variable_get('testing_site', FALSE);
   global $base_url;
   if ($user_list) {
