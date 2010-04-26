@@ -749,7 +749,12 @@ $num_rows = db_num_rows($result);?>
   <div><strong>
   <?php if (!$complete && !$profile_pending) { ?>
     <?php print t('IMPORTANT: Your application has not been submitted yet. You need to fill in the information below.'); ?><br><br><span class="red">
-    <?php print t('You must upload a profile picture. Click Edit Your Profile (above, in blue) and scroll down to add your logo, photo of your community or group. Everything with a red asterisk is required. Blue links are optional. These links are not visible to the public. You can edit your information at any time. '); ?></span><br><br>
+    <?php
+      if ( ! $user->picture ) {
+        print t('You must upload a profile picture. Click Edit Your Profile (above, in blue) and scroll down to add your logo, photo of your community or group. Everything with a red asterisk is required. Blue links are optional. These links are not visible to the public. You can edit your information at any time. ');
+      }
+     ?>
+     </span><br><br>
     <?php print t('Once all the required information is complete you will be able to click the "Submit to Green Map" button at the bottom of the page. '); ?>
   <?php } elseif ($complete && !$profile_pending) { ?>
     <?php print t('Your application is now complete. You must click the "Submit to Green Map" button at the bottom of the page.'); ?><br><br>
