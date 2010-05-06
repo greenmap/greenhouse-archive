@@ -1,7 +1,3 @@
-<style type="text/css">
-#desktophide {display: none !important;}
-</style>
-
 <!--node.tpl.php-->
   <div class="node<?php if ($sticky) { print " sticky"; } ?>">
     <?php if ($picture) {
