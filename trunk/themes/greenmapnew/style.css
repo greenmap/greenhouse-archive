@@ -516,7 +516,7 @@ display: inline;
 }
 
 /* hide GMap overflow */
-#gmap {
+#gmap, #usermap {
   overflow: hidden;
 }
 
