@@ -515,6 +515,11 @@ display: inline;
 	margin-bottom: 14px;
 }
 
+/* hide GMap overflow */
+#gmap, #usermap, #homegmap {
+  overflow: hidden;
+}
+
 /***** Thomas Custom Styles *****/
 
 /***** TT - user_profile styles *****/
