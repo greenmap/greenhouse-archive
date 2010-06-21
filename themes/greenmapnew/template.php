@@ -321,7 +321,43 @@ function greenmapnew_user_picture($account) {
   return $ret;
 }
 
-
+function greenmapnew_menu_bar ( $pid, $depth=0 ) {
+  $menu = menu_get_menu();
+  $output = '';
+  if( $depth == 0 ) {
+    $output .= '<div id="navcontainer"> <ul id="navlist"><li id="home" ><a href="'. base_path() .'"></a></li>'. "\n";
+  }
+  else {
+    $output .= "\n". '<ul class="submenu" id="submenu-' .$pid .'">';
+  }
+  if (isset($menu['visible'][$pid]) && $menu['visible'][$pid]['children']) {
+    foreach ($menu['visible'][$pid]['children'] as $mid) {
+          $children_array = isset($menu['visible'][$mid]['children']) ? $menu['visible'][$mid]['children'] : NULL;
+    $is_children = ( count($children_array) > 0 );
+        $children = $is_children ? theme('menu_bar', $mid, $depth+1) : NULL;
+    if( $depth == 0 ) {
+        $class = 'class="menu-header"';
+    }
+    elseif( $is_children ) {
+    	$mouseover = "document.getElementById('submenu-" .$mid ."').style.display='inline'";
+    	$mouseout = "document.getElementById('submenu-" .$mid ."').style.display='none'";
+        $class = 'class="submenu-header" onMouseOver=' .$mouseover .'; onMouseOut=' .$mouseout .';';
+    }
+    else {
+        $class = 'class="leaf" id="leaf-' .$mid .'"';
+    }
+      $output .= "<li $class>". menu_item_link($mid) . $children ."</li>\n";
+    }
+  }
+  if( $depth == 0 ) {
+    $output .= '<li id="last-menu-item"></li>';
+  }
+  $output .= '</ul>';
+  if( $depth == 0 ) {
+    $output .= '</div>';
+  }
+  return $output;
+}
 
 
 
