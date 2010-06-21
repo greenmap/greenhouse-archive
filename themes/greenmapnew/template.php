@@ -341,7 +341,7 @@ function greenmapnew_menu_bar ( $pid, $depth=0 ) {
     elseif( $is_children ) {
     	$mouseover = "document.getElementById('submenu-" .$mid ."').style.display='inline'";
     	$mouseout = "document.getElementById('submenu-" .$mid ."').style.display='none'";
-        $class = 'class="submenu-header" onMouseOver=' .$mouseover .'; onMouseOut=' .$mouseout .';';
+        $class = 'class="submenu-header" id="submenu-p' .$mid .'" onMouseOver=' .$mouseover .'; onMouseOut=' .$mouseout .';';
     }
     else {
         $class = 'class="leaf" id="leaf-' .$mid .'"';
