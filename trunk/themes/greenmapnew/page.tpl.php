@@ -65,10 +65,10 @@ body {min-width:1000px !important;}
 			
 
 			<div id="mainmenu">
-				<?php if (isset($primary_links)) { ?><?php print theme('links', $primary_links) ?><?php } ?>
-			</div>
-						<div id="mapsbutton">
-				<?php if (isset($primary_links)) { ?><?php print theme('links', $primary_links) ?><?php } ?>
+			
+	<ul>
+   <?php print greenmapnew_menu_bar(169,2) ?>
+   </ul>
 			</div>
 		</div>
 
@@ -78,7 +78,7 @@ body {min-width:1000px !important;}
 
 		<div id="wrap">
 
-			<div id="leftside">
+		<div id="leftside">
 				<?php if ($sidebar_left) {
 	      print $sidebar_left;
 		    } ?>
