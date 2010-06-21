@@ -276,11 +276,11 @@ overflow: hidden;
 background-color: transparent;
 	}
 
-#submenu-609 {
+#submenu-p609 {
 margin-right:18px !important;
 }
 
-#submenu-609 a {
+#submenu-p609 a {
 	color:white;
 	display:block;
 	/* font: 0.8em Tahoma, Arial, sans-serif; */
@@ -296,7 +296,7 @@ margin-right:18px !important;
 background-color: transparent;
 }
 
-#submenu-609 a:hover {
+#submenu-p609 a:hover {
  /* background:#f0f0f0 url(img/menuhover.jpg) repeat-x; */
 color:#FFFFFF;
 width:160px; /* width of button image */
