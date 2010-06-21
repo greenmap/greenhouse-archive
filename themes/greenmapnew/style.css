@@ -276,11 +276,11 @@ overflow: hidden;
 background-color: transparent;
 	}
 
-#leaf-609 {
+#submenu-609 {
 margin-right:18px !important;
 }
 
-#leaf-609 a {
+#submenu-609 a {
 	color:white;
 	display:block;
 	/* font: 0.8em Tahoma, Arial, sans-serif; */
@@ -296,7 +296,7 @@ margin-right:18px !important;
 background-color: transparent;
 }
 
-#leaf-609 a:hover {
+#submenu-609 a:hover {
  /* background:#f0f0f0 url(img/menuhover.jpg) repeat-x; */
 color:#FFFFFF;
 width:160px; /* width of button image */
