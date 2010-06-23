@@ -1,0 +1,34 @@
+msgid "" 
+msgstr "" 
+"Project-Id-Version: Drupal-4.7b"
+"POT-Creation-Date: 2007-07-03 22:11:55+0200"
+"Last-Translator: fagioli.biz "
+"MIME-Version: 1.0"
+"Content-Type: text/plain; charset=utf-8"
+"Content-Transfer-Encoding: 8bit"
+"X-Poedit-Language: spanish"
+"X-Poedit-Country: spain"
+"X-Generator: Drupal PO WEB Generator by fagioli.biz"
+
+
+ #: greenmap.module:11
+#: greenmap.module:14
+msgid "Alters modules and forms for GreenMap.org."
+msgstr ""
+
+#: greenmap.module:11
+#: greenmap.module:14
+msgid "Alters modules and forms for GreenMap.org."
+msgstr ""
+
+#: greenmap.module:2
+#: greenmap.module:7
+#: greenmap.module:23
+#: greenmap.module:24
+#: greenmap.module:28
+msgid "greenmap"
+msgstr ""
+
+#: greenmap.module:53
+msgid "this is some text to help people"
+msgstr ""

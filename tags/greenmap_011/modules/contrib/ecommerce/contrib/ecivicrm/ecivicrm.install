@@ -1,0 +1,65 @@
+<?php
+// $Id: ecivicrm.install,v 1.3.4.3 2007/02/17 12:56:02 sammys Exp $
+
+/**
+ * E-Commerce ecivicrm module schema
+ */
+function ecivicrm_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {ec_transaction_ecivicrm} (
+        txnid int unsigned NOT NULL default '0',
+        civicrm_cid int unsigned NOT NULL default '0',
+        PRIMARY KEY (txnid),
+        KEY civicrm_cid (civicrm_cid)
+      ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      break;
+    case 'pgsql':
+      db_query("CREATE TABLE {ec_transaction_ecivicrm} (
+        txnid int NOT NULL default '0' CHECK (txnid >= 0),
+        civicrm_cid int NOT NULL default '0' CHECK (civicrm_cid >= 0),
+        PRIMARY KEY (txnid)
+      )");
+     db_query("CREATE INDEX {ec_transaction_ecivicrm}_civicrm_cid_idx ON {ec_transaction_ecivicrm} (civicrm_cid)");
+     break;
+  }
+}
+
+/*
+ * Updates
+ */
+
+/**
+ * update 1
+ *
+ * Change civicrm_uid to civicrm_cid which is a better name form this field.
+ */
+function ecivicrm_update_1() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {ec_transaction_ecivicrm} CHANGE civicrm_uid civicrm_cid INT(10) UNSIGNED NOT NULL DEFAULT '0'");
+      break;
+
+    case 'pgsql':
+      break;
+  }
+  return $ret;
+}
+
+function ecivicrm_update_2() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {ec_transaction_ecivicrm} ADD INDEX (civicrm_cid)");
+      break;
+
+    case 'pgsql':
+      db_query("CREATE INDEX {ec_transaction_ecivicrm}_civicrm_cid_idx ON {ec_transaction_ecivicrm} (civicrm_cid)");
+      break;
+  }
+  return $ret;
+}
