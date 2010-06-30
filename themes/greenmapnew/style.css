@@ -162,7 +162,9 @@ font-size:12px !important;
 height:auto !important;
 letter-spacing:0 !important;
 margin-bottom:2px;
-width:105px !important;
+padding-bottom:5px;
+padding-left:7px;
+width:102px !important;
 }
 
 #mainmenu .submenu-header .submenu a:hover{
@@ -215,7 +217,7 @@ height: auto;
 	font: 0.7em Tahoma, Arial, sans-serif;
 	letter-spacing: 0.15em; 
 	height:23px;
-	width:122px; /* width of button image */
+	width:124px; /* width of button image */
 	/* text-transform:uppercase;  */
 	background: transparent url(img/menu_shadow_down_4.gif) no-repeat;
 background-color: transparent;
