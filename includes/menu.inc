@@ -1104,6 +1104,9 @@ function _menu_build() {
 
       // If the administrator has changed the item, reflect the change.
       if ($item->type & MENU_MODIFIED_BY_ADMIN) {
+        if (module_exist('menu_per_role') && !is_null($access = menu_per_role_access($item->mid))) {
+          $_menu['items'][$item->mid]['access'] = isset($_menu['items'][$item->mid]['access']) ? $_menu['items'][$item->mid]['access'] && $access : $access;
+        }
         $_menu['items'][$item->mid]['title'] = $item->title;
         $_menu['items'][$item->mid]['description'] = $item->description;
         $_menu['items'][$item->mid]['pid'] = $item->pid;
