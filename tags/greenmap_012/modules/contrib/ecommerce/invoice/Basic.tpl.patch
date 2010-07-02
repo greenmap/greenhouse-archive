@@ -1,0 +1,18 @@
+Index: Basic.tpl
+===================================================================
+--- Basic.tpl	(revision 6244)
++++ Basic.tpl	(working copy)
+@@ -15,6 +15,13 @@
+         &nbsp; &nbsp; <input type="button" value="{ts}Delete{/ts}" name="contact_delete" onclick="window.location='{crmURL p='civicrm/contact/view/delete' q="reset=1&delete=1&cid=$contactId"}';"/>
+     {/if}
+     {if $url } &nbsp; &nbsp; <a href="{$url}">&raquo; {ts}View User Record{/ts}</a> {/if}
++    {php}
++    if (user_access('create invoice')) {
++    {/php}
++    &nbsp; &nbsp; <a href="{php}echo url('admin/store/invoice/add');{/php}/{$contactId}">&raquo; {ts}Create Transaction{/ts}</a>
++    {php}
++    }
++    {/php}
+     {if $contactTag}<br />{ts}Tags{/ts}:&nbsp;{$contactTag}{/if}
+    </div>
+ </div>
