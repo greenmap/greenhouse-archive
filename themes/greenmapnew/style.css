@@ -140,6 +140,14 @@ display: none;
 display: block;
 }
 
+#submenu-169 #submenu-p609 #submenu-609 li {
+margin-left: 21px !important;
+}
+
+#submenu-169 #submenu-p609 #submenu-609 .submenu li {
+margin-left: 4px !important;
+}
+
 #mainmenu ul {
 font-size:19px;
 background-color: transparent;
@@ -152,7 +160,26 @@ float:left;
 list-style:none outside none;
 padding:0;
 text-align:center;
-width:107px;
+width:103px;
+}
+
+#submenu-169 .submenu-header .submenu li{
+margin-left: 4px !important;
+width: 110px !important;
+}
+
+#submenu-169 .submenu-header .submenu-header .submenu li{
+width: auto !important;
+min-width:110px;
+}
+
+#submenu-169 .submenu-header .submenu-header .submenu a{
+width: auto !important;
+min-width:110px;
+}
+
+#submenu-p609 {
+width: 105px !important;
 }
 
 #mainmenu .submenu-header .submenu a{
@@ -161,10 +188,11 @@ color:#FFFFFF !important;
 font-size:12px !important;
 height:auto !important;
 letter-spacing:0 !important;
-margin-bottom:2px;
+border-bottom:1px solid white;
 padding-bottom:5px;
 padding-left:7px;
-width:102px !important;
+width:96px !important;
+text-align: left;
 }
 
 #mainmenu .submenu-header .submenu a:hover{
@@ -172,14 +200,15 @@ background:url("img/dropdownbg.gif") repeat scroll 0 0 transparent !important;
 }
 
 #mainmenu .submenu-header .submenu-header ul {
-float:right;
-left:-16px;
+float:left;
+left:60px;
 position:relative;
-top:-30px;
+top:-25px;
+width:auto;
 }
 
 #mainmenu .submenu-header .submenu-header .submenu a {
-float:right;
+
 }
 
 #mainmenu .submenu-header .submenu-header ul li{
@@ -202,6 +231,7 @@ text-align: left !important;
 #mainmenu #submenu-169 li{
 float: left;
 text-align: center;
+margin-left: 0;
 }
 
 #mainmenu .submenu-header .menu {
@@ -219,11 +249,14 @@ height: auto;
 	height:23px;
 	width:124px; /* width of button image */
 	/* text-transform:uppercase;  */
-	background: transparent url(img/menu_shadow_down_4.gif) no-repeat;
+	background: transparent url(img/menu_shadow_down_4.png) no-repeat;
 background-color: transparent;
-	padding-top: 4px;
-	margin-left: -14px;
+	padding-top: 3px;
 	letter-spacing: 0.15em;
+}
+
+#mainmenu #submenu-169 {
+	margin-left: -14px !important;
 }
 
 #mainmenu a:hover {
