@@ -1,0 +1,34 @@
+<?php
+// $Id: invoice.install,v 1.2.2.4 2007/02/25 23:05:57 gordon Exp $
+
+/**
+ * E-Commerce invoice module schema
+ */
+function invoice_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {ec_invoice} (
+        uid int unsigned NOT NULL default '0',
+        invoice_id varchar(32) NOT NULL default '',
+        created int NOT NULL default '0',
+        changed int NOT NULL default '0',
+        invoice text NOT NULL,
+        PRIMARY KEY  (uid,invoice_id)
+      ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      break;
+    case 'pgsql':
+      // NOTE: this pgsql statement was converted using an online
+      //       sql conversion tool - it may not work.
+      db_query("CREATE TABLE {ec_invoice} (
+        uid INTEGER NOT NULL DEFAULT 0,
+        invoice_id VARCHAR(32) NOT NULL DEFAULT '',
+        created INTEGER NOT NULL DEFAULT 0,
+        changed INTEGER NOT NULL DEFAULT 0,
+        invoice TEXT NOT NULL,
+        CONSTRAINT ec_invoice_pk PRIMARY KEY (uid, invoice_id),
+        CHECK (uid>=0))");
+      break;
+  }
+}
+
