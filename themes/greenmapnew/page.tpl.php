@@ -19,13 +19,7 @@ return;
 
   <title><?php print $head_title ?></title>
   <?php print $head ?>
-  <?php print $styles ?>
-  <style type="text/css" media="all">@import "<?php print $base_url . '/' . $directory . '/colorcss/' . $color ?>.css";</style>
-  <script type="text/javascript"><?php /* Needed to avoid Flash of Unstyle Content in IE */ ?> </script>
-<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com , Té Baybute - http://tebaybute.net , and Akiko Rokube http://rokube.com / for http://www.greenmap.org" />
-
-<!--[if IE 6]>
+  	<!--[if IE 6]>
 <style type="text/css">
 #content { margin: -380px; margin-top: 0px; margin-right: 0; margin-left: 50px; left: 130px;}
 body {min-width:1000px !important;}
@@ -33,6 +27,36 @@ body {min-width:1000px !important;}
 #sitename {margin-top: 0px !important;}
 </style>
 <![endif]-->
+
+<!--[if IE 7]>
+<style type="text/css">
+#mainmenu {margin-top:25px !important;}
+#mainmenu .submenu-header .submenu-header ul {
+margin-left: 0px !important;
+}
+#mainmenu #submenu-169 .submenu-header ul {
+margin-left: 0px !important;
+
+}
+</style>
+<![endif]-->
+
+<!--[if IE 8]>
+<style type="text/css">
+#mainmenu #submenu-169 .submenu-header ul {
+float:left;
+margin-left: -40px;
+}
+#mainmenu .submenu-header .submenu-header ul {
+left: 100px !important;
+top: -23px !important;
+}
+<![endif]-->
+  <?php print $styles ?>
+  <style type="text/css" media="all">@import "<?php print $base_url . '/' . $directory . '/colorcss/' . $color ?>.css";</style>
+  <script type="text/javascript"><?php /* Needed to avoid Flash of Unstyle Content in IE */ ?> </script>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com , Té Baybute - http://tebaybute.net , and Akiko Rokube http://rokube.com / for http://www.greenmap.org" />
 
 
 
