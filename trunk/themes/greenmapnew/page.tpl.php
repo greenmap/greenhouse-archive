@@ -43,6 +43,7 @@ body {min-width:1000px !important;}
 	<img src="img/menu_shadow_up_4.png">
 	<img src="img/menu_shadow_down_4.png">
 	</div>
+	
 	<div id="container">
 	
 		<div id="preheader"><?php // top bar containing language links and search box ?>
