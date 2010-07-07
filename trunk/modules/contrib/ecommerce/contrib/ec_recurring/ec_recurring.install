@@ -1,0 +1,202 @@
+<?php
+
+/** $Id: ec_recurring.install,v 1.1.2.11 2007/02/16 02:39:17 sammys Exp $
+ *
+ * ec_recurring.install
+ * @author Sammy Spets (Synerger Pty Ltd, Australia)
+ */
+
+require_once (drupal_get_path('module', 'ec_recurring') .'/ec_recurring.module');
+
+/**
+ * Installs E-Commerce recurring product support tables into the
+ * database. This module requires the ec_mail module.
+ *
+ * IMPORTANT: For those that care, rid field in ec_recurring_schedule
+ * has special encoding.
+ *   Values > 0 are reminder IDs and entries are reminder mails
+ *   Values <= 0 denote an entry for the product itself and are 
+ *     cycles (0 == unlimited, -N == product has N-1 cycles remaining)
+ * This was done to have all schedules in the same table with no extra
+ * fields.
+ */
+function ec_recurring_install() {
+  $deps = array('store', 'product', 'ec_mail');
+  if (!store_deps_install('ec_recurring', $deps)) {
+    return;
+  } 
+
+  switch($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {ec_recurring_schedule} (
+        sid int unsigned NOT NULL auto_increment,
+        name varchar(255) NOT NULL,
+        numunits tinyint unsigned NOT NULL,
+        unit enum ('D', 'W', 'M', 'Y') NOT NULL,
+        cycles tinyint unsigned NOT NULL,
+        PRIMARY KEY (sid)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
+      db_query("CREATE TABLE {ec_recurring_reminder} (
+        rid int unsigned NOT NULL auto_increment,
+        sid int unsigned NOT NULL,
+        mid int unsigned NOT NULL,
+        numunits tinyint unsigned NOT NULL,
+        unit enum ('0', 'D', 'W', 'M', 'Y') NOT NULL,
+        PRIMARY KEY (rid)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
+      db_query("CREATE TABLE {ec_recurring_product} (
+        nid integer unsigned NOT NULL,
+        vid integer unsigned NOT NULL,
+        sid integer unsigned NOT NULL,
+        PRIMARY KEY (vid)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
+      db_query("CREATE TABLE {ec_recurring_expiration} (
+        txnid integer unsigned NOT NULL,
+        start_time integer NOT NULL,
+        vid integer unsigned NOT NULL,
+        rid integer NOT NULL,
+        expiry integer unsigned NOT NULL,
+        status tinyint NOT NULL DEFAULT 0,
+        PRIMARY KEY (txnid, vid, rid),
+        KEY (expiry)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
+      break;
+    case 'pgsql':
+      db_query("CREATE TABLE {ec_recurring_schedule} (
+        sid serial CHECK (sid >= 0),
+        name varchar(255) NOT NULL,
+        numunits smallint NOT NULL CHECK (numunits >= 0),
+        unit varchar(1) NOT NULL CHECK (unit in ('D', 'W', 'M', 'Y')),
+        cycles smallint NOT NULL CHECK (cycles >= 0),
+        PRIMARY KEY (sid)
+      )");
+      db_query("CREATE TABLE {ec_recurring_reminder} (
+        rid serial CHECK (rid >= 0),
+        sid integer NOT NULL CHECK (sid >= 0),
+        mid integer NOT NULL CHECK (mid >= 0),
+        numunits smallint NOT NULL CHECK (numunits >= 0),
+        unit varchar(1) NOT NULL CHECK (unit in ('0', 'D', 'W', 'M', 'Y')),
+        PRIMARY KEY (rid)
+      )");
+      db_query("CREATE TABLE {ec_recurring_product} (
+        nid integer NOT NULL CHECK (nid >= 0),
+        vid integer NOT NULL CHECK (vid >= 0),
+        sid integer NOT NULL CHECK (sid >= 0),
+        PRIMARY KEY (vid)
+      )");
+      db_query("CREATE TABLE {ec_recurring_expiration} (
+        txnid integer NOT NULL CHECK (txnid >= 0),
+        start_time integer NOT NULL,
+        vid integer NOT NULL CHECK (vid >= 0),
+        rid integer NOT NULL,
+        expiry integer NOT NULL CHECK (expiry >= 0),
+        status smallint NOT NULL DEFAULT 0 CHECK (status in (0, 1, 2)),
+        PRIMARY KEY (txnid, vid, rid)
+      )");
+      db_query("CREATE INDEX {ec_recurring_expiration}_expiry_idx ON {ec_recurring_expiration} (expiry)");
+      break;
+  }
+
+  $schedlist = array();
+  $vidlist = array();
+  require_once(drupal_get_path('module', 'ec_recurring') . '/ec_recurring.module');
+  require_once(drupal_get_path('module', 'ec_mail') . '/ec_mail.module');
+
+  $mids = ec_mail_reset_to_defaults(ECMAIL_TYPE_REMINDER, 'ec_recurring');
+  ec_recurring_add_reminders($mids);
+
+  // Update old schedules if product schema version requires this.
+  if (drupal_get_installed_schema_version('product') < 3) {
+    ec_recurring_update_schedules($schedlist, $vidlist);
+    ec_recurring_update_purchases($vidlist);
+  }
+}
+
+function ec_recurring_update_schedules(&$schedlist, &$vidlist) {
+  $result = db_query("SELECT nid, vid, price_interval as numunits, price_unit as unit, price_cycle as cycles FROM {ec_product} WHERE is_recurring = 1");
+  while ($row = db_fetch_array($result)) {
+    ec_recurring_update_cycles($row);
+    ec_recurring_add_schedule($schedlist, $vidlist, $row);
+  }
+}
+
+function ec_recurring_update_cycles(&$row) {
+  if (is_array($row) && $row['cycles'] == -1) {
+    $row['cycles'] = ECRECURRING_UNLIMITED;
+  } else if (is_object($row) && $row->cycles == -1) {
+    $row->cycles = ECRECURRING_UNLIMITED;
+  }
+}
+
+function ec_recurring_add_schedule(&$schedlist, &$vidlist, &$row) {
+  $s = "{$row['numunits']}:{$row['unit']}:{$row['cycles']}";
+  $vid = $row['vid'];
+  $nid = $row['nid'];
+  unset($row['vid']);
+  unset($row['nid']);
+  
+  if (!isset($schedlist[$s])) {
+    // add the schedule to the system
+    $row['name'] = theme('recurring_schedule', $row);
+    $row['sid'] = db_result(db_query("SELECT sid FROM {ec_recurring_schedule} WHERE numunits = %d AND unit = '%s' AND cycles = %d", $row['numunits'], $row['unit'], $row['cycles']));
+    if (empty($row['sid'])) {
+      ec_recurring_save_schedule($row);
+    }
+    $schedlist[$s] = array('schedule' => $row, 'vids' => array());
+  } else {
+    $row['sid'] = $schedlist[$s]['schedule']['sid'];
+  }
+  
+  // add the entry into ec_recurring_product
+  db_query("INSERT INTO {ec_recurring_product} (sid, nid, vid) VALUES (%d, %d, %d)", $row['sid'], $nid, $vid);
+  $schedlist[$s]['vids'][] = $vid;
+  $vidlist[$vid] = $row['sid'];
+}
+
+function ec_recurring_update_purchases(&$vidlist) {
+  $result = db_query("SELECT t.txnid, t.uid, t.payment_date, p.* FROM {ec_transaction} t, {ec_transaction_product} p WHERE is_recurring = 1 AND t.txnid = p.txnid ORDER BY p.expires");
+  while ($row = db_fetch_object($result)) {
+    $row->schedule = ec_recurring_load_schedule($vidlist[$row->vid], ec_recurring_default_expiry_time($row->expires), FALSE);
+    ec_recurring_update_cycles($row);
+    ec_recurring_product_payment($row, $row, ec_recurring_default_expiry_time($row->payment_date));
+  }
+}
+
+function ec_recurring_add_reminders(&$mids) {
+  $reminders = array();
+
+  for ($n = 1; $n <= 2; $n++) {
+    $status = variable_get("{$n}_price_status", 0);
+    variable_del("{$n}_price_status");
+    
+    if ($status) {
+      $r = array();
+      $r['mid'] = $mids[ECMAIL_TYPE_REMINDER]['renewal'];
+      $r['numunits'] = variable_get("{$n}_price_interval", 0);
+      variable_del("{$n}_price_interval");
+      $r['unit'] = variable_get("{$n}_price_unit", 0);
+      variable_del("{$n}_price_unit");
+      $reminders[] = $r;
+    }
+  }
+  
+  // add the expiry reminder
+  $r = array();
+  $r['mid'] = $mids[ECMAIL_TYPE_REMINDER]['expired'];
+  $r['numunits'] = ECRECURRING_ATEXPIRY_NUMUNITS;
+  $r['unit'] = ECRECURRING_ATEXPIRY_UNITS;
+  $reminders[] = $r;
+  
+  $result = db_query("SELECT sid FROM {ec_recurring_schedule}");
+  while ($row = db_fetch_array($result)) {
+    foreach ($reminders as $r) {
+      $r['sid'] = $row['sid'];
+      $msg = '';
+      ec_recurring_save_reminder($r, $msg);
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Update functions

@@ -1,0 +1,12 @@
+; $Id: recaptcha.info,v 1.8 2007/07/20 07:25:44 robloach Exp $
+name = reCAPTCHA
+description = "Uses the reCAPTCHA web service to improve the CAPTCHA system and protect email addresses."
+dependencies = captcha
+package = "Spam control"
+version = "$Name: DRUPAL-4-7--1-0 $"
+
+; Information added by drupal.org packaging script on 2007-08-02
+version = "4.7.x-1.0"
+project = "recaptcha"
+datestamp = "1186077524"
+
