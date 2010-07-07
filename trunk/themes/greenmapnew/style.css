@@ -120,6 +120,14 @@ float:right;
 
 /*** Horizontal menu ***/
 
+#preloader {
+display: none;
+}
+
+#preloader img{
+display: none;
+}
+
 #mainmenu{
 left: 0;
 margin-left: 20px;
@@ -196,7 +204,7 @@ text-align: left;
 }
 
 #mainmenu .submenu-header .submenu a:hover{
-background:url("img/dropdownbg.gif") repeat scroll 0 0 transparent !important;
+background:#c4de99 repeat scroll 0 0 !important;
 }
 
 #mainmenu .submenu-header .submenu-header ul {
@@ -259,11 +267,11 @@ background-color: transparent;
 	margin-left: -14px !important;
 }
 
-#mainmenu a:hover {
+#mainmenu #submenu-169 a:hover {
  /* background:#f0f0f0 url(img/menuhover.jpg) top left repeat-x; */
 color:#FFFFFF;
 text-decoration:none;
-background: transparent url(img/menu_shadow_up_4.gif) no-repeat;
+background: transparent url(img/menu_shadow_up_4.png) no-repeat;
 background-color: transparent;
 }
 
