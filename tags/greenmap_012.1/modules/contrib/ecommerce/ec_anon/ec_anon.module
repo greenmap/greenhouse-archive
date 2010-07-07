@@ -1,0 +1,552 @@
+<?php
+
+// $Id: ec_anon.module,v 1.1.2.13 2007/02/24 12:32:52 sammys Exp $
+
+/*
+ * List of TODO items for integrating this module into the system
+ * 
+ * TODO: get blocked user purchasing working
+ * TODO: provide access to invoice via token
+ * TODO: provide access to order status via token
+ * TODO: When processing a login the cart contents need to be recalculated for member specials
+ */
+
+/*
+TODO: Upgrades from 4.7 that use address or civicrm modules need this module installed during
+the upgrade. Explore if this is possible.
+TODO: (5.0) Upgrade adds email addresses for the uid != 0 transactions
+TODO: (5.0) Admin display must show both the email address at time of transaction
+and the user's current email address
+TODO: (5.0) Add hook to obtain the email address for the transaction
+  hook_transactionapi($txn, 'get email', [TRUE for current, FALSE for time of transaction])
+TODO: (5.0) Overhaul payment system to allow blocked users to pay for their order. Does this need to happen with the token system in place?
+TODO: (later) 
+*/
+
+/**
+ * Enables user account provision when products are purchased.
+ * @author Sammy Spets (thanks to Synerger Pty Ltd, Australia)
+ */
+
+define('ECANON_POLICY_UNSET', 0);
+define('ECANON_POLICY_NEVER', 1);
+define('ECANON_POLICY_OPTIONAL', 2);
+define('ECANON_POLICY_ALWAYS', 3);
+define('ECANON_POLICY_DEFAULT', ECANON_POLICY_OPTIONAL);
+
+define('ECANON_TOKEN_LENGTH', 32);
+
+/**
+ * Implementation of hook_help().
+ */
+function ec_anon_help($section) {
+  switch ($section) {
+    case 'admin/modules#description':
+      return '<b>EC:</b> '.t('Enables anonymous purchasing.');
+    case 'admin/help/ec_anon':
+    $msg = <<<END
+<p>The ec_anon module is responsible for purchasing policy setting and enforcement. For example, 
+purchasing policies can allow or deny anonymous customers from buying a product. Policies can also 
+restrict a product, such as a trial membership, to only be available to new customers. A 
+purchasing policy can be set as a site-wide policy that products default to. Policies can also be 
+set per-product to override the site default.</p>
+
+<p>Anonymous customers can register for a user account during checkout if the policy is set to 
+%optional or %always. Both <i>standard</i> and <i>express</i> registration methods are supported. 
+Drupal natively performs a <i>standard</i> registration where the user must confirm their email 
+address before continuing through the checkout process. An <i>express</i> registration is possible 
+by installing the %lt module and selecting <i>Set password & Immediate login</i> for the <b>Allow 
+user to set their password during registration</b> setting. See the %ltsettings for more 
+information.</p>
+END;
+      $plist = ec_anon_policy_list(FALSE);
+      return t($msg, array('optional' => $plist[ECANON_POLICY_OPTIONAL], '%always' => $plist[ECANON_POLICY_ALWAYS], '%lt' => l(t('LoginToboggan module'), 'http://drupal.org/project/logintoboggan'), '%ltsettings' => l(t('LoginToboggan settings page'), 'admin/settings/logintoboggan')));
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function ec_anon_menu($may_cache) {
+  $items = array();
+
+  if ($may_cache) {
+    $items[] = array(
+      'path' => 'ec_anon',
+      'type' => MENU_CALLBACK,
+      'callback' => 'ec_anon_blank',
+      'access' => 1
+    );
+    $items[] = array(
+      'path' => 'ec_anon/confirm', 
+      'title' => t('email confirmation'),
+      'type' => MENU_CALLBACK,
+      'callback' => 'ec_anon_confirmation',
+      'access' => 1
+    );
+    $items[] = array(
+      'path' => 'ec_anon/regsent',
+      'title' => t('confirmation sent'),
+      'type' => MENU_CALLBACK,
+      'callback' => 'ec_anon_registration_confirm_sent',
+      'access' => 1
+    );
+  }
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function ec_anon_form_alter($form_id, &$form) {
+  if (product_form_is_product($form_id, $form)) {
+    $form['product']['ec_anon'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Anonymous purchases'),
+      '#weight' => -11,
+      '#collapsible' => TRUE,
+    );
+    
+    $plist = ec_anon_policy_list();
+    $sitewide = $plist[variable_get('ec_anon_policy', ECANON_POLICY_DEFAULT)];
+    $form['product']['ec_anon']['anon_policy'] = array(
+      '#type' => 'select',
+      '#title' => t('Anonymous purchasing policy for this product'),
+      '#default_value' => $form['#node']->anon_policy,
+      '#options' => ec_anon_policy_list(),
+      '#description' => t('This sets the policy for user registrations during checkout for this product. This setting overrides the %link, which is currently set to <i>%setting</i>.<br/>', array('%link' => l(t('site-wide setting'), 'admin/store/settings'), '%setting' => $sitewide)).ec_anon_policy_description(), 
+    );
+  } else if ($form_id == 'store_ec_settings_form') {
+    $form['ec_anon_policy'] = array(
+      '#type' => 'select',
+      '#title' => t('Anonymous purchasing policy'),
+      '#default_value' => variable_get('ec_anon_policy', ECANON_POLICY_DEFAULT),
+      '#options' => ec_anon_policy_list(FALSE),
+      '#description' => t('This sets the site-wide policy for anonymous purchasing. This setting can be overridden by product settings.<br/>').ec_anon_policy_description().theme('more_help_link', url('admin/help/ec_anon')),
+      '#weight' => -20,
+    );
+  }
+}
+
+function ec_anon_user($op, &$edit, &$account, $category = NULL) {
+  switch ($op) {
+    case 'insert':
+      // migrate cart of anonymous user over to new user
+      if ($_GET['reg'] == 'standard') {
+        db_query("UPDATE {ec_cart} SET cookie_id = '%s' WHERE cookie_id = '%s'", $account->uid, session_id());
+      }
+      break;
+  }
+}
+
+/**
+ * Used to display a blank page.
+ */
+function ec_anon_blank() {
+  return '';
+}
+
+/**
+ * Displays a message to the user after registration has completed.
+ * Accepts $reg_type of 'standard' or 'express' (logintoboggan).
+ * 
+ * @param Type of registration performed. Either 'standard' or 'express'
+ */
+function ec_anon_registration_confirm_sent($reg_type) {
+  if ($reg_type == 'standard') {
+    return t('Please follow the link contained in that email then proceed to the checkout to complete your purchase.');
+  } else if ($reg_type == 'express'){
+    drupal_set_message(t('Please continue with the checkout process.'));
+  }
+}
+
+/**
+ * Returns an associative array of policies for use on form select elements.
+ *
+ * @return Array of policies
+ */
+function ec_anon_policy_list($allowUnset = TRUE) {
+  $plist = array(
+     ECANON_POLICY_NEVER => t('Registered only'),
+     ECANON_POLICY_OPTIONAL => t('Flexible'),
+     ECANON_POLICY_ALWAYS => t('Anonymous only')
+  );
+
+  if ($allowUnset) {
+    return array_merge(array(ECANON_POLICY_UNSET => t('Unset')), $plist);
+  }
+
+  return $plist;
+}
+
+function ec_anon_policy_description() {
+  $plist = ec_anon_policy_list(FALSE);
+  return t('
+<ul>
+  <li><i>%never:</i> Anonymous purchases are disabled. All customers must register or login before they can checkout.</li>
+  <li><i>%optional:</i> Customers can choose to register, login or checkout anonymously.</li>
+  <li><i>%always:</i> Only anonymous purchases are allowed. Customers are never given the option to register during checkout. Customers will be given the option of logging in or purchasing anonymously.</li>
+</ul>', array('%never' => $plist[ECANON_POLICY_NEVER], '%optional' => $plist[ECANON_POLICY_OPTIONAL],
+    '%always' => $plist[ECANON_POLICY_ALWAYS]));
+}
+
+/**
+ * Implementation of hook_transactionapi()
+ */
+function ec_anon_ec_transactionapi(&$txn, $op, $a3 = NULL, $a4 = NULL) {
+  if ($op == 'load') {
+    for ($i = 0; $i < count($txn->items); $i++) {
+      ec_anon_load_product($txn->items[$i]);
+    }
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function ec_anon_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  if ($node->type != 'product') {
+    return;
+  }
+  
+  switch ($op) {
+    case 'load':
+      ec_anon_load_product($node);
+      break;
+    case 'insert':
+    case 'update':
+      ec_anon_save_product($node);
+      break;
+    case 'view':
+      if (user_access('administer products')) {
+        return theme('ec_anon_view', $node);
+      }
+      break;
+  }
+}
+
+/**
+ * Loads the product policy information into the product node.
+ *
+ * @param Product node.
+ */
+function ec_anon_load_product(&$node) {
+  $ua = db_fetch_array(db_query("SELECT * FROM {ec_anon} WHERE vid = %d", $node->vid));
+  $node->anon_policy = ($ua ? $ua['policy'] : ECANON_POLICY_UNSET);
+}
+
+/**
+ * Saves the user account provision information contained in the given node.
+ * Returns TRUE if the save was successful. Otherwise it returns FALSE. The
+ * system is designed to remove records where the policy setting is
+ * ECANON_POLICY_UNSET.
+ * 
+ * This function enforces an anonymous policy of ECANON_POLICY_NEVER for
+ * recurring products without user account creation.
+ *
+ * @param $node Product containing user account provision fields.
+ * @return TRUE if the save was successful.
+ */
+function ec_anon_save_product(&$node) {
+  if (isset($node->sid) && $node->sid && (!isset($node->useracc_create) || !$node->useracc_create)) {
+    $node->anon_policy = ECANON_POLICY_NEVER;
+    $plist = ec_anon_policy_list();
+    drupal_set_message(t('Anonymous policy for this product has been reset to %policy.', array('%policy' => $plist[$node->anon_policy])));
+  }
+
+  $affected = db_affected_rows(db_query("UPDATE {ec_anon} SET policy = %d WHERE vid = %d", $node->anon_policy, $node->vid));
+  if (!$affected && $node->anon_policy) {
+    $affected = db_affected_rows(db_query("INSERT INTO {ec_anon} (vid, policy) VALUES (%d, %d)", $node->vid, $node->anon_policy));
+  } else if ($affected && $node->anon_policy == ECANON_POLICY_UNSET) {
+    $affected = db_affected_rows(db_query("DELETE FROM {ec_anon} WHERE vid = %d", $node->vid));
+  }
+
+  return $affected;
+}
+
+/**
+ * Returns the policy for the given product. If the product has no policy set
+ * this function returns the site-wide policy.
+ *
+ * @param $vid Product version ID
+ * @return Registration policy for the given product or, if one isn't set, the
+ *    site-wide policy.
+ */
+function ec_anon_policy_get($vid) {
+  $policy = db_result(db_query("SELECT policy FROM {ec_anon} WHERE vid = %d", $vid));
+  if (!$policy || $policy == ECANON_POLICY_UNSET) {
+    $policy = variable_get('ec_anon_policy', ECANON_POLICY_DEFAULT);
+  }
+  return $policy;
+}
+
+/**
+ * Implementation of E-Commerce hook_productapi()
+ */
+function ec_anon_productapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
+  global $user;
+
+  switch ($op) {
+    case 'allowed in cart':
+      return ec_anon_product_allowed_in_cart($node, $user->uid);
+      break;
+  }
+}
+
+/**
+ * Returns TRUE if the given product is allowed in the cart of the given
+ * user.
+ * 
+ * This function enforces that a non-creational and recurring product
+ * cannot be purchased by an anonymous user.
+ */
+function ec_anon_product_allowed_in_cart(&$node, $uid) {
+  if ($uid) {
+    $disallowed = array(ECANON_POLICY_ALWAYS);
+    $msg = t('Only non-registered users can purchase this product');
+  } else if (!isset($node->is_recurring) || !$node->is_recurring 
+      || !isset($node->useracc['create']) || !$node->useracc['create']){
+    $disallowed = array(ECANON_POLICY_NEVER);
+    $msg = t('Only registered users can purchase this product');
+  } else {
+    $disallowed = array();
+  }
+  
+  if ($node->anon_policy == ECANON_POLICY_UNSET) {
+    if (in_array(variable_get('ec_anon_policy', ECANON_POLICY_DEFAULT), $disallowed)) {
+      drupal_set_message($msg);
+      return FALSE;
+    }
+  } else if (in_array($node->anon_policy, $disallowed)) {
+    drupal_set_message($msg);
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/**
+ * Implements hook_checkoutapi()
+ */
+function ec_anon_checkoutapi(&$txn, $op, $arg3 = null, $arg4 = null) {
+  global $user;
+
+  if ($txn == 'ec_anon') {
+    return TRUE;
+  }
+
+  switch ($op) {
+    case 'form':
+      // user may have a blocked account and may not have
+      // filled in this form during this session.
+      if (!$user->uid && !$_SESSION['blocked_uid']) {
+        return ec_anon_checkout_form($txn);
+      } else if ($_SESSION['blocked_uid']) {
+        $txn->mail = db_result(db_query("SELECT mail FROM {users} WHERE uid = %d", $_SESSION['blocked_uid']));
+      }
+    case 'validate':
+      if (!$_SESSION['blocked_uid']) {
+        return ec_anon_checkout_validate($txn);
+      }
+      break;
+    case 'save':
+      if ($user->uid) {
+        $txn->mail = $user->mail;
+        // call function to adjust items in the cart for member specials
+        //store_recalc_transaction($txn);
+      } else if (isset($_SESSION['blocked_uid']) && $_SESSION['blocked_uid']) {
+        $txn->mail = db_result(db_query("SELECT mail FROM {users} WHERE uid = %d", $_SESSION['blocked_uid']));
+      }
+      $txn->screen++;
+      break;
+    case 'review':
+      if ($user->uid) {
+        $txn->mail = $user->mail;
+      }
+      $form['mail'] = array('#value' => $txn->mail);
+      return $form;
+    case 'review_submit':
+      // generate the token here for all purchases
+      $txn->token = ec_anon_generate_token();
+      break;
+    default:
+      break;
+  }
+}
+
+/**
+ * Generates a token that gives anonymous customers direct access to their
+ * order status etc.
+ * 
+ * @return Token string to be inserted into ec_transaction.
+ */
+function ec_anon_generate_token() {
+  do {
+    $token = user_password(ECANON_TOKEN_LENGTH);
+  } while (db_result(db_query("SELECT token FROM {ec_transaction} WHERE token = '%s'", $token)));
+  
+  return $token;
+}
+
+/**
+ * This function returns TRUE if the customer can either register or login
+ * for the given transaction. The decision is made according to the anonymous
+ * purchasing policies on products and the site-wide anonymous purchasing policy.
+ *
+ * @param $txn Transaction to check
+ * @return TRUE if the registration link can be displayed, otherwise FALSE.
+ */
+function ec_anon_login_allowed(&$txn) {
+  $unsetcount = $nitems = 0;
+  $items =& $txn->items;
+  foreach ($items as $key => $item) {
+    ec_anon_load_product($items[$key]); // use items[$key] as $item is not a reference
+    if ($items[$key]->anon_policy == ECANON_POLICY_ALWAYS) {
+      return FALSE;
+    }
+    if ($items[$key]->anon_policy == ECANON_POLICY_UNSET) {
+      $unsetcount++;
+    }
+    $nitems++;
+  }
+
+  if ($unsetcount == $nitems 
+        && variable_get('ec_anon_policy', ECANON_POLICY_DEFAULT) == ECANON_POLICY_ALWAYS) {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/**
+ * Displays the checkout form
+ */
+function ec_anon_checkout_form(&$txn) {
+  $form['mail'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Email'),
+    '#default_value' => $txn->mail
+  );
+  $form[] = array('#type' => 'submit', '#value' => t('Continue'));
+
+  if (ec_anon_login_allowed($txn)) {
+    $form['foo'] = array('#value' => t('<b>OR</b> if you already have an account'));
+    $form['name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Username')
+    );
+    $form['pass'] = array(
+      '#type' => 'password',
+      '#title' => t('Password')
+    );
+    
+    $form[] = array('#type' => 'submit', '#value' => t('Login'));
+    
+    if (variable_get('user_register', 1) == 1) {
+      if (module_exist('logintoboggan') && variable_get('reg_passwd_set', 0)) {
+        $dest = drupal_get_destination();
+      } else {
+        $dest = 'destination='.url('ec_anon/regsent/standard');
+      }
+      $form['register'] = array('#value' => theme('box', '', l(t('Register for an account'), 'user/register', array(), $dest).'<br/>'));
+    }
+  }
+  return $form;
+}
+
+function ec_anon_checkout_validate(&$txn) {
+  global $user;
+
+  if ($user->uid) {
+    $txn->mail = $user->mail;
+    return;
+  }
+
+  if ($_POST['op'] == t('Login')) {
+    // if the login button was pressed check that name and password
+    // were given
+    if (empty($txn->name)) {
+      form_set_error('name', t('Please supply a username'));
+    }
+    else if (empty($txn->pass)) {
+      form_set_error('pass', t('Please supply a password'));
+    } else {
+      // otherwise we check if the supplied values generate a login
+      $account = user_load(array('name' => $txn->name, 'pass' => trim($txn->pass)));
+      if ($account) {
+        // login values are valid so we set appropriate values for
+        // the mail and uid members of the txn.
+        $txn->mail = $account->mail;
+        $txn->uid = $account->uid;
+
+        // only log the user in if the account isn't blocked
+        $migrate_cart = FALSE;
+        if ($account->status) {
+          $user = $account;
+          user_login_submit('', array('name' => $txn->name, 'pass' => trim($txn->pass)));
+          $migrate_cart = TRUE;
+        } else {
+          // account is blocked. look through the products and see if one 
+          // allows purchasing while the user account is blocked
+          foreach ($txn->items as $nid => $n) {
+            $node = node_load(array('nid' => $nid));
+            
+            if ($node->allow_blocked_buyer) {
+              // a product allows purchases to blocked users.
+              // save the user id in session so if the user comes back to the
+              // beginning of checkout they won't be asked to login again
+              $_SESSION['blocked_uid'] = $account->uid;
+              break;
+            }
+          }
+          
+          if (!$_SESSION['blocked_uid']) {
+            // not allowed to buy any of the cart items when account is blocked
+            form_set_error('login', t('Sorry. Your account is currently blocked. Please contact the store by phone or email to arrange your purchase'));
+          } else {
+            //$migrate_cart = TRUE;
+          }
+        }
+        
+        // a login has occurred or purchasing by blocked accounts is allowed.
+        // we shift the cart over to be owned by the user
+        if ($migrate_cart) {
+          db_query("UPDATE {ec_cart} set cookie_id = '%s' WHERE cookie_id = '%s'", $txn->uid, session_id());
+        }
+      } else {
+        // login values were incorrect
+        form_set_error('login', t('Sorry. Unrecognized username or password.') .' '. l(t('Have you forgotten your password?'), 'user/password'));
+      }
+    }
+
+    // clear the username and password fields
+    $txn->name = '';
+    $txn->pass = '';
+  } else {
+    // continue button was clicked
+    user_validate_mail($txn->mail);
+
+    // if the product creates a user account we have to check that the user
+    // isn't entering a duplicate email address
+    if (function_exists('ec_useracc_is_creational_txn')) {
+      if (ec_useracc_is_creational_txn($txn)
+            && db_num_rows(db_query("SELECT uid FROM {users} WHERE LOWER(mail) = LOWER('%s')", $txn->mail)) > 0) {
+        form_set_error('mail', t('The e-mail address %email is already taken.', array('%email' => theme('placeholder', $txn->mail))));
+      }
+    }
+  }
+}
+
+function theme_ec_anon_review_form(&$form) {
+  global $user;
+
+  $screens = checkout_get_screens();
+  $screen = array_search('ec_anon', $screens);
+  if (!$user->uid) {
+    $changeurl = ($screen !== FALSE ? ' '. l(t('(change)'), 'cart/checkout', array(), "op={$screen}&". drupal_get_destination()) : '');
+  }
+
+  return theme('box', t('Email address'), form_render($form['mail']) . $changeurl);
+}
+
