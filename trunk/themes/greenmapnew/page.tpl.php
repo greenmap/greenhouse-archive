@@ -23,7 +23,7 @@ return;
   <style type="text/css" media="all">@import "<?php print $base_url . '/' . $directory . '/colorcss/' . $color ?>.css";</style>
   <script type="text/javascript"><?php /* Needed to avoid Flash of Unstyle Content in IE */ ?> </script>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com / for http://www.greenmap.org" />
+<meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com , Té Baybute - http://tebaybute.net , and Akiko Rokube http://rokube.com / for http://www.greenmap.org" />
 
 <!--[if IE 6]>
 <style type="text/css">
@@ -35,10 +35,16 @@ body {min-width:1000px !important;}
 <![endif]-->
 
 
+
 </head>
 
 <body>
+<div id="preloader">
+	<img src="img/menu_shadow_up_4.png">
+	<img src="img/menu_shadow_down_4.png">
+	</div>
 	<div id="container">
+	
 		<div id="preheader"><?php // top bar containing language links and search box ?>
 		<div id="ogmlink">
 <a href="http://www.opengreenmap.org/home" title="<?php print t('Go to Open Green Map') ?>">
