@@ -205,18 +205,22 @@ text-align: left;
 
 #mainmenu .submenu-header .submenu a:hover{
 background:#c4de99 repeat scroll 0 0 !important;
+width:96px !important;
 }
 
 #mainmenu .submenu-header .submenu-header ul {
 float:left;
-left:60px;
+left:100px;
 position:relative;
-top:-25px;
+top:-23px;
 width:auto;
 }
 
-#mainmenu .submenu-header .submenu-header .submenu a {
+*>#mainmenu .submenu-header .submenu-header ul { top:-25px; }
 
+#mainmenu #submenu-169 .submenu-header ul {
+float:left;
+margin-left: -40px;
 }
 
 #mainmenu .submenu-header .submenu-header ul li{
