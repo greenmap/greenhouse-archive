@@ -1832,7 +1832,7 @@ div.wbx-gw-wrapper {
 
 /* hide breadcrumbs */
 
-div.breadcrumb { display: none; }
+div.breadcrumb { display:block;}
 
 .ogm-maps div.item-list ul li a {
   color: #F89938;
