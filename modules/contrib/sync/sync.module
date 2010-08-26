@@ -242,7 +242,7 @@ function _sync_users_sync(&$edit, &$account,$override_update_check = false){
 
   $role_sql = "SELECT rid FROM {role} WHERE name = '%s'";
   $role_res = db_query($role_sql, 'map creator');
-  $role = db_get_result($role_res);
+  $role = db_result($role_res);
 
   $greenhouse_uid = $account->uid;
   $greenhouse_profile_fields_fid = 97; // the place in the greenhouse that the OGM UID is stored
