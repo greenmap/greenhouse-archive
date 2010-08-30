@@ -2,18 +2,13 @@
 global $base_url;
 global $i18n_langpath; ?>
 
-<?php
-if ($_GET[theme] == 'simple') { include('page-simple.tpl.php');
-return;
-}
-?>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
 "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <!--page.tpl.php-->
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-  <?php print $styles ?>
+<link rel="stylesheet" type="text/css" href="<?php print $base_url ?>/themes/iphoneappreferral/iphonestyle.css" media="screen" />
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
 <meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com , Te Baybute - http://tebaybute.net , and Akiko Rokube http://rokube.com / for http://www.greenmap.org" />
 
@@ -22,12 +17,7 @@ return;
 
 
 			<div id="content">
-				<?php
-				if (!$frontpage) {
-				  print $breadcrumb;
-				}
-				?>
-				<?php // print $breadcrumb ?>
+				
 				<?php if ($title) { ?><h1><?php print $title ?></h1><?php } ?>
 				<?php print $help ?>
 				<?php print $messages ?>
