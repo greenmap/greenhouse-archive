@@ -258,7 +258,7 @@ function _sync_users_sync(&$edit, &$account,$override_update_check = false){
   // if conditions are not accepted we do nothing
   if(($account->profile_terms_and_conditions == 0) && !$override_update_check) {return false;}
 
-  $role = 4; // 4 = team leader in OGM
+  $role = 11;
   $greenhouse_uid = $account->uid;
   $greenhouse_profile_fields_fid = 97; // the place in the greenhouse that the OGM UID is stored
   $ogm_profile_fields_fid = 1; // the place in the OGM that the Greenhouse UID is stored
