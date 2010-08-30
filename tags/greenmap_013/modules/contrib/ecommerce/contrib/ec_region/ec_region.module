@@ -1,0 +1,469 @@
+<?php
+
+define('ECREGION_CODE_COUNTRY', 0);
+define('ECREGION_CODE_STATE', 1);
+define('ECREGION_CODE_POSTAL', 2);
+
+/**
+ * Implementation of hook_menu()
+ */
+function ec_region_menu($may_cache) {
+  $items = array();
+  $access = user_access('administer store');
+
+  if ($may_cache) {
+
+    $items[] = array(
+      'path'     => 'admin/store/settings/regions',
+      'title'    => t('regions'),
+      'description' => t('Define geographic regions that are used by other modules.'),
+      'callback' => 'ec_region_region_overview',
+      'access'   => $access,
+    );
+    $items[] = array(
+      'path'     => 'admin/store/settings/regions/list',
+      'title'    => t('regions'),
+      'type'     => MENU_DEFAULT_LOCAL_TASK,
+      'weight'   => -2,
+    );
+    $items[] = array(
+      'path'     => 'admin/store/settings/regions/delete',
+      'title'    => t('Delete region'),
+      'callback' => 'ec_region_region_delete',
+      'type'     => MENU_CALLBACK,
+    );
+    $items[] = array(
+      'path'     => 'admin/store/settings/regions/edit',
+      'title'    => t('edit'),
+      'callback' => 'ec_region_region_edit',
+      'type'     => MENU_CALLBACK,
+      'weight'   => -1,
+    );
+    $items[] = array(
+      'path'     => 'admin/store/settings/regions/add',
+      'title'    => t('add'),
+      'callback' => 'ec_region_region_edit',
+      'type'     => MENU_LOCAL_TASK,
+      'weight'   => -1,
+    );
+    foreach (ec_region_get_realms() AS $realm => $realm_name) {
+      $items[] = array(
+        'path'     => 'admin/store/settings/regions/'. $realm,
+        'title'    => t('realm: ') . t($realm_name),
+        'callback' => 'ec_region_configure',
+        'type'     => MENU_LOCAL_TASK,
+        'access'   => $access,
+      );
+    }
+  }
+  return $items;
+}
+
+function ec_region_get_realms() {
+  $realms = module_invoke_all('ec_region_realm');
+
+  return array_merge (array('ec_region' => t('default')), $realms);
+}
+
+function ec_region_get_regions($regid = NULL, $region_realm = NULL) {
+  if ($regid) {
+    $result = db_query('SELECT * FROM {ec_region} WHERE regid = %d ORDER BY region_realm, region_name', $regid);
+  }
+  elseif ($region_realm) {
+    $result = db_query("SELECT * FROM {ec_region} WHERE region_realm = '%s' ORDER BY region_name", $region_realm);
+  }
+  else {
+    $result = db_query('SELECT * FROM {ec_region} ORDER BY region_realm, region_name');
+  }
+
+  $values = array();
+  while ($row = db_fetch_object($result)) {
+    $values[$row->regid] = array('region_name' => $row->region_name, 'region_realm' => $row->region_realm);
+  }
+  return $values;
+}
+
+/**
+ * Displays an administrative overview of all case states available.
+ */
+function ec_region_region_overview() {
+  $output = t('<p>This is your list of regions. The "Realm" refers to a specific area of E-Commerce
+             For example, you could have a "Local" region
+             for Tax and Shipping purposes, with different geographies assigned to each.</p>');
+
+  $header = array(t('region'), array('data' => t('operations'), 'colspan' => 3));
+
+  $realms = ec_region_get_realms();
+  foreach ($realms AS $realm => $name) {;
+    $output .= t('<h2>Realm: '. $name .'</h2>');
+    $rows = array();
+    foreach (ec_region_get_regions() as $regid => $region_data) {
+      if ($region_data['region_realm'] == $realm) {
+        $rows[] = array(
+            $region_data['region_name'],
+            l(t('edit'), 'admin/store/settings/regions/edit/'.$regid),
+            l(t('delete'), 'admin/store/settings/regions/delete/'.$regid),
+            l(t('configure'), 'admin/store/settings/regions/'.$realm),
+          );
+
+      }
+    }
+    if (!count($rows)) {
+      $rows[] = array('No regions configured!', l(t('add region'), 'admin/store/settings/regions/add/'. $realm),'');
+    }
+    $output .= theme('table', $header, $rows);
+  }
+
+  return $output;
+}
+
+function ec_region_region_edit() {
+  return drupal_get_form('ec_region_region_edit_form', ec_region_region_edit_form());
+}
+
+function ec_region_region_edit_form($regid = NULL) {
+  $action = arg(4);
+  $edit_what = arg(5); // A region is arg(4) is 'edit', a realm if arg(4) is 'add'.
+
+  if ($action == 'edit') {
+    $region_data = db_fetch_object(db_query('SELECT * FROM {ec_region} WHERE regid = %d', $edit_what));
+  }
+
+  $realms = ec_region_get_realms();
+
+  $form = array();
+  $form['regid'] = array(
+    '#type'              => 'hidden',
+    '#default_value'     => ($action)=='edit' ? $edit_what : NULL,
+  );
+  $form['region_name'] = array(
+    '#type'              => 'textfield',
+    '#title'             => t('region name'),
+    '#required'          => TRUE,
+    '#default_value'     => isset($region_data) ? $region_data->region_name : NULL,
+    '#description'       => t('The name of this region. Examples: "Interstate", "Taxable destinations"'),
+  );
+  $form['region_realm'] = array(
+    '#type'              => 'select',
+    '#title'             => t('region used by'),
+    '#required'          => TRUE,
+    '#default_value'     => (($action == 'edit') ? $region_data->region_realm : $edit_what),
+    '#description'       => t('The area of E-Commerce where this region will be used.'),
+    '#options'           => $realms,
+    '#disabled'          => ($regid) ? TRUE : FALSE,
+  );
+  $form['submit'] = array('#type' => 'submit', '#value' => t('submit'));
+
+  return $form;
+}
+
+/**
+ * Processes the submitted results of our region addition or editing.
+ */
+function ec_region_region_edit_form_submit($form_id, $form_values) {
+  $region_data = array('regid' => ($form_values['regid']) ? $form_values['regid'] : NULL, 'region_name' => $form_values['region_name'], 'region_realm' => $form_values['region_realm']);
+  drupal_set_message(t('The region %name has been updated.', array('%name' =>  $form_values['region_name'])));
+  ec_region_region_save_query($region_data);
+  return 'admin/store/settings/regions';
+}
+
+
+function ec_region_region_save_query($region_data) {
+  $result = isset($region_data['regid'])
+    ? db_query("UPDATE {ec_region} SET region_name = '%s', region_realm = '%s' WHERE regid = %d", $region_data['region_name'], $region_data['region_realm'], $region_data['regid'])
+    : db_query("INSERT INTO {ec_region} SET region_name = '%s', region_realm = '%s'", $region_data['region_name'], $region_data['region_realm']);
+}
+
+function ec_region_region_delete() {
+  return drupal_get_form('ec_region_region_delete_form', ec_region_region_delete_form());
+}
+
+function ec_region_region_delete_form() {
+  $regid = arg(5);
+
+  $region_data = ec_region_get_regions($regid);
+  $form['regid'] = array('#type' => 'hidden', '#default_value' => $regid);
+  return confirm_form(
+      $form,
+      t('Are you sure you want to delete the region %name?',
+        array('%name' => $region_data['region_name'])),
+      'admin/store/settings/regions',
+      t('This action can not be undone, you will lose any country/state associations belonging to his region.'),
+      t('delete'), t('cancel'));
+}
+
+/**
+ * Computer says nooo
+ */
+function ec_region_region_delete_form_submit($form_id, $form_values) {
+
+  ec_region_region_delete_query($form_values['regid']);
+  drupal_set_message(t('The region has been deleted.'));
+
+  drupal_goto('admin/store/settings/regions');
+}
+
+function ec_region_region_delete_query($regid) {
+  return db_query('DELETE FROM {ec_region} WHERE regid = %d', $regid);
+}
+
+function ec_region_get_configuration($realm = NULL, $geo_type = NULL, $regid = NULL, $geo_code = NULL) {
+
+  $where = ' 1=1';
+  if ($realm) {
+    $where .= " AND er.region_realm = '%s'";
+    $vars[] = $realm;
+  }
+  if ($regid) {
+    $where .= ' AND erc.regid = %d';
+    $vars[] = $regid;
+  }
+  if ($geo_type) {
+    $where .= " AND erc.geo_type = '%s'";
+    $vars[] = $regid;
+  }
+  if ($geo_code) {
+    $where .= " AND erc.geo_code = '%s'";
+    $vars[] = $geo_code;
+  }
+  $result = db_query('SELECT er.region_realm, erc.* FROM {ec_region_configuration} AS erc
+                      INNER JOIN {ec_region} AS er
+                      ON erc.regid = er.regid
+                      WHERE '. $where
+                      . ' ORDER BY er.region_realm, erc.regid, erc.geo_type, erc.geo_code',
+                      $vars);
+
+  $config = array();
+  while ($row = db_fetch_object($result)) {
+    $config[] = $row;
+  }
+  return $config;
+}
+
+function ec_region_configure() {
+
+  return drupal_get_form('ec_region_configure_form', ec_region_configure_form());
+
+}
+
+/**
+ * This is the main form for setting up your countries and states into groups.
+ */
+function ec_region_configure_form() {
+  $realm = arg(4);
+
+  $region_config = ec_region_get_configuration($realm);
+
+  $all_countries = store_build_countries();
+  $this_country = variable_get('ec_country','us');
+  $all_country_states = store_build_states();
+
+  // Determine configured shipping regions, and initialized existing settings
+  $regions = ec_region_get_regions(NULL, $realm);
+  $region_options = array(0 => 'N/A');
+  foreach ($regions AS $rd => $region_data) {
+    $region_options[$rd] = $region_data['region_name'];
+  }
+
+  $form[$realm] = array(
+    '#tree' => TRUE,
+  );
+
+  // Create fieldsets, 1 for Countries, 1 for each available state list.
+  // We create these for each configured region, plus one for N/A.
+  foreach ($region_options as $r => $region) {
+    $form[$realm][$r] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#title' => t($region),
+    );
+    $form[$realm][$r]['country'] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#title' => t('countries'),
+    );
+    foreach ($all_country_states AS $c => $c_states) {
+      $form[$realm][$r][$c .'.state'] = array(
+        '#type' => 'fieldset',
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+        '#title' => t(drupal_strtoupper($c)) .' - '. t('states'),
+      );
+    }
+  }
+
+  // Take the database values and allocate them to groups.
+  foreach ($region_config AS $item) {
+
+    // Each row in the db represents a location that is already assigned somewhere.
+    // First configure the values based on what kind of code it is.
+    // Eg. "us.state" is a state.
+    $codes = explode('.', $item->geo_code);
+    switch ($item->geo_type) {
+      case 'country':
+        $group = 'country';
+        $geo_name = $all_countries[$item->geo_code];
+        break;
+      case 'state':
+        $group = $codes[ECREGION_CODE_COUNTRY] .'.'. $item->geo_type;
+        $geo_name = $all_country_states[$codes[ECREGION_CODE_COUNTRY]][$codes[ECREGION_CODE_STATE]];
+        break;
+      case 'postal':
+        // Yes, forward support for postal codes in a region.
+        $group = $codes[ECREGION_CODE_COUNTRY] .'.'. $codes[ECREGION_CODE_STATE] .'.'. $item->geo_type;
+        $geo_name = 'something not yet determined';
+        break;
+    }
+
+    // Set up the form element, a set of radio buttons, one for each available Region.
+    $form[$realm][$item->regid][$group][$item->geo_code] = array(
+      '#type' => 'radios',
+      '#title' => $geo_name,
+      '#options' => $region_options,
+      '#default_value' => $item->regid,
+    );
+
+    // After processing each code form the database, unset it
+    // from the master list (what remains will go on 'unallocated').)
+    switch ($item->geo_type) {
+      case 'country':
+        unset ($all_countries[$item->geo_code]);
+        break;
+      case 'state':
+        unset ($all_country_states[$codes[ECREGION_CODE_COUNTRY]][$codes[ECREGION_CODE_STATE]]);
+        break;
+      case 'postal':
+        unset ($all_country_state_postals[$codes[ECREGION_CODE_COUNTRY]][$codes[ECREGION_CODE_STATE]][$codes[ECREGION_CODE_POSTAL]]);
+        break;
+    }
+  }
+
+  if ($all_country_states) {
+    foreach ($all_country_states as $c => $c_states) {
+      foreach ($c_states as $s => $state) {
+        // Set the states to this region
+        $form[$realm][0][$c  .'.state'][$c .'.'. $s] = array(
+          '#type' => 'radios',
+          '#title' => $state,
+          '#options' => $region_options,
+          '#default_value' => 0,
+        );
+      }
+    }
+  }
+
+  if ($all_countries) {
+    foreach ($all_countries as $c => $country) {
+      // Set the country to this region
+      $form[$realm][0]['country'][$c] = array(
+        '#type' => 'radios',
+        '#title' => $country,
+        '#options' => $region_options,
+        '#default_value' => 0,
+      );
+    }
+  }
+
+  // Weird code to count the members of each group. Better way??
+  foreach (element_children($form[$realm]) AS $region) {
+    foreach (element_children($form[$realm][$region]) AS $type) {
+      $children = count(element_children($form[$realm][$region][$type]));
+      if ($children) {
+        $form[$realm][$region][$type]['#title'] .= ' ('. $children .')';
+      }
+      else {
+        unset ($form[$realm][$region][$type]);
+      }
+    }
+    if (!count(element_children($form[$realm][$region]))) {
+      unset ($form[$realm][$region]);
+    }
+  }
+
+  $form['##regions'] = $region_options;
+  $form['realm'] = array(
+    '#type' => 'hidden',
+    '#value' => $realm,
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('update regions'),
+  );
+  return $form;
+}
+
+function theme_ec_region_configure_form(&$form) {
+  $realm = arg(4);
+
+  $all_realms = ec_region_get_realms();
+  drupal_set_title(t($all_realms[$realm]) ." regions");
+
+  $output = '';
+
+  $output .= t('<p>Here you can allocate Countries and States to different regions.
+                   Simply select the locations that you need to change and then
+                   click the "Update regions" button. Go to the %add_region page
+                   if the only region you have is N/A or you need more regions. </p>',
+                   array('%add_region' => l(t('Add region'), 'admin/store/settings/regions/add/'. $realm)));
+
+  // Build the top of the region locations table
+  $region_header = '<table class="radios_row" style="width:auto;">';
+
+  // Cycle through the regions building the settings tables rows
+  foreach (element_children($form[$realm]) AS $r) {
+
+    foreach (element_children($form[$realm][$r]) AS $group) {
+      $radios = '';
+      // Generate the rows for the state/country list.
+      foreach (element_children($form[$realm][$r][$group]) AS $s) {
+        $radios .= form_render($form[$realm][$r][$group][$s]);
+      }
+      if ($radios == '') {
+        // No locations in this group.
+        unset($form[$realm][$r][$group]);
+      }
+      else {
+        $form[$realm][$r][$group]['#children'] = $region_header . $radios .'</table>';
+      }
+    }
+
+  }
+
+  $output .= form_render($form);
+  return $output;
+}
+
+
+/**
+* Save data from our configuration form.
+*/
+function ec_region_configure_form_submit($form_id, $form_values) {
+
+  $realm = arg(4);
+  $regions = ec_region_get_regions(NULL, $realm);
+
+  foreach($regions AS $r => $region_data) {
+    db_query('DELETE FROM {ec_region_configuration} WHERE regid = %d', $r);
+  }
+
+  foreach($form_values[$form_values['realm']] AS $key => $data) {
+    foreach ($data AS $geo_type => $geo_data) {
+      foreach ($geo_data AS $geo_code => $regid) {
+        if ($geo_type != 'country') {
+          $geo_type = array_pop(explode('.', $geo_type));
+        }
+        if ($regid) {
+          $result = db_query("INSERT INTO {ec_region_configuration}
+                    (regid, geo_type, geo_code)
+                    VALUES (%d, '%s', '%s')",
+                    $regid, $geo_type, $geo_code);
+        }
+      }
+    }
+  }
+  drupal_set_message(t('The regions have been updated.'));
+}
+
