@@ -47,7 +47,7 @@ outline:none;
 /*** Main container ***/
 
 #container {
-background:#fbfdf8 url(img/topbar_icon_14.gif) no-repeat left top; /* pale green background */
+background:#fbfdf8 url(img/topbar_icon_15.gif) no-repeat left top; /* pale green background */
 color:#303030;
 margin:0 41px 0px 15px;
 padding:0;
@@ -1832,7 +1832,7 @@ div.wbx-gw-wrapper {
 
 /* hide breadcrumbs */
 
-div.breadcrumb { display:block;}
+div.breadcrumb { display:none;}
 
 .ogm-maps div.item-list ul li a {
   color: #F89938;
