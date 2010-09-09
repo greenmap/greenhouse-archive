@@ -73,7 +73,7 @@ top: -23px !important;
 		<div id="preheader"><?php // top bar containing language links and search box ?>
 		<div id="ogmlink">
 <a href="http://www.opengreenmap.org/home" title="<?php print t('Go to Open Green Map') ?>">
-<img src="<?php print $base_path ?>images/ogmlink2.png" width="180px" alt="<?php print t('Open Green Map link') ?>" /></a>
+<img src="<?php print $base_path ?>images/ogmlink3.png" width="180px" alt="<?php print t('Open Green Map link') ?>" /></a>
 		</div>
 		<div id="toplogo">
 <a href="<?php print $base_path ?>home" title="<?php print t('Home') ?>">
