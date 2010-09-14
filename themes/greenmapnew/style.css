@@ -1837,3 +1837,31 @@ div.breadcrumb { display:none;}
 .ogm-maps div.item-list ul li a {
   color: #F89938;
 }
+
+#marker-images {
+width: 225px;
+float: left;
+}
+
+#marker-images .marker-number{
+width: 150px;
+text-align: center;
+visibility: hidden;
+}
+
+#marker-images .marker-image {
+width: 200px !important;
+float: none !important;
+}
+
+.choices {
+padding-top: 70px;
+}
+
+.choices .form-item {
+height: 222px;
+}
+
+#marker-image-11, #marker-image-12, #marker-image-13, #marker-image-14, #marker-image-15, #marker-image-16, #marker-image-17, #marker-image-18, #marker-image-19, #marker-image-20, #marker-image-21, #marker-image-22, #marker-image-23, #marker-image-24, #marker-image-25 {
+display: none;
+}
