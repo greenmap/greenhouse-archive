@@ -1,0 +1,233 @@
+<?php
+// $Id: pageroute_workflow.module,v 1.7 2006/09/13 11:56:59 fago Exp $
+
+/**
+ * @file
+ * Creates a workflow for each pageroute and tracks users
+ */
+
+
+/**
+ * Implementation of hook_help().
+ */
+function pageroute_workflow_help($section) {
+  switch ($section) {
+    case 'admin/modules#description':
+      return t('Creates a workflow for each pageroute and tracks users.');
+  }
+}
+
+/*
+ * Implementation of hook_form_alter().
+ */
+function pageroute_workflow_form_alter($form_id, &$form) { 
+  //module dependency check
+  if ($form_id == 'system_modules' && !$_POST) {
+    pageroute_workflow_system_module_validate($form);
+  }
+  
+  if ($form_id == 'pageroute_ui_route_edit') {
+    $form['workflow'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Create a workflow for this route.'),
+      '#default_value' => isset($form['route']['#value']->options['wid']) ? 1 : 0,
+      '#weight' => -1,
+    );
+    if (isset($form['route']['#value']->options['wid'])) {
+      //keep value
+      $form['options']['wid'] = array('#type' => 'value', '#value' => $form['route']['#value']->options['wid']);
+    }
+    $form['#submit']['pageroute_workflow_route_edit_submit'] = array();
+  }
+  else if ($form_id == '_pageroute_ui_confirm_del_route') {
+    $form['#submit']['pageroute_workflow_route_delete_submit'] = array();
+  }
+  else if ($form_id == 'pageroute_ui_page_edit') {
+    if (isset($form['route']['#value']->options['wid'])) {
+      $form['#submit']['pageroute_workflow_page_edit_submit'] = array();
+      
+      if (isset($form['page']['#value']->options['sid'])) {
+        //keep value
+        $form['options']['sid'] = array('#type' => 'value', '#value' => $form['page']['#value']->options['sid']);
+      }      
+    }
+  }
+  else if ($form_id == '_pageroute_ui_confirm_del_page') {
+    $form['#submit']['pageroute_workflow_page_delete_submit'] = array();    
+  }
+  
+}
+
+/*
+ * Cares for workflow creation for a route
+ */
+function pageroute_workflow_route_edit_submit($form_id, &$form_values) {
+
+  if ($form_values['workflow'] && ($form_values['route']->new || !$form_values['route']->options['wid'])) {
+    $workflow_name = t('route %path', array('%path' => $form_values['validated']));
+
+    $wid = db_next_id('{workflows}_wid');
+    db_query("INSERT INTO {workflows} (wid, name) VALUES (%d, '%s')", $wid, $workflow_name);
+    db_query("INSERT INTO {workflow_states} (sid, wid, state, sysid) VALUES (%d, %d, '%s', %d)",
+      db_next_id('{workflow_states}_sid'), $wid, t('(creation)'), WORKFLOW_CREATION);
+    pageroute_workflow_save_wid($wid, $form_values);
+    //create states if necessary
+    if (!$form_values['route']->new) {
+      $form_values['route']->options['wid'] = $wid;
+      pageroute_workflow_update_access($form_values['route'], TRUE);
+    }
+    drupal_set_message(t('The workflow %name has been created for your route!', array('%name' => theme('placeholder', $workflow_name))));
+  }
+  else if ($form_values['workflow']) {
+    //update workflow name if necessary
+    if ($form_values['route']->path != $form_values['validated']) {
+        db_query("UPDATE {workflows} SET name = '%s' WHERE wid = %d", 'route_'. $form_values['validated'], $form_values['route']->options['wid']);
+    }
+  }
+  else if ($form_values['route']->options['wid']) {
+    if (workflow_get_name($form_values['route']->options['wid'])) {
+      workflow_deletewf($form_values['route']->options['wid']);
+    }
+    pageroute_workflow_save_wid(0, $form_values);
+  }
+}
+
+/*
+ * This saves the wid for a new route at $route->options['wid'] into the serialized route options field,
+ * so it will be loaded automatically
+ */
+function pageroute_workflow_save_wid($wid, &$form_values) {
+  if ($wid) {
+    $form_values['options']['wid'] = $wid;
+  }
+  else {
+    //delete
+    unset($form_values['options']['wid']);
+  }
+  
+  db_query("UPDATE {pageroute_routes} SET options = '%s' WHERE prid = %d", 
+           serialize($form_values['options']), $form_values['route']->prid);
+}
+
+
+function pageroute_workflow_route_delete_submit($form_id, &$form_values) {
+  workflow_deletewf($form_values['route']->options['wid']);
+}
+
+function pageroute_workflow_page_edit_submit($form_id, &$form_values) {
+  if (!$form_values['page']) {
+    //create a new state for the new page..
+    $form_values['options']['sid'] = workflow_state_create($form_values['route']->options['wid'], $form_values['name_validated']);
+    db_query("UPDATE {pageroute_pages} SET options = '%s' WHERE prid = %d AND name = '%s'", 
+             serialize($form_values['options']), $form_values['route']->prid, $form_values['name']);
+  }
+  else {
+    if ($form_values['page']->name != $form_values['name_validated']) {
+      db_query("UPDATE {workflow_states} SET state = '%s' WHERE sid = %d", $form_values['name_validated'], $form_values['page']->options['sid']);
+    }
+  }
+  pageroute_workflow_update_access($form_values['route']);
+}
+
+function pageroute_workflow_page_delete_submit($form_id, &$form_values) {
+  workflow_state_delete($form_values['page']->options['sid']);
+  pageroute_workflow_update_access($form_values['route']);  
+}
+
+
+/*
+ * Implementation of hook_pageroute()
+ */
+function pageroute_workflow_pageroute($op, &$page) {
+
+  if ($op == 'load' && $page->route->options['wid']) {
+    //get current state
+    $node = usernode_get_node(pageroute_page_get_uid($page));
+    $sql = "SELECT s.state FROM {workflow_states} s ".
+           "JOIN {workflow_node} w ON w.sid = s.sid AND w.nid = %d";
+    $page->route->state = db_result(db_query($sql, $node->nid));
+    if (!$page->route->state) {
+      $page->route->state = t('creation');
+    }
+  }
+  else if ($op == 'submit' && $page->route->options['wid']) {
+    $node = usernode_get_node(pageroute_page_get_uid($page));
+    //set new state?
+    if ($page->route->state == t('creation') || $page->route->page_index[$page->name] > $page->route->page_index[$page->route->state]) {
+      workflow_execute_transition($node, $page->options['sid'], ''); // do transition
+      $page->route->state = $page->name;
+    }
+  }
+}
+
+
+/*
+ * Updates the workflow transition access for node authors for the whole route and
+ * optionally checks/creates the states for the pages
+ * 
+ * @param $route The route, for which the access will be updated
+ * @param $check Wheter to check if the state of the path exists
+ */
+function pageroute_workflow_update_access(&$route, $check = FALSE) {
+  $result = db_query("SELECT * FROM {pageroute_pages} WHERE prid = %d ORDER BY weight, name", $route->prid);
+  $transitions = array();
+  $pages = array();
+
+  while ($the_page = db_fetch_object($result)) {
+    $the_page->options = unserialize($the_page->options);
+
+    if (isset($the_page->options['activated']) && !$the_page->options['activated']) {
+      continue;
+    }
+    
+    if ($check && (!$the_page->options['sid'] || !pageroute_workflow_state_exists($the_page->options['sid']))) {
+      $the_page->options['sid'] = workflow_state_create($route->options['wid'], $the_page->name);
+      db_query("UPDATE {pageroute_pages} SET options = '%s' WHERE prid = %d AND name = '%s'", 
+             serialize($the_page->options), $route->prid, $the_page->name);
+    }
+
+    if (!$back) {
+      $creation_sid = _workflow_creation_state($route->options['wid']);
+      $transitions[$creation_sid] = $the_page->options['sid'];
+    }
+    else {
+      $transitions[$back->options['sid']] = $the_page->options['sid'];
+    }
+    $back = $the_page;
+    $page_sids[] = $the_page->options['sid'];
+  }
+  
+  //build arrray for workflow function
+  $array = array();
+  foreach ($transitions as $from_sid => $to_sid) {
+    foreach ($page_sids as $sid) {
+      $array[$from_sid][$sid] = array('author' => $sid == $to_sid ? 1 : 0 ); 
+    }
+  }
+
+  workflow_update_transitions($array);
+}
+
+function pageroute_workflow_state_exists($sid) {
+  return db_result(db_query("SELECT sid FROM {workflow_states} WHERE sid = %d", $sid));
+}
+
+/**
+ * hunmonk's module dependency check: see http://drupal.org/node/54463
+ */
+function pageroute_workflow_system_module_validate(&$form) {
+  $module = 'pageroute_workflow';
+  $dependencies = array('pageroute', 'usernode', 'workflow');
+  foreach ($dependencies as $dependency) {
+      if (!in_array($dependency, $form['status']['#default_value'])) {
+        $missing_dependency = TRUE;
+        $missing_dependency_list[] = $dependency;
+      }
+  }
+  if (in_array($module, $form['status']['#default_value']) && isset($missing_dependency)) {
+    db_query("UPDATE {system} SET status = 0 WHERE type = 'module' AND name = '%s'", $module);
+    $key = array_search($module, $form['status']['#default_value']);
+    unset($form['status']['#default_value'][$key]);
+    drupal_set_message(t('The module %module was deactivated--it requires the following disabled/non-existant modules to function properly: %dependencies', array('%module' => $module, '%dependencies' => implode(', ', $missing_dependency_list))), 'error');
+  }
+}
