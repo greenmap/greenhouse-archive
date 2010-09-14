@@ -115,16 +115,23 @@ function votingapi_set_vote($content_type, $content_id, $vote, $uid = NULL, $rec
       $vote->tag = VOTINGAPI_VALUE_DEFAULT_TAG;
     }
 
-    $result = db_query("SELECT * FROM {votingapi_vote} WHERE content_type='%s' AND content_id=%d AND tag='%s' AND value_type='%s' AND uid=%d", $content_type, $content_id, $vote->tag, $vote->value_type, $uid);
+  if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+    $hostname = $_SERVER['HTTP_X_FORWARDED_FOR'];
+  }
+  else {
+    $hostname = $_SERVER['REMOTE_ADDR'];
+  }
+
+    $result = db_query("SELECT * FROM {votingapi_vote} WHERE content_type='%s' AND content_id=%d AND tag='%s' AND value_type='%s' AND uid=%d AND hostname='%s'", $content_type, $content_id, $vote->tag, $vote->value_type, $uid, $hostname);
     while ($vobj = db_fetch_object($result)) {
       votingapi_change_vote($vobj, $vote->value);
       $exists = TRUE;
     }
     if (!$exists) {
-      votingapi_add_vote($content_type, $content_id, $vote->value, $vote->value_type, $vote->tag, $uid);
+      votingapi_add_vote($content_type, $content_id, $vote->value, $vote->value_type, $vote->tag, $uid, $hostname );
     }
   }
-
+  
   if ($recursion) {
     return $vobj;
   }
@@ -190,7 +197,7 @@ function votingapi_unset_vote($content_type, $content_id, $uid = NULL) {
  * @return
  *   The $vote object cast.
  */
-function votingapi_add_vote($content_type, $content_id, $value, $value_type = VOTINGAPI_VALUE_DEFAULT_TYPE, $tag = VOTINGAPI_VALUE_DEFAULT_TAG, $uid = NULL) {
+function votingapi_add_vote($content_type, $content_id, $value, $value_type = VOTINGAPI_VALUE_DEFAULT_TYPE, $tag = VOTINGAPI_VALUE_DEFAULT_TAG, $uid = NULL, $hostname=NULL) {
   if ($uid == NULL) {
     global $user;
     $uid = $user->uid;
@@ -204,13 +211,15 @@ function votingapi_add_vote($content_type, $content_id, $value, $value_type = VO
   $vobj->tag = $tag;
   $vobj->uid = $uid;
   $vobj->timestamp = time();
-  if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-    $vobj->hostname = $_SERVER['HTTP_X_FORWARDED_FOR'];
-  }
-  else {
-    $vobj->hostname = $_SERVER['REMOTE_ADDR'];
-  }
 
+  $vobj->hostname = $_SERVER['REMOTE_ADDR'];
+  //Append internal IP if it exists.
+  if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+    $vobj->hostname .= '-'. $_SERVER['HTTP_X_FORWARDED_FOR'];
+  }
+  if($hostname != NULL)
+  $vobj->hostname = $hostname;
+    
   db_query("INSERT INTO {votingapi_vote} (vote_id, content_type, content_id, value, value_type, tag, uid, timestamp, hostname) VALUES (%d, '%s', %d, %f, '%s', '%s', %d, %d, '%s')", 
     $vobj->vote_id, $vobj->content_type, $vobj->content_id, $vobj->value, $vobj->value_type, $vobj->tag, $vobj->uid, $vobj->timestamp, $vobj->hostname);
 
