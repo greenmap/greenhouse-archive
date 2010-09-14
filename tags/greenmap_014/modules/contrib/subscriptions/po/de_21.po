@@ -1,0 +1,339 @@
+# German translation of Drupal (subscriptions.module)
+# Copyright 2006 Jakob Petsovits <jpetso@gmx.at>
+# Generated from file: subscriptions.module,v 1.38.2.3.2.16 2006/09/09 18:25:16 c0c0c0
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: de\n"
+"POT-Creation-Date: 2006-10-19 04:57-0400\n"
+"PO-Revision-Date: 2006-12-30 20:30+0100\n"
+"Last-Translator: Jakob Petsovits <jpetso@gmx.at>\n"
+"Language-Team: Jakob Petsovits <jpetso@gmx.at>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: subscriptions.module:10
+msgid "\n        <p>This module enables users to subscribe to be notified of changes to threads, categories and content types.\n        Once enabled, all nodes will have an additional link that allows the user to subscribe to them.\n        Additionally, all users will be given an account option to auto-subscribe to any thread to which they post.\n        No configuration is required for this module, although roles must be given permission to\n        use it.</p>\n        <p>While no configuration is required, administrators are offered a few configurable options:</p>\n        <p>\"<b>Omitted vocabularies</b>\" allows the admin to exclude certain node categories from this list of those\n        available for subscription.</p>\n        <p>\"<b>Omitted content types</b>\" allows the admin to exclude certain content types from this list of those\n        available for subscription.</p>\n        <p>\"<b>Notify poster of own posts</b>\" sends a notification to a node poster about their own posts. Useful principally during testing. Default is OFF.</p>\n        <p>\"<b>Use cron for notifications</b>\" allows you to postpone subscription\n        notifications until the next cron job is run.  Default behavior is to notify all subscribers immediately\n        upon content change.  This behavior is probably best for low volume sites, but high volume sites could\n        observe appreciable pauses upon node or comment insert, and should probably use the cron option.\n        <p>\"<b>Display watchdog entries for successful mailings</b>\" should also probably be disabled for high volume sites,\n        as a large number of mailings could completely fill the log.</p>\n        <p>\"<b>Test held posts prior to sending</b>\" tells Subscriptions to test if a node or comment\n        is still active\\published prior toi sending a notification.  This is mainly to avoid sending\n        notifications for for posts that have been deleted.  This will result in a small performance\n        hit, and only makes sense if you are delaying the notifications with \"Use cron for notifications\".</p>\n        <p>\"<b>Show Subscriptions users menu on main menu</b>\" tells Subscriptions to display the\n        Subscriptions user menu, used to manage one's own subscriptions, on the main menu.  The default\n        setting is OFF.</p>\n        <p>\"<b>Show Subscriptions users menu under 'my account'</b>\" tells Subscriptions to display the\n        Subscriptions user menu, used to manage one's own subscriptions, under the 'My Account' menu.  The default\n        setting is ON.</p>\n        <p>\"<b>Set all users to 'autosubscribe' by default</b>\" set's the default value of the 'autosubscribe'\n        option in each user's account to ON.  This value will not be set, however, until the user saves their\n        account preferences.  This, essentially, pre-checks the option associated with 'autosubscribe'. The\n        default value is OFF.</p>\n\n        "
+msgstr ""
+"\n"
+"        <p>Dieses Modul erlaubt Benutzern, über Änderungen in Diskussionen, Kategorien oder Inhaltstypen benachrichtigt zu werden. Wenn es aktiviert wird, gibt es auf jedem Knoten einen zusätzlichen Link, mit dem der Benutzer Abonnements einrichten oder kündigen kann. Zusätzlich findet sich in den Benutzereinstellungen eine Option zum automatischen Abonnieren von Diskussionen, in denen selbst gepostet wurde. Für dieses Modul ist keine Konfiguration notwendig, einzig die Zugriffsrechte zum Benutzen des Moduls müssen für die entsprechenden Rollen gesetzt werden.</p>\n"
+"\n"
+"        <p>Obwohl keine Konfiguration notwendig ist, gibt es dennoch einige Einstellungsmöglichkeiten für Administratoren:</p>\n"
+"<p>\"<b>Ausgelassene Kategorien</b>\" erlaubt dem Administrator, das Abonnieren bestimmter Kategorien zu unterbinden.</p>\n"
+"<p>\"<b>Ausgelassene Inhaltstypen</b>\" erlaubt dem Administrator, das Abonnieren bestimmter Inhaltstypen zu unterbinden.</p>\n"
+"<p>\"<b>Benachrichtigung für eigene Inhalte</b>\" ist hauptsächlich für Testzwecke von Nutzen, und benachrichtigt neben anderen Benutzern auch den Verfasser eines Kommentars selbst. Diese Option ist standardmäßig ausgeschaltet.</p>\n"
+"<p>\"<b>cron für Benachrichtigungen verwenden</b>\" ermöglicht es, die Benachrichtigungen bis zum nächsten cron-Durchlauf zu verzögern. In der Standardeinstellung werden die Benachrichtigungen dagegen sofort bei jeder Änderung versandt. Das Verwenden von cron ist vor allem für Websites mit hoher Last sinnvoll, da bei vielen Abonnements merkbare Pausen beim Erstellen von neuen Knoten oder Kommentaren entstehen können, bei Seiten mit wenigen Benutzern hingegen ist die Standardeinstellung völlig in Ordnung.</p>\n"
+"<p>\"<b>Erfolgreich versandte Benachrichtigungen im Protokoll anzeigen</b>\" sollte bei stark besuchten Seiten wahrscheinlich deaktiviert werden, da eine große Anzahl von Mails das Protokoll komplett überfüllen kann.</p>\n"
+"<p>\"<b>Verzögerte Benachrichtigungen vor dem Senden prüfen</b>\" veranlasst vor dem Absenden der Benachrichtigungen einen Test, ob abonnierte Seiten bzw. Kommentare noch aktiv/veröffentlicht sind. Der Test dient hauptsächlich dazu, das Versenden von Benachrichtigungen für bereits gelöschte Inhalte zu vermeiden. Diese Option verursacht einen geringfügigen Performance-Verlust, und macht nur Sinn wenn die Option \"cron für Benachrichtigungen verwenden\" aktiviert ist.</p>\n"
+"<p>\"<b>'Meine Abonnements' im Hauptmenü anzeigen</b>\" fügt den Abonnements-Menüpunkt als ein Wurzelelement in den Navigations-Menüblock ein. In der Standardeinstellung ist diese Option nicht aktiviert.</p>\n"
+"<p>\"<b>'Meine Abonnements' unter 'Mein Konto' anzeigen</b>\" fügt den Abonnements-Menüpunkt als Unterpunkt von 'Mein Konto' ein. In der Standardeinstellung ist diese Option aktiviert.</p>\n"
+"<p>\"<b>Automatisches Abonnieren für alle Benutzer standardmäßig aktivieren</b>\" setzt den Standardwert der Option \"Automatisch abonnieren\" in den Konto-Einstellungen eines jeden Benutzers auf aktiviert. Dieser Standardwert gilt für jeden Benutzer, bis er ihn durch Speichern der Konto-Einstellungen selbst festlegt. In der Standardeinstellung ist \"Automatisch abonnieren\" nicht aktiviert.</p>\n\n "
+
+#: subscriptions.module:46
+msgid "Allows users to subscribe to nodes and taxonomy terms."
+msgstr "Erlaubt Benutzern, Seiten und Kategorien zu abonnieren."
+
+#: subscriptions.module:64
+msgid "Subscription settings"
+msgstr "Abonnement-Einstellungen"
+
+#: subscriptions.module:70
+msgid "Autosubscribe"
+msgstr "Automatisch abonnieren"
+
+#: subscriptions.module:72
+msgid "Checking this box allows you to be automatically subscribe to any thread you create or post a comment to."
+msgstr "Falls diese Option ausgewählt ist, wird beim Verfassen eines Beitrags gleichzeitig auch ein Abonnement für die entsprechende Diskussion eingerichtet."
+
+#: subscriptions.module:90
+msgid "none"
+msgstr "keine"
+
+#: subscriptions.module:97
+msgid "Omitted vocabularies"
+msgstr "Ausgelassene Kategorien"
+
+#: subscriptions.module:100
+msgid "Select vocabularies which should be <strong>omitted</strong> from subscription listings."
+msgstr "Diese Kategorien werden in den Auswahllisten für Abonnements <strong>nicht angezeigt</strong>."
+
+#: subscriptions.module:111
+msgid "Omitted content types"
+msgstr "Ausgelassene Inhaltstypen"
+
+#: subscriptions.module:114
+msgid "Select content types which should be <strong>omitted</strong> from subscription listings."
+msgstr "Diese Inhaltstypen werden in den Auswahllisten für Abonnements <strong>nicht angezeigt</strong>."
+
+#: subscriptions.module:119
+msgid "Notify poster of own posts"
+msgstr "Benachrichtigung für eigene Inhalte"
+
+#: subscriptions.module:121
+msgid "Notifies a node poster about their own posts.  Useful principally during testing.  Default is OFF."
+msgstr "Benachrichtigt den Verfasser nicht nur über neue Inhalte anderer Benutzer, sondern auch über die eigenen. Diese Option ist hauptsächlich für Testzwecke von Nutzen und in der Standardeinstellung nicht aktiviert."
+
+#: subscriptions.module:125
+msgid "Use cron for notifications"
+msgstr "cron für Benachrichtigungen verwenden"
+
+#: subscriptions.module:127
+msgid "Sends subscription notification when cron module runs.  Default is to send upon node update.  <br /><em>Note:  Currently only works with MySQL.</em>"
+msgstr "Versendet Benachrichtigungen erst, wenn cron gestartet wird. (In der Standardeinstellung werden Benachrichtigungen sofort nach dem Erstellen der Inhalte versandt.) <br/><em>Anm.: Wurde bisher nur mit MySQL getestet.</em>"
+
+#: subscriptions.module:131
+msgid "Display watchdog entries for successful mailings"
+msgstr "Erfolgreich versandte Benachrichtigungen im Protokoll anzeigen"
+
+#: subscriptions.module:133
+msgid "Inserts notification of successful mailings in the watchdog log.  Default is ON."
+msgstr "Erstellt Protokoll-Einträge für erfolgreich versandte Benachrichtigungen. Standardmäßig aktiviert."
+
+#: subscriptions.module:137
+msgid "Test held posts prior to sending"
+msgstr "Verzögerte Benachrichtigungen vor dem Senden prüfen"
+
+#: subscriptions.module:139
+msgid "Tests to see if a post about to be sent by cron is still active.  Adds a small amount of overhead.  Default is OFF."
+msgstr "Veranlasst vor dem Absenden der von cron veranlassten Benachrichtigungen einen Test, ob abonnierte Seiten bzw. Kommentare noch aktiv/veröffentlicht sind. Diese Option verursacht einen geringfügigen Performance-Verlust und ist in der Standardeinstellung nicht aktiviert."
+
+#: subscriptions.module:143
+msgid "Show Subscriptions users menu on main menu"
+msgstr "'Meine Abonnements' im Hauptmenü anzeigen"
+
+#: subscriptions.module:145
+msgid "Displays the Subscriptions users menu on the main menu. Default is OFF."
+msgstr "Fügt den Abonnements-Menüpunkt als ein Wurzelelement in den Navigations-Menüblock ein. Standardmäßig deaktiviert."
+
+#: subscriptions.module:149
+msgid "Show Subscriptions users menu under \"my account\""
+msgstr "'Meine Abonnements' unter 'Mein Konto' anzeigen"
+
+#: subscriptions.module:151
+msgid "Displays the Subscriptions users menu as a tab under \"my Account\". Default is ON."
+msgstr "Fügt den Abonnements-Menüpunkt als Unterpunkt von 'Mein Konto' ein. Standardmäßig aktiviert."
+
+#: subscriptions.module:155
+msgid "Set all users to \"autosubscribe\" by default"
+msgstr "Automatisches Abonnieren für alle Benutzer standardmäßig aktivieren"
+
+#: subscriptions.module:157
+msgid "Set's each users \"autosubscribe\" profile option. Default is OFF."
+msgstr "Setzt den Standardwert der \"Automatisch abonnieren\" Option eines jeden Benutzers. Standardmäßig deaktiviert."
+
+#: subscriptions.module:170;196;223
+msgid "my subscriptions"
+msgstr "Meine Abonnements"
+
+#: subscriptions.module:175;201
+msgid "blogs"
+msgstr "Blogs"
+
+#: subscriptions.module:179;205
+msgid "threads"
+msgstr "Diskussionen"
+
+#: subscriptions.module:183;212
+msgid "categories"
+msgstr "Kategorien"
+
+#: subscriptions.module:187;216
+msgid "content types"
+msgstr "Inhaltstypen"
+
+#: subscriptions.module:190;219
+msgid "rss feed"
+msgstr "RSS-Newsfeed"
+
+#: subscriptions.module:208
+msgid "my content types"
+msgstr "Meine Inhaltstypen"
+
+#: subscriptions.module:331
+msgid "subscription notification for "
+msgstr "Abonnement-Benachrichtigung für "
+
+#: subscriptions.module:335
+msgid "error mailing subscription notification: "
+msgstr "Abonnement-Benachrichtigung fehlgeschlagen für "
+
+#: subscriptions.module:379
+msgid "new blog for "
+msgstr "Neues Blog für "
+
+#: subscriptions.module:414
+msgid "[%site] %type subscription update for %name : %subject"
+msgstr "[%site] Abonnement für %name: %type \"%subject\" wurde aktualisiert"
+
+#: subscriptions.module:415
+msgid "Greetings, %name.\n\nA %type to which you have subscribed has been updated.\n%title\n%teaser\nTo view the thread, navigate to %url \n\n--\nThis is an automatic message from %site.\nTo manage your subscriptions, browse to %manage-url"
+msgstr ""
+"Hallo, %name.\n"
+"\n"
+"Ein abonniertes Element vom Typ %type wurde aktualisiert:\n"
+"%title\n"
+"%teaser\n"
+"Die Diskussion findet sich unter %url\n"
+"\n"
+"--\n"
+"Dies ist ein automatisches Mail der %site Website.\n"
+"Die dort eingerichteten Abonnements lassen sich unter %manage-url verwalten."
+
+#: subscriptions.module:620
+msgid "Subscriptions"
+msgstr "Abonnements"
+
+#: subscriptions.module:626
+msgid "Subscribe"
+msgstr "Abonnieren"
+
+#: subscriptions.module:627
+msgid "Receive notification of replies or comments to this node."
+msgstr "Für Antworten und Kommentare zu dieser Seite werden Benachrichtigungen versandt."
+
+#: subscriptions.module:654
+msgid "unsubscribe blog"
+msgstr "Abonnement für Blog kündigen"
+
+#: subscriptions.module:654
+msgid "Stop receiving an e-mail whenever a new entry is made to this person's blog."
+msgstr "Für neue Blog-Einträge werden keine weiteren Benachrichtigungs-Emails mehr versandt."
+
+#: subscriptions.module:657
+msgid "subscribe blog"
+msgstr "Blog abonnieren"
+
+#: subscriptions.module:657
+msgid "Receive an e-mail whenever a new entry is made to this person's blog."
+msgstr "Für jeden neuen Blog-Eintrag wird eine Benachrichtigungs-Email versandt."
+
+#: subscriptions.module:661
+msgid "unsubscribe post"
+msgstr "Abonnement für Kommentare kündigen"
+
+#: subscriptions.module:661
+msgid "Stop receiving an e-mail whenever a new comment is posted to this %n."
+msgstr "Für neue Kommentare werden keine weiteren Benachrichtigungs-Emails mehr versandt."
+
+#: subscriptions.module:664
+msgid "subscribe post"
+msgstr "Kommentare abonnieren"
+
+#: subscriptions.module:664
+msgid "Receive an e-mail whenever a comment is posted to this %n."
+msgstr "Für jeden Kommentar zu diesem Inhalt des Typs %n werden Benachrichtigungen versandt."
+
+#: subscriptions.module:702;712
+msgid "unsubscribe"
+msgstr "Abonnement kündigen"
+
+#: subscriptions.module:702
+msgid "Unsubscribe from this category."
+msgstr "Abonnement für diese Kategorie kündigen."
+
+#: subscriptions.module:705;715
+msgid "subscribe"
+msgstr "abonnieren"
+
+#: subscriptions.module:705
+msgid "Subscribe to this category."
+msgstr "Diese Kategorie abonnieren."
+
+#: subscriptions.module:712
+msgid "Unsubscribe from this node type."
+msgstr "Abonnement für diesen Inhaltstyp löschen."
+
+#: subscriptions.module:715
+msgid "Subscribe to this node type."
+msgstr "Diesen Inhaltstyp abonnieren."
+
+#: subscriptions.module:750;785;830;877
+msgid "Save"
+msgstr "Speichern"
+
+#: subscriptions.module:762;797;845;892;958
+msgid "Your subscription was deactivated."
+msgstr "Das Abonnement wurde gekündigt."
+
+#: subscriptions.module:849;896;951
+msgid "Your subscription was activated."
+msgstr "Das Abonnement wurde eingerichtet."
+
+#: subscriptions.module:968
+msgid "thread"
+msgstr "Diskussion"
+
+#: subscriptions.module:972
+msgid "blog"
+msgstr "Blog"
+
+#: subscriptions.module:985
+msgid "category"
+msgstr "Kategorie"
+
+#: subscriptions.module:995
+msgid "content type"
+msgstr "Inhaltstyp"
+
+#: subscriptions.module:998
+msgid "type"
+msgstr "Typ"
+
+#: subscriptions.module:998
+msgid "title"
+msgstr "Titel"
+
+#: subscriptions.module:998
+msgid "subscribers"
+msgstr "Abonnenten"
+
+#: subscriptions.module:1002
+msgid "<p>No threads or categories are currently subscribed.</p>"
+msgstr "<p>Es sind derzeit keine Diskussionen oder Kategorien abonniert.</p>"
+
+#: subscriptions.module:1007
+msgid "Subscriptions Summary"
+msgstr "Abonnement-Zusammenfassung"
+
+#: subscriptions.module:1030
+msgid "You are not currently subscribed to any active blogs"
+msgstr "Es sind zurzeit keine Blogs abonniert."
+
+#: subscriptions.module:1038;1040
+msgid "There are no active categories."
+msgstr "Es sind zurzeit keine Kategorien abonniert."
+
+#: subscriptions.module:1047
+msgid "You are not currently subscribed to any active threads"
+msgstr "Es sind zurzeit keine Diskussionen abonniert."
+
+#: subscriptions.module:1055
+msgid "There are no active content types."
+msgstr "Es sind zurzeit keine Inhaltstypen abonniert."
+
+#: subscriptions.module:1063;1096
+msgid "%name Subscriptions"
+msgstr "%name-Abonnements"
+
+#: subscriptions.module:331
+msgid "regular"
+msgstr "normal"
+
+#: subscriptions.module:335
+msgid "error"
+msgstr "Fehler"
+
+#: subscriptions.module:53
+msgid "maintain subscriptions"
+msgstr "Abonnements verwalten"
+
+#: subscriptions.module:0
+msgid "subscriptions"
+msgstr "Abonnements"
+
+#: subscriptions.install:19;34
+msgid "subscriptions database tables have been installed."
+msgstr "Die Datenbanktabellen für das Verwalten von Abonnements wurden installiert."
+

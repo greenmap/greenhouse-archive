@@ -1,0 +1,7 @@
+; $Id: node_images.info,v 1.1.2.1 2007/01/13 14:48:55 stefano73 Exp $
+name = Node images
+description = Allows users to upload images and associate them to nodes.
+; Information added by drupal.org packaging script on 2007-02-03
+version = "4.7.x-2.x-dev"
+project = "node_images"
+
