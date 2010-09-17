@@ -6,7 +6,13 @@ global $i18n_langpath; ?>
 if ($_GET[theme] == 'simple') { include('page-simple.tpl.php');
 return;
 }
+//Instantiate the object to do our testing with.
+$uagent_obj = new uagent_info();
+$isIphoneTier = $uagent_obj->DetectTierIphone();
+$isCssTier = $uagent_obj->DetectTierRichCss();
+$isOtherTier = $uagent_obj->DetectTierOtherPhones();
 ?>
+
 
 <?php
 	$color = 'blue'; //set to blue, black, green, orange, purple, or red
@@ -16,6 +22,160 @@ return;
 <!--page.tpl.php-->
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
+
+<?php
+
+//Print the variable part of the URL to the HTML source
+
+if ($isIphoneTier == 1) {
+
+echo '<meta name="viewport" content="width = 320" />';
+echo '<meta name="viewport" content="initial-scale=2.3, user-scalable=yes" />';
+echo '<style type="text/css">
+#container, #rightside, #leftside, #footer_gh, .tabs, .postinfo {
+display:none;
+} 
+
+body {
+background: #ffffff !important;
+width:320px !important;
+max-width:320px !important;
+min-width:320px !important;
+}
+
+.links {
+font-size:150%;
+text-align:left;
+width:320px;
+margin-top:30px;
+}
+
+#content {
+width:300px !important;
+max-width:320px !important;
+min-width:320px !important;
+padding-top:0px !important;
+margin-left:0px !important;
+float:none !important;
+} 
+
+#wrap {
+width:320px !important;
+max-width:320px !important;
+min-width:320px !important;
+background:none !important;
+margin:0px !important;
+}
+
+#content h1 {
+width:320px;
+text-align: center;
+line-height:25px;
+}
+</style>';
+
+}
+
+if ($isCssTier == 1) {
+
+echo '<meta name="viewport" content="width = 320" />';
+echo '<meta name="viewport" content="initial-scale=2.3, user-scalable=yes" />';
+echo '<style type="text/css">
+#container, #rightside, #leftside, #footer_gh, .tabs, .postinfo {
+display:none;
+} 
+
+body {
+background: #ffffff !important;
+width:320px !important;
+max-width:320px !important;
+min-width:320px !important;
+}
+
+.links {
+font-size:150%;
+text-align:left;
+width:320px;
+margin-top:30px;
+}
+
+#content {
+width:300px !important;
+max-width:320px !important;
+min-width:320px !important;
+padding-top:0px !important;
+margin-left:0px !important;
+float:none !important;
+} 
+
+#wrap {
+width:320px !important;
+max-width:320px !important;
+min-width:320px !important;
+background:none !important;
+margin:0px !important;
+}
+
+#content h1 {
+width:320px;
+text-align: center;
+line-height:25px;
+}
+</style>';
+
+}
+
+if ($isOtherTier == 1) {
+
+echo '<meta name="viewport" content="width = 320" />';
+echo '<meta name="viewport" content="initial-scale=2.3, user-scalable=yes" />';
+echo '<style type="text/css">
+#container, #rightside, #leftside, #footer_gh, .tabs, .postinfo {
+display:none;
+} 
+
+body {
+background: #ffffff !important;
+width:320px !important;
+max-width:320px !important;
+min-width:320px !important;
+}
+
+.links {
+font-size:150%;
+text-align:left;
+width:320px;
+margin-top:30px;
+}
+
+#content {
+width:300px !important;
+max-width:320px !important;
+min-width:320px !important;
+padding-top:0px !important;
+margin-left:0px !important;
+float:none !important;
+} 
+
+#wrap {
+width:320px !important;
+max-width:320px !important;
+min-width:320px !important;
+background:none !important;
+margin:0px !important;
+}
+
+#content h1 {
+width:320px;
+text-align: center;
+line-height:25px;
+}
+</style>';
+
+}
+
+
+?>
 
   <title><?php print $head_title ?></title>
   <?php print $head ?>
@@ -57,8 +217,6 @@ top: -23px !important;
   <script type="text/javascript"><?php /* Needed to avoid Flash of Unstyle Content in IE */ ?> </script>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
 <meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com , Té Baybute - http://tebaybute.net , and Akiko Rokube http://rokube.com / for http://www.greenmap.org" />
-
-
 
 </head>
 
