@@ -1849,9 +1849,14 @@ text-align: center;
 visibility: hidden;
 }
 
-#marker-images .marker-image {
-width: 200px !important;
+.marker-image {
+height: 220px;
+width: 220px;
 float: none !important;
+}
+
+.marker-image img{
+height: 80%;
 }
 
 .choices {
@@ -1859,7 +1864,21 @@ padding-top: 70px;
 }
 
 .choices .form-item {
-height: 222px;
+height: 207px;
+}
+
+.choice-form .form-submit {
+float: right;
+color: #8cc63f;
+font-size: 20px;
+height: 30px;
+width: 100%;
+letter-spacing: 6px;
+text-transform: uppercase;
+}
+
+.advpoll-electoral-list {
+text-align: center;
 }
 
 #marker-image-23, #marker-image-24, #marker-image-25 {
