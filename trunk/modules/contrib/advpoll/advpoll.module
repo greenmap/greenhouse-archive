@@ -978,55 +978,55 @@ $output .= '<style type="text/css">.postinfo, .links{display:none;}</style>';
   $output .= '  <div class="choice-form">';
   $output .= '  <div id="marker-images">';
 
-$output .= '  <div id="marker-image-1"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker1.jpg"><img class="marker-image" border=0 id="marker-image-1" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker1.jpg"><div class="marker-number">#1</div></a></div>';
+$output .= '  <div id="marker-image-1" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker1.jpg"><img border=0 id="marker-image-1" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker1.jpg"><div class="marker-number">#1</div></a></div>';
 
-$output .= '  <div id="marker-image-2"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker2.jpg"><img class="marker-image" border=0 id="marker-image-2" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker2.jpg"><div class="marker-number">#2</div></a></div>';
+$output .= '  <div id="marker-image-2" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker2.jpg"><img border=0 id="marker-image-2" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker2.jpg"><div class="marker-number">#2</div></a></div>';
 
-$output .= '  <div id="marker-image-3"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker3.jpg"><img class="marker-image" border=0 id="marker-image-3" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker3.jpg"><div class="marker-number">#3</div></a></div>';
+$output .= '  <div id="marker-image-3" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker3.jpg"><img border=0 id="marker-image-3" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker3.jpg"><div class="marker-number">#3</div></a></div>';
 
-$output .= '  <div id="marker-image-4"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker4.jpg"><img class="marker-image" border=0 id="marker-image-4" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker4.jpg"><div class="marker-number">#4</div></a></div>';
+$output .= '  <div id="marker-image-4" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker4.jpg"><img border=0 id="marker-image-4" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker4.jpg"><div class="marker-number">#4</div></a></div>';
 
-$output .= '  <div id="marker-image-5"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker5.jpg"><img class="marker-image" border=0 id="marker-image-5" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker5.jpg"><div class="marker-number">#5</div></a></div>';
+$output .= '  <div id="marker-image-5" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker5.jpg"><img border=0 id="marker-image-5" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker5.jpg"><div class="marker-number">#5</div></a></div>';
 
-$output .= '  <div id="marker-image-6"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker6.jpg"><img class="marker-image" border=0 id="marker-image-6" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker6.jpg"><div class="marker-number">#6</div></a></div>';
+$output .= '  <div id="marker-image-6" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker6.jpg"><img border=0 id="marker-image-6" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker6.jpg"><div class="marker-number">#6</div></a></div>';
 
-$output .= '  <div id="marker-image-7"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker7.jpg"><img class="marker-image" border=0 id="marker-image-7" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker7.jpg"><div class="marker-number">#7</div></a></div>';
+$output .= '  <div id="marker-image-7" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker7.jpg"><img border=0 id="marker-image-7" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker7.jpg"><div class="marker-number">#7</div></a></div>';
 
-$output .= '  <div id="marker-image-8"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker8.jpg"><img class="marker-image" border=0 id="marker-image-8" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker8.jpg"><div class="marker-number">#8</div></a></div>';
+$output .= '  <div id="marker-image-8" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker8.jpg"><img border=0 id="marker-image-8" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker8.jpg"><div class="marker-number">#8</div></a></div>';
 
-$output .= '  <div id="marker-image-9"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker9.jpg"><img class="marker-image" border=0 id="marker-image-9" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker9.jpg"><div class="marker-number">#9</div></a></div>';
+$output .= '  <div id="marker-image-9" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker9.jpg"><img border=0 id="marker-image-9" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker9.jpg"><div class="marker-number">#9</div></a></div>';
 
-$output .= '  <div id="marker-image-10"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker10.jpg"><img class="marker-image" border=0 id="marker-image-10" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker10.jpg"><div class="marker-number">#10</div></a></div>';
+$output .= '  <div id="marker-image-10" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker10.jpg"><img border=0 id="marker-image-10" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker10.jpg"><div class="marker-number">#10</div></a></div>';
 
-$output .= '  <div id="marker-image-11"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker11.jpg"><img class="marker-image" border=0 id="marker-image-11" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker11.jpg"><div class="marker-number">#11</div></a></div>';
+$output .= '  <div id="marker-image-11" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker11.jpg"><img border=0 id="marker-image-11" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker11.jpg"><div class="marker-number">#11</div></a></div>';
 
-$output .= '  <div id="marker-image-12"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker12.jpg"><img class="marker-image" border=0 id="marker-image-12" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker12.jpg"><div class="marker-number">#12</div></a></div>';
+$output .= '  <div id="marker-image-12" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker12.jpg"><img border=0 id="marker-image-12" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker12.jpg"><div class="marker-number">#12</div></a></div>';
 
-$output .= '  <div id="marker-image-13"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker13.jpg"><img class="marker-image" border=0 id="marker-image-13" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker13.jpg"><div class="marker-number">#13</div></a></div>';
+$output .= '  <div id="marker-image-13" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker13.jpg"><img border=0 id="marker-image-13" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker13.jpg"><div class="marker-number">#13</div></a></div>';
 
-$output .= '  <div id="marker-image-14"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker14.jpg"><img class="marker-image" border=0 id="marker-image-14" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker14.jpg"><div class="marker-number">#14</div></a></div>';
+$output .= '  <div id="marker-image-14" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker14.jpg"><img border=0 id="marker-image-14" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker14.jpg"><div class="marker-number">#14</div></a></div>';
 
-$output .= '  <div id="marker-image-15"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker15.jpg"><img class="marker-image" border=0 id="marker-image-15" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker15.jpg"><div class="marker-number">#15</div></a></div>';
+$output .= '  <div id="marker-image-15" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker15.jpg"><img border=0 id="marker-image-15" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker15.jpg"><div class="marker-number">#15</div></a></div>';
 
-$output .= '  <div id="marker-image-16"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker16.jpg"><img class="marker-image" border=0 id="marker-image-16" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker16.jpg"><div class="marker-number">#16</div></a></div>';
+$output .= '  <div id="marker-image-16" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker16.jpg"><img border=0 id="marker-image-16" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker16.jpg"><div class="marker-number">#16</div></a></div>';
 
-$output .= '  <div id="marker-image-17"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker17.jpg"><img class="marker-image" border=0 id="marker-image-17" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker17.jpg"><div class="marker-number">#17</div></a></div>';
+$output .= '  <div id="marker-image-17" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker17.jpg"><img border=0 id="marker-image-17" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker17.jpg"><div class="marker-number">#17</div></a></div>';
 
-$output .= '  <div id="marker-image-18"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker18.jpg"><img class="marker-image" border=0 id="marker-image-18" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker18.jpg"><div class="marker-number">#18</div></a></div>';
+$output .= '  <div id="marker-image-18" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker18.jpg"><img border=0 id="marker-image-18" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker18.jpg"><div class="marker-number">#18</div></a></div>';
 
-$output .= '  <div id="marker-image-19"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker19.jpg"><img class="marker-image" border=0 id="marker-image-19" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker19.jpg"><div class="marker-number">#19</div></a></div>';
+$output .= '  <div id="marker-image-19" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker19.jpg"><img border=0 id="marker-image-19" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker19.jpg"><div class="marker-number">#19</div></a></div>';
 
-$output .= '  <div id="marker-image-20"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker20.jpg"><img class="marker-image" border=0 id="marker-image-20" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker20.jpg"><div class="marker-number">#20</div></a></div>';
+$output .= '  <div id="marker-image-20" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker20.jpg"><img border=0 id="marker-image-20" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker20.jpg"><div class="marker-number">#20</div></a></div>';
 
-$output .= '  <div id="marker-image-21"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker21.jpg"><img class="marker-image" border=0 id="marker-image-21" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker21.jpg"><div class="marker-number">#21</div></a></div>';
+$output .= '  <div id="marker-image-21" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker21.jpg"><img border=0 id="marker-image-21" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker21.jpg"><div class="marker-number">#21</div></a></div>';
 
-$output .= '  <div id="marker-image-22"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker22.jpg"><img class="marker-image" border=0 id="marker-image-22" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker22.jpg"><div class="marker-number">#22</div></a></div>';
+$output .= '  <div id="marker-image-22" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker22.jpg"><img border=0 id="marker-image-22" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker22.jpg"><div class="marker-number">#22</div></a></div>';
 
-$output .= '  <div id="marker-image-23"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker23.jpg"><img class="marker-image" border=0 id="marker-image-23" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker23.jpg"><div class="marker-number">#23</div></a></div>';
+$output .= '  <div id="marker-image-23" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker23.jpg"><img border=0 id="marker-image-23" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker23.jpg"><div class="marker-number">#23</div></a></div>';
 
-$output .= '  <div id="marker-image-24"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker24.jpg"><img class="marker-image" border=0 id="marker-image-24" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker24.jpg"><div class="marker-number">#24</div></a></div>';
+$output .= '  <div id="marker-image-24" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker24.jpg"><img border=0 id="marker-image-24" src="http://greenmap.org/greenhouse/files/markerdemo/testmarker24.jpg"><div class="marker-number">#24</div></a></div>';
 
-$output .= '  <div id="marker-image-25"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker25.jpg"><img class="marker-image" border=0 src="http://greenmap.org/greenhouse/files/markerdemo/testmarker25.jpg"><div class="marker-number">#25</div></a></div>';
+$output .= '  <div id="marker-image-25" class="marker-image"><a href="http://greenmap.org/greenhouse/files/markerdemo/testmarker25.jpg"><img border=0 src="http://greenmap.org/greenhouse/files/markerdemo/testmarker25.jpg"><div class="marker-number">#25</div></a></div>';
   $output .= '  </div>';
   $output .= '    <div class="choices">';
   $output .= form_render($form['choice']);
