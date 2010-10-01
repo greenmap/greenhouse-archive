@@ -29,11 +29,31 @@ $isOtherTier = $uagent_obj->DetectTierOtherPhones();
 
 if ($isIphoneTier == 1) {
 
-echo '<meta name="viewport" content="width = 320" />';
-echo '<meta name="viewport" content="initial-scale=2.3, user-scalable=yes" />';
+echo '<meta name="viewport" content="width=320; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>';
+echo '<script type="text/javascript">
+addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false);
+
+function hideURLbar(){
+window.scrollTo(0,1);
+}
+</script>';
 echo '<style type="text/css">
-#container, #rightside, #leftside, #footer_gh, .tabs, .postinfo {
-display:none;
+#sitename, #ogmlink, #languagelinks, #searchbox, #mainmenu, #rightside, #leftside, #footer_gh, .tabs {display:none;} 
+
+#container {
+display:block !important; width:100% !important;margin:0 !important;background:none !important;text-align:center !important; min-width: none !important;
+}
+
+#preheader {
+max-height:none !important;height: 80px !important;width:100% !important;max-width:480px;min-width:320px;
+}
+
+#toplogo {
+width:320px;background:none !important;height:75px;text-align: center;margin-left:0 !important;float:none !important;margin:auto !impoartant;
+}
+
+#toplogo img{
+width:120px;
 } 
 
 body {
@@ -41,6 +61,7 @@ background: #ffffff !important;
 width:320px !important;
 max-width:320px !important;
 min-width:320px !important;
+overflow-x:hidden;
 }
 
 .links {
@@ -71,6 +92,14 @@ margin:0px !important;
 width:320px;
 text-align: center;
 line-height:25px;
+}
+
+.styledbox {
+display:none;
+}
+
+.node .content {
+padding-left:10px;
 }
 </style>';
 
@@ -216,7 +245,7 @@ top: -23px !important;
   <style type="text/css" media="all">@import "<?php print $base_url . '/' . $directory . '/colorcss/' . $color ?>.css";</style>
   <script type="text/javascript"><?php /* Needed to avoid Flash of Unstyle Content in IE */ ?> </script>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
-<meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com , Té Baybute - http://tebaybute.net , and Akiko Rokube http://rokube.com / for http://www.greenmap.org" />
+<meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com , TÃ© Baybute - http://tebaybute.net , and Akiko Rokube http://rokube.com / for http://www.greenmap.org" />
 
 </head>
 
