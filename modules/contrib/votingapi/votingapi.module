@@ -207,7 +207,7 @@ function votingapi_add_vote($content_type, $content_id, $value, $value_type = VO
   $vobj->uid = $uid;
   $vobj->timestamp = time();
 
-  $vobj->hostname = $_SESSION['id']
+  $vobj->hostname = $_SESSION['id'];
   //Append internal IP if it exists.
   if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
     $vobj->hostname .= '-'. $_SERVER['HTTP_X_FORWARDED_FOR'];
