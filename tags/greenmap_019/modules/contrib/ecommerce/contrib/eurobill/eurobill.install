@@ -1,0 +1,36 @@
+<?php
+
+// $Id: eurobill.install,v 1.1.2.1 2007/02/08 03:21:21 sammys Exp $
+
+/**
+ * E-Commerce eurobill module schema
+ */
+function eurobill_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {ec_eurobill} (
+        txnid int NOT NULL default '0',
+        billing_id varchar(30) NOT NULL default '0',
+        PRIMARY KEY  (billing_id)
+      ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */");
+      db_query("CREATE TABLE {ec_eurobill_product} (
+        vid int NOT NULL,
+        ebid int NOT NULL,
+        PRIMARY KEY (vid, ebid)
+      ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */");
+      break;
+    case 'pgsql':
+      db_query("CREATE TABLE {ec_eurobill} (
+        txnid int NOT NULL default '0',
+        billing_id varchar(30) NOT NULL default '0',
+        PRIMARY KEY (billing_id)
+      )");
+      db_query("CREATE TABLE {ec_eurobill_product} (
+        vid int NOT NULL,
+        ebid int NOT NULL,
+        PRIMARY KEY (vid, ebid)
+      )");
+      break;
+  }
+}
