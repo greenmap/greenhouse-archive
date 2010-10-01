@@ -115,7 +115,7 @@ function votingapi_set_vote($content_type, $content_id, $vote, $uid = NULL, $rec
       $vote->tag = VOTINGAPI_VALUE_DEFAULT_TAG;
     }
 
-    $hostname = session_id();
+    $hostname = $_SESSION['id'];
 
     $result = db_query("SELECT * FROM {votingapi_vote} WHERE content_type='%s' AND content_id=%d AND tag='%s' AND value_type='%s' AND uid=%d AND hostname='%s'", $content_type, $content_id, $vote->tag, $vote->value_type, $uid, $hostname);
     while ($vobj = db_fetch_object($result)) {
@@ -207,7 +207,7 @@ function votingapi_add_vote($content_type, $content_id, $value, $value_type = VO
   $vobj->uid = $uid;
   $vobj->timestamp = time();
 
-  $vobj->hostname = session_id();
+  $vobj->hostname = $_SESSION['id']
   //Append internal IP if it exists.
   if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
     $vobj->hostname .= '-'. $_SERVER['HTTP_X_FORWARDED_FOR'];
