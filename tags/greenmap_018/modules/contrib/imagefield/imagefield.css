@@ -1,0 +1,59 @@
+div.imagefield-edit-image-row { 
+  border: 1px solid #e5e5e5;
+  padding: 5px;
+  margin-bottom: 10px;
+}
+
+div.imagefield-edit-preview img {
+  border: 1px solid #e5e5e5;
+}
+
+div.imagefield-edit-preview  {
+  float: left;
+}
+
+div.imagefield-edit-image-replace { 
+  font-size: .9em;
+}
+
+div.imagefield-edit-image-detail input.form-text {
+  width: 100%;
+}
+
+div.imagefield-edit-image-detail {
+  margin-left: 180px;
+  margin-right: 20px;
+}
+
+div.imagefield-edit-image-flags div.form-item {
+ float: right;
+ margin:0;
+ padding:0;
+}
+
+/*
+** Markup free clearing
+** Details: http://www.positioniseverything.net/easyclearing.html
+** We don't need this for 5.0 version since it's included in drupal default styling
+*/
+.clear-block:after {
+  content: ".";
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+
+.clear-block {
+  display: inline-block;
+}
+
+/* Hides from IE-mac \*/
+* html .clear-block {
+  height: 1%;
+}
+.clear-block {
+  display: block;
+}
+/* End hide from IE-mac */
+
