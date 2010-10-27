@@ -20,7 +20,7 @@ global $i18n_langpath; ?>
 
 			<div id="content">
 				<div class="toolbar">
-        <a id="backButton" class="button" href="../index.html" style="display:block;">Back</a>
+        <a id="backButton" class="button" style="display:block;">Back</a>
     </div>
 				<?php if ($title) { ?><h1><?php print $title ?></h1><?php } ?>
 				<?php print $help ?>
