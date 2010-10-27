@@ -11,6 +11,8 @@ global $i18n_langpath; ?>
 <link rel="stylesheet" type="text/css" href="<?php print $base_url ?>/themes/iphoneappreferral/iphonestyle.css" media="screen" />
 <link rel="stylesheet" type="text/css" href="<?php print $base_url ?>/themes/iphoneappreferral/style.css" media="screen" />
 <script type="application/x-javascript" src="<?php print $base_url ?>/themes/iphoneappreferral/iui.js"></script>
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
+<meta name="apple-touch-fullscreen" content="YES" />
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
 <meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com , Te Baybute - http://tebaybute.net , and Akiko Rokube http://rokube.com / for http://www.greenmap.org" />
 
