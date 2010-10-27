@@ -16,12 +16,12 @@ global $i18n_langpath; ?>
 
 
 </head>
+<div class="toolbar">
+        <a id="backButton" class="button" style="display:block;">Back</a>
+    </div>
 
 
 			<div id="content">
-				<div class="toolbar">
-        <a id="backButton" class="button" style="display:block;">Back</a>
-    </div>
 				<?php if ($title) { ?><h1><?php print $title ?></h1><?php } ?>
 				<?php print $help ?>
 				<?php print $messages ?>
