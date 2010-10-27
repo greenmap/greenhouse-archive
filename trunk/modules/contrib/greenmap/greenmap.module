@@ -1,0 +1,1217 @@
+<?php
+// $Id: greenmap.module,v 1.0.0 2007/06/26 08:28:26 tom_o_t Exp $
+
+/**
+* Display help and module information
+*/
+function greenmap_help($section='') {
+  $output = '';
+  switch ($section) {
+    case 'admin/modules#description':
+      $output = t('Alters modules and forms for GreenMap.org.');
+      break;
+    case 'node/add#simplenews':
+      $output =  t('Alters modules and forms for GreenMap.org.');
+      break;
+  }
+  return $output;
+}
+
+/**
+ * Implementation of hook_node_info().
+ */
+function greenmap_node_info() {
+  return array('greenmap' => array('name' => t('greenmap'), 'base' => 'greenmap'));
+}
+
+
+function greenmap_form_alter($form_id,&$form)  {
+	
+//  if($form_id=="theme_sn_form")  {
+//    $form['form_info'] = array(
+//    '#value' => '<pre>'. print_r($form,1) .'</pre>'
+ //    );
+	
+
+//		$form['sn_email_141']['#title']=""; // remove the title above the email box
+//		$form['sn_subscribe_141'] = array(
+//			'#type' => 'hidden',
+//			'#value' => 'subscribe',
+//			);
+//		$form['sn_141'] = array(
+//			'#type' => 'submit',
+//			'#value' => 'go',
+//			);
+	   
+//   }
+
+ global $form_values;
+ switch ($form_id) {
+	
+	// this adds the calculator button in the Fees page
+    case 'user_edit':
+		  global $i18n_langpath; 
+		  
+		  
+		  $form['F. Fees']['calculatortext'] = array(
+		  	'#type' => 'markup', 
+			'#weight' => '-1001',
+			'#value' => '<p class="calculator">' . t('Click the button below to launch the fee calculator (it opens in a new window). ') . t('The Fee Calculator will automatically put your details into this section of the form. Check that this has been done, then close the Calculator and continue to complete the rest of this form. If you have any problems please contact Green Map System.') . '</p>'
+		  );
+		  
+		  $form['F. Fees']['calculator2'] = array(
+		  	'#type' => 'markup', 
+			'#weight' => '-1000',
+			'#value' => '<p class="calculator"><input type="button" value="' . t('Launch the Fee Calculator') . '" onClick="window.open(\'/greenhouse/' . $i18n_langpath . '/calculator?theme=simple\', \'feespage\'); return false"></p>'
+		  );
+	break;
+
+  }
+
+	if($form_id=="user_register") {
+	
+		$regstuff = "<p>" . t('Before registering please browse the Participate section (using the menu on the left) to find out what is involved in becoming a Mapmaker') . "</p>";
+		$regstuff .= "<p>" . t('Now, Get Ready! Here are the Five Steps') . "</p>";
+		$regstuff .= "<p>" . t('Step 1: Check if a Green Map project is already underway in your area ');
+		$regstuff .= "(" . l(t('Check the List'),'all') . ").";
+		$regstuff .= t(' If it is active, contact the Mapmaker and see if you can get involved. 
+							  If there are no existing Green Map projects or if your specific project scale 
+							  is different, you can begin the registration process.') . "</p>";
+		$regstuff .= "<p>" . t('Step 2: Read over the ') .  l(t('Terms and Conditions'),'participate/mapmakeragreementplain') .  "</p>";
+		$regstuff .= "<p>" . t('Step 3 (optional): You can download the registration form to complete offline with 
+								your project partners. Then come back to the website and continue the registration process.') . 
+								t(' Different languages are available in the Offline Registration Documents section (or use 
+								top left corner links for different languages). ') . "</p>";
+		
+		$regstuff .= "<fieldset class=\"collapsible collapsed\"><legend>" . t('Offline Registration Documents') . "</legend><div>" ;
+		
+		$regstuff .= l(t('English Registration Files'),file_create_url('Registration_EN.zip')) . '<br />';
+		$regstuff .= l(t('Chinese Traditional Registration Files'),file_create_url('Registration_CN_Traditional.zip')) . '<br />';
+		$regstuff .= l(t('Chinese Simplified Registration Files'),file_create_url('Registration_Simp_CN.zip')) . '<br />';
+		$regstuff .= l(t('Spanish Registration Files'),file_create_url('Registration_ES.zip')) . '<br />';
+		$regstuff .= l(t('Indonesian Registration Files'),file_create_url('Registration_ID.zip')) . '<br />';
+		$regstuff .= l(t('Japanese Registration Files'),file_create_url('Registration_JP.zip')) . '<br />';
+		
+		$regstuff .= "</div></fieldset>";
+		
+		$regstuff .= "<p>" . t('Step 4: This is the first page of your registration form. Fill in all fields in the form below to begin the registration process.') . 
+					 t('If you would like to preview the fee or read about services you can contribute instead of a fee, ') . l(t('click here to go to the Mapmakers FAQ'),'participate/FAQ_makers', NULL, NULL, '1554') . "</p>";
+		$regstuff .= "<p>" . t('Step 5: After clicking the "Next" button, you will be automatically logged in and taken to your Profile page. On this page you must 
+								add further details before you can submit your completed application. It will then be reviewed by Green Map System, who will contact you 
+								within two working days. Then, you can send in your fee, download our great tools and officially begin your Green Map project! ') . "</p>";
+	
+		$form['form_intro'] = array (
+			'#type' => 'markup',
+			'#weight' => '-20',
+			'#value' => $regstuff ,
+		);
+		$form['submit']['#value'] = 'Next';
+	}
+}
+
+
+function greenmap_block($op = "list", $delta = 0) {
+  if ($op == 'list') {
+    $blocks[0]['info'] = t('Registration Block');
+	$blocks[1]['info'] = t('Greenmap Translation Links');
+	$blocks[2]['info'] = t('Map of the Day Block');
+	$blocks[3]['info'] = t('Resubmit Registration Block');
+    return $blocks;
+  }
+  elseif ($op == 'view') {
+      switch ($delta) {
+      	case 0:
+		  $block['subject'] = 'Greenmap Registration';
+		  $block['content'] = greenmap_form();
+		  // return $block;
+		 break;
+		 
+		 case 1:
+		     $blocks['subject'] = 'Switcheroo'; // dont want a subject header
+    		 $blocks['content'] = 'switch' . theme('item_list', greenmap_translation_get_links($_GET['q']));
+		 break;
+		 
+		 case 2:
+		 	$blocks['subject'] = 'Map of the Day';
+			$blocks['content'] = ''; // insert result of database query here. Need to cache result for speed. The function is written below
+		 break;
+		 
+      	case 3:
+		  $block['subject'] = 'Greenmap Resubmit Registration';
+		  $block['content'] = greenmap_resubmit_form();
+		  // return $block;
+		 break;
+		 
+		}
+		return $block;
+  }
+}
+
+
+
+
+
+/**************************
+** Hook_form 
+** Form contianing submit button for when registration is complete - called in block above
+**************************/
+
+
+function greenmap_form($edit = null) {
+
+
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit to Green Map'),
+    '#submit' => TRUE,
+  );
+  return drupal_get_form('greenmap_form', $form);
+}
+
+function greenmap_form_submit($form_id, $form_values) {
+$useridforquery = $GLOBALS['user']->uid;
+  db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES ('89', $useridforquery, 'yes')");
+// need to insert new line in profile_values  set fid = fid of 'pending' and uid = users uid and value = 1
+
+// need to email greenhouse@greenmap.org to inform of new reg.
+$registration_email = 'New User ' . $GLOBALS['user']->name . ' has completed the registration process. ';
+$registration_email .= '<a href="http://www.greenmap.org' . base_path() . 'user/' . $GLOBALS['user']->uid . '">View their account</a>';
+$registration_subject = 'New User ' . $GLOBALS['user']->name . ' has registered';
+
+// To send HTML mail, the Content-type header must be set
+$headers  = 'MIME-Version: 1.0' . "\n";
+$headers .= 'Content-type: text/html; charset=iso-8859-1' . "\n";
+
+// Additional headers
+$headers .= 'From: greenhouse@greenmap.org' . "\n";
+
+user_mail('greenhouse@greenmap.org',$registration_subject,$registration_email,$headers);
+drupal_goto('participate/submitted'); //the page the user should see, after submit the form.
+}
+
+
+
+/**************************
+** Hook_form 
+** Form contianing submit button for when registration is being RESUBMITTED - called in block above
+**************************/
+
+
+function greenmap_resubmit_form($edit = null) {
+
+
+
+  $form['resubmit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Resubmit'),
+    '#submit' => TRUE,
+  );
+  return drupal_get_form('greenmap_resubmit_form', $form);
+}
+
+function greenmap_resubmit_form_submit($form_id, $form_values) {
+
+// need to email greenhouse@greenmap.org to inform of resubmit
+$registration_email = 'New User ' . $GLOBALS['user']->name . ' has RESUBMITTED their registration. ';
+$registration_email .= '<a href="http://www.greenmap.org' . base_path() . 'user/' . $GLOBALS['user']->uid . '">View their account</a>';
+$registration_subject = 'New User ' . $GLOBALS['user']->name . ' has RESUBMITTED';
+
+// To send HTML mail, the Content-type header must be set
+$headers  = 'MIME-Version: 1.0' . "\n";
+$headers .= 'Content-type: text/html; charset=iso-8859-1' . "\n";
+
+// Additional headers
+$headers .= 'From: greenhouse@greenmap.org' . "\n";
+
+user_mail('greenhouse@greenmap.org',$registration_subject,$registration_email,$headers);
+drupal_goto('participate/submitted'); //the page the user should see, after submit the form.
+}
+
+
+
+/**
+ * Copied from i18n translation.module - function translation_get_links
+ * 
+ * Returns an array of links for all languages, with or without names
+ */
+function greenmap_translation_get_links($path = '', $names = 1) {
+  $current = i18n_get_lang();
+  foreach(i18n_supported_languages() as $lang => $name){
+    $url = translation_url($path, $lang);
+    $name = $names ? t($name) : '' ; // Should be localized??
+    $links[]= theme('i18n_link', $name, i18n_path($url, $lang) , $lang);
+  }
+  return $links;  
+}
+
+/**
+ * Produces a language link without the  flag - copied and hacked from i18n
+ */
+function theme_i18n_greenmap_link($text, $target, $lang, $separator=' '){
+  $output = '<span class="i18n-link">';
+  $attributes = ($lang == i18n_get_lang()) ? array('class' => 'active') : NULL;
+  $output .= l($text, $target, $attributes, NULL, NULL, FALSE, TRUE);
+  $output .= '</span>';
+  return $output;
+}
+
+
+
+// Function to fetch map of the day from database - called in block 3 above
+
+function map_of_the_day() {
+
+//  $result = db_query_range("SELECT n.title, n.nid, ncm.field_main_map_image_alt
+//    FROM {node} n INNER JOIN {node_content_map} ncm ON n.vid = ncm.vid WHERE n.type = 'content_map' AND n.nid = '1439' ", 0, 1); // last variable limits it to one result
+//  while ($map_of_the_day_result = db_fetch_object($result)) {
+    // Perform operations on $map_of_the_day_result->body, etc. here.
+//	$map_of_the_day_result->title // do something here.....*************************************
+//  } 
+  
+} // end map of the day
+
+
+
+// add a css class to the 'comment' link so that I can insert an image using css. This will override or add to comment.module line 200 ish
+
+
+/**
+ * Implementation of hook_link().
+ */
+function hook_link($type, $node = 0, $main = 0) {
+  $links = array();
+
+  if ($type == 'node' && $node->comment) {
+
+    if ($main) {
+      // Main page: display the number of comments that have been posted.
+
+      if (user_access('access comments')) {
+        $all = comment_num_all($node->nid);
+        $new = comment_num_new($node->nid);
+
+        if (!$all) {
+          if ($node->comment == COMMENT_NODE_READ_WRITE) {
+            if (user_access('post comments')) {
+              $links[] = l(t('add new comment'), "comment/reply/$node->nid", array('title' => t('Add a new comment to this page.'), 'class' => 'active'), NULL, 'comment_form');
+            }
+            else {
+              $links[] = theme('comment_post_forbidden', $node->nid);
+            }
+          }
+        }
+      }
+    }
+    else {
+      // Node page: add a "post comment" link if the user is allowed to
+      // post comments, if this node is not read-only, and if the comment form isn't already shown
+
+      if ($node->comment == COMMENT_NODE_READ_WRITE) {
+        if (user_access('post comments')) {
+          if (variable_get('comment_form_location', COMMENT_FORM_SEPARATE_PAGE) == COMMENT_FORM_SEPARATE_PAGE) {
+            if($_GET[theme] == 'simple') {
+				$query="theme=simple";
+			 }
+			$links[] = l(t('add new comment'), "comment/reply/$node->nid", array('title' => t('Share your thoughts and opinions related to this posting.'), 'class' => 'active'), $query, 'comment_form');
+          }
+        }
+        else {
+          $links[] = theme('comment_post_forbidden', $node->nid);
+        }
+      }
+    }
+  }
+
+  if ($type == 'comment') {
+    $links = comment_links($node, $main);
+  }
+
+  return $links;
+}
+
+// end of hook_link
+
+
+function greenmap_callback_from_block_25() {
+  //choose the role to list by value. 
+  // Note ID 1 = anonymous, ID 2 = authenticated user,  ID 3 = member,  ID 4 = admin-level1
+  // so valid values here are > 2.
+
+  $rid = 5;
+  print <<<EOF
+<br/>
+Click on the Field name to sort the list.<br/><br>
+Currently the fields: Profession, Membership, Gender, Age, Hobbies & Interest, and Zip code, are not sortable.
+EOF;
+
+  $header = array(
+    array('data' => t('Username'), 'field' => 'u.name'),
+    array('data' => t('Member for'), 'field' => 'u.created'),
+    array('data' => t('User Last Accessed'), 'field' => 'u.access', 'sort' => 'desc'),
+    t('Pending Reason'),
+    t('Operations')
+  );
+  $sql = "SELECT u.uid, u.name, u.status, u.created, u.access FROM {users} u INNER JOIN {users_roles} ur ON u.uid=ur.uid INNER JOIN {profile_values} pv ON pv.uid=u.uid AND pv.fid=89 WHERE ur.rid = $rid AND pv.value = 'yes'";
+  $sql .= tablesort_sql($header);
+  $result = pager_query($sql, 50);
+
+  $status = array(t('blocked'), t('active'));
+  while ($account = db_fetch_object($result)) {
+         $account = user_load(array('uid' => $account->uid));
+
+
+  $rows[] = array(theme('username', $account),
+            format_interval(time() - $account->created),
+            $account->access ? t('%time ago', array('%time' => format_interval(time() - $account->access))) : t('never'),
+            $account->profile_pending_reason,
+            l(t(' edit'), "user/$account->uid/edit/G.+Administration", array()));
+  }
+
+  $output = theme('table', $header, $rows);
+  $output .= theme('pager', NULL, 50, 0);
+  print ($output);
+}
+
+/* *******************************************
+// Copyright 2010, Anthony Hand
+//
+// File version date: August 09, 2010
+//
+// LICENSE INFORMATION
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//        http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, 
+// software distributed under the License is distributed on an 
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific 
+// language governing permissions and limitations under the License. 
+//
+//
+// ABOUT THIS PROJECT
+//   Project Owner: Anthony Hand
+//   Email: anthony.hand@gmail.com
+//   Web Site: http://www.mobileesp.com
+//   Source Files: http://code.google.com/p/mobileesp/
+//   
+//   Versions of this code are available for:
+//      PHP, JavaScript, Java, and ASP.NET (C#)
+//
+// *******************************************
+*/
+
+
+
+//**************************
+// The uagent_info class encapsulates information about
+//   a browser's connection to your web site. 
+//   You can use it to find out whether the browser asking for
+//   your site's content is probably running on a mobile device.
+//   The methods were written so you can be as granular as you want.
+//   For example, enquiring whether it's as specific as an iPod Touch or
+//   as general as a smartphone class device.
+//   The object's methods return 1 for true, or 0 for false.
+class uagent_info
+{
+   var $useragent = "";
+   var $httpaccept = "";
+
+   //standardized values for true and false.
+   var $true = 1;
+   var $false = 0;
+
+   //Optional: store values for quickly accessing same info multiple times.
+   //  Call InitDeviceScan() to initialize these values.
+   var $isIphone = 0; //Stores whether the device is an iPhone or iPod Touch.
+   var $isTierIphone = 0; //Stores whether is the iPhone tier of devices.
+   var $isTierRichCss = 0; //Stores whether the device can probably support Rich CSS, but JavaScript support is not assumed. (e.g., newer BlackBerry, Windows Mobile)
+   var $isTierGenericMobile = 0; //Stores whether it is another mobile device, which cannot be assumed to support CSS or JS (eg, older BlackBerry, RAZR)
+
+   //Initialize some initial smartphone string variables.
+   var $engineWebKit = 'webkit';
+   var $deviceAndroid = 'android';
+   var $deviceIphone = 'iphone';
+   var $deviceIpod = 'ipod';
+   var $deviceIpad = 'ipad';
+   var $deviceMacPpc = 'macintosh'; //Used for disambiguation
+
+   var $deviceNuvifone = 'nuvifone'; //Garmin Nuvifone
+
+   var $deviceSymbian = 'symbian';
+   var $deviceS60 = 'series60';
+   var $deviceS70 = 'series70';
+   var $deviceS80 = 'series80';
+   var $deviceS90 = 'series90';
+   
+   var $deviceWinPhone7 = 'windows phone os 7'; 
+   var $deviceWinMob = 'windows ce';
+   var $deviceWindows = 'windows'; 
+   var $deviceIeMob = 'iemobile';
+   var $devicePpc = 'ppc'; //Stands for PocketPC
+   var $enginePie = 'wm5 pie'; //An old Windows Mobile
+   
+   var $deviceBB = 'blackberry';   
+   var $vndRIM = 'vnd.rim'; //Detectable when BB devices emulate IE or Firefox
+   var $deviceBBStorm = 'blackberry95';  //Storm 1 and 2
+   var $deviceBBBold = 'blackberry97'; //Bold
+   var $deviceBBTour = 'blackberry96'; //Tour
+   var $deviceBBCurve = 'blackberry89'; //Curve2
+   var $deviceBBTorch = 'blackberry 98'; //Torch
+   
+   var $devicePalm = 'palm';
+   var $deviceWebOS = 'webos'; //For Palm's new WebOS devices
+   var $engineBlazer = 'blazer'; //Old Palm browser
+   var $engineXiino = 'xiino'; //Another old Palm
+   
+   var $deviceKindle = 'kindle'; //Amazon Kindle, eInk one.
+   
+   //Initialize variables for mobile-specific content.
+   var $vndwap = 'vnd.wap';
+   var $wml = 'wml';   
+   
+   //Initialize variables for other random devices and mobile browsers.
+   var $deviceBrew = 'brew';
+   var $deviceDanger = 'danger';
+   var $deviceHiptop = 'hiptop';
+   var $devicePlaystation = 'playstation';
+   var $deviceNintendoDs = 'nitro';
+   var $deviceNintendo = 'nintendo';
+   var $deviceWii = 'wii';
+   var $deviceXbox = 'xbox';
+   var $deviceArchos = 'archos';
+   
+   var $engineOpera = 'opera'; //Popular browser
+   var $engineNetfront = 'netfront'; //Common embedded OS browser
+   var $engineUpBrowser = 'up.browser'; //common on some phones
+   var $engineOpenWeb = 'openweb'; //Transcoding by OpenWave server
+   var $deviceMidp = 'midp'; //a mobile Java technology
+   var $uplink = 'up.link';
+   var $engineTelecaQ = 'teleca q'; //a modern feature phone browser
+   
+   var $devicePda = 'pda'; //some devices report themselves as PDAs
+   var $mini = 'mini';  //Some mobile browsers put 'mini' in their names.
+   var $mobile = 'mobile'; //Some mobile browsers put 'mobile' in their user agent strings.
+   var $mobi = 'mobi'; //Some mobile browsers put 'mobi' in their user agent strings.
+   
+   //Use Maemo, Tablet, and Linux to test for Nokia's Internet Tablets.
+   var $maemo = 'maemo';
+   var $maemoTablet = 'tablet';
+   var $linux = 'linux';
+   var $qtembedded = 'qt embedded'; //for Sony Mylo and others
+   var $mylocom2 = 'com2'; //for Sony Mylo also
+   
+   //In some UserAgents, the only clue is the manufacturer.
+   var $manuSonyEricsson = "sonyericsson";
+   var $manuericsson = "ericsson";
+   var $manuSamsung1 = "sec-sgh";
+   var $manuSony = "sony";
+   var $manuHtc = "htc"; //Popular Android and WinMo manufacturer
+
+   //In some UserAgents, the only clue is the operator.
+   var $svcDocomo = "docomo";
+   var $svcKddi = "kddi";
+   var $svcVodafone = "vodafone";
+
+
+
+   //**************************
+   //The constructor. Initializes several default variables.
+   function uagent_info()
+   { 
+       $this->useragent = strtolower($_SERVER['HTTP_USER_AGENT']);
+       $this->httpaccept = strtolower($_SERVER['HTTP_ACCEPT']);
+   }
+   
+   //**************************
+   // Initialize Key Stored Values.
+   function InitDeviceScan()
+   {
+        global $isIphone, $isTierIphone, $isTierRichCss, $isTierGenericMobile;
+        
+        $this->isIphone = $this->DetectIphoneOrIpod();
+        $this->isTierIphone = $this->DetectTierIphone();
+        $this->isTierRichCss = $this->DetectTierRichCss();
+        $this->isTierGenericMobile = $this->DetectTierOtherPhones();
+   }
+
+   //**************************
+   //Returns the contents of the User Agent value, in lower case.
+   function Get_Uagent()
+   { 
+       return $this->useragent;
+   }
+
+   //**************************
+   //Returns the contents of the HTTP Accept value, in lower case.
+   function Get_HttpAccept()
+   { 
+       return $this->httpaccept;
+   }
+
+   //**************************
+   // Detects if the current device is an iPhone.
+   function DetectIphone()
+   {
+      if (stripos($this->useragent, $this->deviceIphone) > -1)
+      {
+         //The iPad and iPod Touch say they're an iPhone! So let's disambiguate.
+         if ($this->DetectIpad() == $this->true ||
+             $this->DetectIpod() == $this->true)
+         {
+            return $this->false;
+         }
+         else
+            return $this->true; 
+      }
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current device is an iPod Touch.
+   function DetectIpod()
+   {
+      if (stripos($this->useragent, $this->deviceIpod) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+   
+   //**************************
+   // Detects if the current device is an iPad tablet.
+   function DetectIpad()
+   {
+      if (stripos($this->useragent, $this->deviceIpad) > -1 &&
+          $this->DetectWebkit() == $this->true)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current device is an iPhone or iPod Touch.
+   function DetectIphoneOrIpod()
+   {
+       //We repeat the searches here because some iPods may report themselves as an iPhone, which would be okay.
+       if (stripos($this->useragent, $this->deviceIphone) > -1 ||
+           stripos($this->useragent, $this->deviceIpod) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current device is an Android OS-based device.
+   function DetectAndroid()
+   {
+      if (stripos($this->useragent, $this->deviceAndroid) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current device is an Android OS-based device and
+   //   the browser is based on WebKit.
+   function DetectAndroidWebKit()
+   {
+      if ($this->DetectAndroid() == $this->true)
+      {
+         if ($this->DetectWebkit() == $this->true)
+         {
+            return $this->true; 
+         }
+         else
+            return $this->false; 
+      }
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current browser is based on WebKit.
+   function DetectWebkit()
+   {
+      if (stripos($this->useragent, $this->engineWebKit) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+
+   //**************************
+   // Detects if the current browser is the Nokia S60 Open Source Browser.
+   function DetectS60OssBrowser()
+   {
+      //First, test for WebKit, then make sure it's either Symbian or S60.
+      if ($this->DetectWebkit() == $this->true)
+      {
+        if (stripos($this->useragent, $this->deviceSymbian) > -1 ||
+            stripos($this->useragent, $this->deviceS60) > -1)
+        {
+           return $this->true;
+        }
+        else
+           return $this->false; 
+      }
+      else
+         return $this->false; 
+   }
+   
+   //**************************
+   // Detects if the current device is any Symbian OS-based device,
+   //   including older S60, Series 70, Series 80, Series 90, and UIQ, 
+   //   or other browsers running on these devices.
+   function DetectSymbianOS()
+   {
+       if (stripos($this->useragent, $this->deviceSymbian) > -1 || 
+           stripos($this->useragent, $this->deviceS60) > -1 ||
+           stripos($this->useragent, $this->deviceS70) > -1 || 
+           stripos($this->useragent, $this->deviceS80) > -1 ||
+           stripos($this->useragent, $this->deviceS90) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current browser is a 
+   // Windows Phone 7 device.
+   function DetectWindowsPhone7()
+   {
+      if (stripos($this->useragent, $this->deviceWinPhone7) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current browser is a Windows Mobile device.
+   // Excludes Windows Phone 7 devices. 
+   // Focuses on Windows Mobile 6.xx and earlier.
+   function DetectWindowsMobile()
+   {
+      if ($this->DetectWindowsPhone7() == $this->true)
+         return $this->false; 
+      //Most devices use 'Windows CE', but some report 'iemobile' 
+      //  and some older ones report as 'PIE' for Pocket IE. 
+      if (stripos($this->useragent, $this->deviceWinMob) > -1 ||
+          stripos($this->useragent, $this->deviceIeMob) > -1 ||
+          stripos($this->useragent, $this->enginePie) > -1)
+         return $this->true; 
+      //Test for Windows Mobile PPC but not old Macintosh PowerPC.
+          if (stripos($this->useragent, $this->devicePpc) > -1
+                  && !(stripos($this->useragent, $this->deviceMacPpc) > 1))
+         return $this->true; 
+      //Test for certain Windwos Mobile-based HTC devices.
+      if (stripos($this->useragent, $this->manuHtc) > -1 &&
+          stripos($this->useragent, $this->deviceWindows) > -1)
+         return $this->true; 
+      if ($this->DetectWapWml() == $this->true &&
+          stripos($this->useragent, $this->deviceWindows) > -1) 
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current browser is a BlackBerry of some sort.
+   function DetectBlackBerry()
+   {
+       if (stripos($this->useragent, $this->deviceBB) > -1)
+         return $this->true; 
+       if (stripos($this->httpaccept, $this->vndRIM) > -1)
+         return $this->true; 
+       else
+         return $this->false; 
+   }
+   
+   //**************************
+   // Detects if the current browser is a BlackBerry device AND uses a
+   //    WebKit-based browser. These are signatures for the new BlackBerry OS 6.
+   //    Examples: Torch
+   function DetectBlackBerryWebKit()
+   {
+      if ((stripos($this->useragent, $this->deviceBB) > -1) &&
+                (stripos($this->useragent, $this->engineWebKit) > -1))
+      {
+         return $this->true; 
+      }
+      else
+        return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current browser is a BlackBerry Touch
+   //    device, such as the Storm or Torch.
+   function DetectBlackBerryTouch()
+   {
+       if ((stripos($this->useragent, $this->deviceBBStorm) > -1) ||
+                (stripos($this->useragent, $this->deviceBBTorch) > -1))
+         return $this->true; 
+       else
+         return $this->false; 
+   }
+   
+   //**************************
+   // Detects if the current browser is a BlackBerry OS 5 device AND
+   //    has a more capable recent browser. 
+   //    Examples, Storm, Bold, Tour, Curve2
+   //    Excludes the new BlackBerry OS 6 browser!!
+   function DetectBlackBerryHigh()
+   {
+      //Disambiguate for BlackBerry OS 6 (WebKit) browser
+      if ($this->DetectBlackBerryWebKit() == $this->true)
+         return $this->false; 
+      if ($this->DetectBlackBerry() == $this->true)
+      {
+          if (($this->DetectBlackBerryTouch() == $this->true) ||
+            stripos($this->useragent, $this->deviceBBBold) > -1 ||
+            stripos($this->useragent, $this->deviceBBTour) > -1 ||
+            stripos($this->useragent, $this->deviceBBCurve) > -1)
+          {
+             return $this->true; 
+          }
+          else
+            return $this->false; 
+      }
+      else
+        return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current browser is a BlackBerry device AND
+   //    has an older, less capable browser. 
+   //    Examples: Pearl, 8800, Curve1.
+   function DetectBlackBerryLow()
+   {
+      if ($this->DetectBlackBerry() == $this->true)
+      {
+          //Assume that if it's not in the High tier, then it's Low.
+          if ($this->DetectBlackBerryHigh() == $this->true)
+             return $this->false; 
+          else
+            return $this->true; 
+      }
+      else
+        return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current browser is on a PalmOS device.
+   function DetectPalmOS()
+   {
+      //Most devices nowadays report as 'Palm', but some older ones reported as Blazer or Xiino.
+      if (stripos($this->useragent, $this->devicePalm) > -1 ||
+          stripos($this->useragent, $this->engineBlazer) > -1 ||
+          stripos($this->useragent, $this->engineXiino) > -1)
+      {
+         //Make sure it's not WebOS first
+         if ($this->DetectPalmWebOS() == $this->true)
+            return $this->false;
+         else
+            return $this->true; 
+      }
+      else
+         return $this->false; 
+   }
+
+
+   //**************************
+   // Detects if the current browser is on a Palm device
+   //   running the new WebOS.
+   function DetectPalmWebOS()
+   {
+      if (stripos($this->useragent, $this->deviceWebOS) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current browser is a
+   //   Garmin Nuvifone.
+   function DetectGarminNuvifone()
+   {
+      if (stripos($this->useragent, $this->deviceNuvifone) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+
+   //**************************
+   // Check to see whether the device is any device
+   //   in the 'smartphone' category.
+   function DetectSmartphone()
+   {
+      if ($this->DetectIphoneOrIpod() == $this->true) 
+         return $this->true; 
+      if ($this->DetectS60OssBrowser() == $this->true)
+         return $this->true; 
+      if ($this->DetectSymbianOS() == $this->true) 
+         return $this->true; 
+      if ($this->DetectAndroid() == $this->true)
+         return $this->true; 
+      if ($this->DetectWindowsMobile() == $this->true)
+         return $this->true; 
+      if ($this->DetectWindowsPhone7() == $this->true)
+         return $this->true; 
+      if ($this->DetectBlackBerry() == $this->true)
+         return $this->true; 
+      if ($this->DetectPalmWebOS() == $this->true)
+         return $this->true; 
+      if ($this->DetectPalmOS() == $this->true)
+         return $this->true; 
+      if ($this->DetectGarminNuvifone() == $this->true)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+
+   //**************************
+   // Detects whether the device is a Brew-powered device.
+   function DetectBrewDevice()
+   {
+       if (stripos($this->useragent, $this->deviceBrew) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects the Danger Hiptop device.
+   function DetectDangerHiptop()
+   {
+      if (stripos($this->useragent, $this->deviceDanger) > -1 ||
+          stripos($this->useragent, $this->deviceHiptop) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current browser is Opera Mobile or Mini.
+   function DetectOperaMobile()
+   {
+      if (stripos($this->useragent, $this->engineOpera) > -1)
+      {
+         if ((stripos($this->useragent, $this->mini) > -1) ||
+          (stripos($this->useragent, $this->mobi) > -1))
+            return $this->true; 
+         else
+            return $this->false; 
+      }
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects whether the device supports WAP or WML.
+   function DetectWapWml()
+   {
+       if (stripos($this->httpaccept, $this->vndwap) > -1 ||
+           stripos($this->httpaccept, $this->wml) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+   
+   //**************************
+   // Detects if the current device is an Amazon Kindle.
+   function DetectKindle()
+   {
+      if (stripos($this->useragent, $this->deviceKindle) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+   
+   
+   //**************************
+   // The quick way to detect for a mobile device.
+   //   Will probably detect most recent/current mid-tier Feature Phones
+   //   as well as smartphone-class devices. Excludes Apple iPads.
+   function DetectMobileQuick()
+   {
+      //Let's say no if it's an iPad, which contains 'mobile' in its user agent.
+      if ($this->DetectiPad() == $this->true) 
+         return $this->false;
+
+      //Most mobile browsing is done on smartphones
+      if ($this->DetectSmartphone() == $this->true) 
+         return $this->true;
+
+      if ($this->DetectWapWml() == $this->true) 
+         return $this->true; 
+      if ($this->DetectBrewDevice() == $this->true) 
+         return $this->true; 
+      if ($this->DetectOperaMobile() == $this->true) 
+         return $this->true;
+         
+      if (stripos($this->useragent, $this->engineNetfront) > -1)
+         return $this->true; 
+      if (stripos($this->useragent, $this->engineUpBrowser) > -1)
+         return $this->true; 
+      if (stripos($this->useragent, $this->engineOpenWeb) > -1)
+         return $this->true; 
+         
+      if ($this->DetectDangerHiptop() == $this->true) 
+         return $this->true;
+
+      if ($this->DetectMidpCapable() == $this->true) 
+         return $this->true; 
+
+      if ($this->DetectMaemoTablet() == $this->true) 
+         return $this->true; 
+      if ($this->DetectArchos() == $this->true) 
+         return $this->true; 
+
+       if (stripos($this->useragent, $this->devicePda) > -1)
+         return $this->true; 
+       if (stripos($this->useragent, $this->mobile) > -1)
+         return $this->true; 
+
+      else
+         return $this->false; 
+   }
+   
+   //**************************
+   // Detects if the current device is a Sony Playstation.
+   function DetectSonyPlaystation()
+   {
+      if (stripos($this->useragent, $this->devicePlaystation) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current device is a Nintendo game device.
+   function DetectNintendo()
+   {
+      if (stripos($this->useragent, $this->deviceNintendo) > -1 || 
+           stripos($this->useragent, $this->deviceWii) > -1 ||
+           stripos($this->useragent, $this->deviceNintendoDs) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current device is a Microsoft Xbox.
+   function DetectXbox()
+   {
+      if (stripos($this->useragent, $this->deviceXbox) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+   
+   //**************************
+   // Detects if the current device is an Internet-capable game console.
+   function DetectGameConsole()
+   {
+      if ($this->DetectSonyPlaystation() == $this->true) 
+         return $this->true; 
+      else if ($this->DetectNintendo() == $this->true) 
+         return $this->true; 
+      else if ($this->DetectXbox() == $this->true) 
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+   
+   //**************************
+   // Detects if the current device supports MIDP, a mobile Java technology.
+   function DetectMidpCapable()
+   {
+       if (stripos($this->useragent, $this->deviceMidp) > -1 || 
+           stripos($this->httpaccept, $this->deviceMidp) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+   
+   //**************************
+   // Detects if the current device is on one of the Maemo-based Nokia Internet Tablets.
+   function DetectMaemoTablet()
+   {
+      if (stripos($this->useragent, $this->maemo) > -1)
+         return $this->true; 
+      //Must be Linux + Tablet, or else it could be something else. 
+      if (stripos($this->useragent, $this->maemoTablet) > -1 &&
+          stripos($this->useragent, $this->linux) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current device is an Archos media player/Internet tablet.
+   function DetectArchos()
+   {
+      if (stripos($this->useragent, $this->deviceArchos) > -1)
+         return $this->true; 
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // Detects if the current browser is a Sony Mylo device.
+   function DetectSonyMylo()
+   {
+      if (stripos($this->useragent, $this->manuSony) > -1)
+      {
+         if ((stripos($this->useragent, $this->qtembedded) > -1) ||
+          (stripos($this->useragent, $this->mylocom2) > -1))
+         {
+            return $this->true; 
+         }
+         else
+            return $this->false; 
+      }
+      else
+         return $this->false; 
+   }
+   
+  
+   //**************************
+   // The longer and more thorough way to detect for a mobile device.
+   //   Will probably detect most feature phones,
+   //   smartphone-class devices, Internet Tablets, 
+   //   Internet-enabled game consoles, etc.
+   //   This ought to catch a lot of the more obscure and older devices, also --
+   //   but no promises on thoroughness!
+   function DetectMobileLong()
+   {
+      if ($this->DetectMobileQuick() == $this->true) 
+         return $this->true; 
+      if ($this->DetectGameConsole() == $this->true) 
+         return $this->true; 
+      if ($this->DetectSonyMylo() == $this->true) 
+         return $this->true; 
+
+       //Detect older phones from certain manufacturers and operators. 
+       if (stripos($this->useragent, $this->uplink) > -1)
+         return $this->true; 
+       if (stripos($this->useragent, $this->manuSonyEricsson) > -1)
+         return $this->true; 
+       if (stripos($this->useragent, $this->manuericsson) > -1)
+         return $this->true; 
+
+       if (stripos($this->useragent, $this->manuSamsung1) > -1)
+         return $this->true; 
+       if (stripos($this->useragent, $this->svcDocomo) > -1)
+         return $this->true; 
+       if (stripos($this->useragent, $this->svcKddi) > -1)
+         return $this->true; 
+       if (stripos($this->useragent, $this->svcVodafone) > -1)
+         return $this->true; 
+
+      else
+         return $this->false; 
+   }
+
+
+
+  //*****************************
+  // For Mobile Web Site Design
+  //*****************************
+
+
+   //**************************
+   // The quick way to detect for a tier of devices.
+   //   This method detects for devices which can 
+   //   display iPhone-optimized web content.
+   //   Includes iPhone, iPod Touch, Android, WebOS, etc.
+   function DetectTierIphone()
+   {
+      if ($this->DetectIphoneOrIpod() == $this->true) 
+         return $this->true; 
+      if ($this->DetectAndroid() == $this->true) 
+         return $this->true; 
+      if ($this->DetectAndroidWebKit() == $this->true) 
+         return $this->true; 
+      if ($this->DetectWindowsPhone7() == $this->true)
+         return $this->true; 
+      if ($this->DetectBlackBerryWebKit() == $this->true) 
+         return $this->true; 
+      if ($this->DetectPalmWebOS() == $this->true) 
+         return $this->true; 
+      if ($this->DetectGarminNuvifone() == $this->true) 
+         return $this->true; 
+      if ($this->DetectMaemoTablet() == $this->true)
+         return $this->true;
+      else
+         return $this->false; 
+   }
+   
+   //**************************
+   // The quick way to detect for a tier of devices.
+   //   This method detects for devices which are likely to be capable 
+   //   of viewing CSS content optimized for the iPhone, 
+   //   but may not necessarily support JavaScript.
+   //   Excludes all iPhone Tier devices.
+   function DetectTierRichCss()
+   {
+      if ($this->DetectMobileQuick() == $this->true) 
+      {
+        if ($this->DetectTierIphone() == $this->true)
+           return $this->false;
+           
+        //The following devices are explicitly ok.
+        if ($this->DetectWebkit() == $this->true) //Any WebKit
+           return $this->true;
+        if ($this->DetectS60OssBrowser() == $this->true)
+           return $this->true;
+           
+        //Note: 'High' BlackBerry devices ONLY
+        if ($this->DetectBlackBerryHigh() == $this->true)
+           return $this->true;
+        
+        if ($this->DetectWindowsMobile() == $this->true)
+           return $this->true;
+        if (stripos($this->useragent, $this->engineTelecaQ) > -1)
+           return $this->true; 
+           
+        //default
+        else
+           return $this->false;
+      }
+      else
+         return $this->false; 
+   }
+
+   //**************************
+   // The quick way to detect for a tier of devices.
+   //   This method detects for all other types of phones,
+   //   but excludes the iPhone and RichCSS Tier devices.
+   function DetectTierOtherPhones()
+   {
+      if ($this->DetectMobileLong() == $this->true) 
+      {
+        //Exclude devices in the other 2 categories 
+        if ($this->DetectTierIphone() == $this->true)
+           return $this->false;
+        if ($this->DetectTierRichCss() == $this->true)
+           return $this->false;
+        
+        //Otherwise, it's a YES
+        else
+           return $this->true;
+      }
+      else
+         return $this->false; 
+   }
+      
+
+}
+
+
+//Was informed by a MobileESP user that it's a best practice 
+//  to omit the closing ?&gt; marks here. They can sometimes
+//  cause errors with HTML headers.
