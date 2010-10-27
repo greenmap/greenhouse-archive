@@ -19,7 +19,7 @@ global $i18n_langpath; ?>
 
 </head>
 <div class="toolbar">
-        <a id="backButton" class="button" style="display:block;">Back</a>
+        <a id="backButton" class="button" href="#" style="display:block;">Back</a>
     </div>
 
 
