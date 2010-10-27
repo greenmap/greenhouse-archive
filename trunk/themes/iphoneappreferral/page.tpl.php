@@ -9,6 +9,7 @@ global $i18n_langpath; ?>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <link rel="stylesheet" type="text/css" href="<?php print $base_url ?>/themes/iphoneappreferral/iphonestyle.css" media="screen" />
+<script type="application/x-javascript" src="<?php print $base_url ?>/themes/iphoneappreferral/iui.js"></script>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
 <meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com , Te Baybute - http://tebaybute.net , and Akiko Rokube http://rokube.com / for http://www.greenmap.org" />
 
@@ -17,7 +18,9 @@ global $i18n_langpath; ?>
 
 
 			<div id="content">
-				
+				<div class="toolbar">
+        <a id="backButton" class="button" href="../index.html" style="display:block;">Back</a>
+    </div>
 				<?php if ($title) { ?><h1><?php print $title ?></h1><?php } ?>
 				<?php print $help ?>
 				<?php print $messages ?>
