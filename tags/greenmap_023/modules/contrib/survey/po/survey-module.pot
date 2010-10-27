@@ -1,0 +1,153 @@
+# LANGUAGE translation of Drupal (survey.module)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from file: survey.module,v 1.8 2005/05/18 19:10:35 walkah
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2005-10-04 08:48+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: survey.module:10
+msgid "Create user defined survey questions"
+msgstr ""
+
+#: survey.module:13
+msgid "A survey allows you to create a form for use on the site to collect data"
+msgstr ""
+
+#: survey.module:23;39;0
+msgid "survey"
+msgstr ""
+
+#: survey.module:41
+msgid "survey submission"
+msgstr ""
+
+#: survey.module:50
+msgid "form"
+msgstr ""
+
+#: survey.module:53;65
+msgid "list"
+msgstr ""
+
+#: survey.module:55
+msgid "add field"
+msgstr ""
+
+#: survey.module:58
+msgid "delete field"
+msgstr ""
+
+#: survey.module:62
+msgid "responses"
+msgstr ""
+
+#: survey.module:67
+msgid "download to excel"
+msgstr ""
+
+#: survey.module:103
+msgid "Please specify a valid email address, or leave the field blank"
+msgstr ""
+
+#: survey.module:119
+msgid "Intro Text"
+msgstr ""
+
+#: survey.module:121
+msgid "Path for \"thank you\" page"
+msgstr ""
+
+#: survey.module:121
+msgid "This page is displayed after the form is submitted.  If you are not using clean URLs, specify the part after '?q='.  If unsure, specify nothing."
+msgstr ""
+
+#: survey.module:122
+msgid "Email address"
+msgstr ""
+
+#: survey.module:122
+msgid "This email address will receive a copy of each survey submission. Multiple addresses can be specified as a comma-separated list."
+msgstr ""
+
+#: survey.module:135
+msgid "Submit"
+msgstr ""
+
+#: survey.module:177
+msgid "edit"
+msgstr ""
+
+#: survey.module:178;224
+msgid "delete"
+msgstr ""
+
+#: survey.module:181
+msgid "field"
+msgstr ""
+
+#: survey.module:181
+msgid "type"
+msgstr ""
+
+#: survey.module:184
+msgid "No fields defined"
+msgstr ""
+
+#: survey.module:205
+msgid "Save field"
+msgstr ""
+
+#: survey.module:224
+msgid "Really delete %field?"
+msgstr ""
+
+#: survey.module:253
+msgid "%survey submission"
+msgstr ""
+
+#: survey.module:259
+msgid "Submitted by %name on %date\n"
+msgstr ""
+
+#: survey.module:270
+msgid "Thank you for your submission"
+msgstr ""
+
+#: survey.module:282
+msgid "submitted by"
+msgstr ""
+
+#: survey.module:283
+msgid "date"
+msgstr ""
+
+#: survey.module:291;314
+msgid "Submitted by"
+msgstr ""
+
+#: survey.module:291;314
+msgid "Date"
+msgstr ""
+
+#: survey.module:295
+msgid "view"
+msgstr ""
+
+#: survey.module:30
+msgid "maintain surveys"
+msgstr ""
+
+#: survey.module:30
+msgid "submit surveys"
+msgstr ""
+

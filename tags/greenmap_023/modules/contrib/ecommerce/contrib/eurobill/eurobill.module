@@ -1,0 +1,585 @@
+<?php
+/*
+ * $Id: eurobill.module,v 1.1.2.3 2007/02/15 06:37:01 gordon Exp $
+ */
+define('EUROBILL_PAYMENT_URL', 'https://www.eurobill.com/cgi/mastergate/signupselect.cgi');
+define('EUROBILL_THANKS_URL', 'node');
+define('EUROBILL_VAR_USERNAME', 'eurobill_username');
+define('EUROBILL_VAR_SITEID', 'eurobill_siteid');
+define('EUROBILL_VAR_KEY', 'eurobill_security_key');
+
+
+function eurobill_help($section = '') {
+  switch ($section) {
+    case 'admin/modules#description':
+      return t('<b>EC:</b> EuroBill payment processing.<br />Dependency: payment.module');
+      break;
+    case 'admin/store/settings/eurobill':
+      return t('Enter the required parameters that have been supplied during the signup process with Eurobill.');
+      break;
+  }
+}
+
+function eurobill_menu($maycache) {
+  if ($maycache) {
+    $access = user_access('administer store');
+    $items[] = array(
+      'path' => 'eurobill/payment',
+      'title' => t('Eurobill Email Address'),
+      'callback' => 'eurobill_payment',
+      'access' => TRUE,
+      'type' => MENU_CALLBACK,
+    );
+    $items[] = array(
+      'path' => 'eurobill/accepted',
+      'title' => t('Payment Accepted'),
+      'callback' => 'eurobill_accepted',
+      'access' => TRUE,
+      'type' => MENU_CALLBACK,
+    );
+    $items[] = array(
+      'path' => 'eurobill/declined',
+      'title' => t('Payment Declined'),
+      'callback' => 'eurobill_declined',
+      'access' => TRUE,
+      'type' => MENU_CALLBACK,
+    );
+    $items[] = array(
+      'path' => 'eurobill/ipn',
+      'callback' => 'eurobill_ipn',
+      'access' => TRUE,
+      'type' => MENU_CALLBACK,
+    );
+    $items[] = array(
+      'path' => 'admin/store/settings/eurobill',
+      'title' => t('eurobill'),
+      'callback' => 'eurobill_site_ec_settings',
+      'access' => $access,
+    );    
+    $items[] = array(
+      'path' => 'admin/store/settings/eurobill/setup',
+      'title' => t('eurobill setup'),
+      'access' => $access,
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+    );
+    $items[] = array(
+      'path' => 'admin/store/settings/eurobill/products',
+      'title' => t('eurobill product settings'),
+      'callback' => 'eurobill_product_settings',
+      'access' => $access,
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 1,
+    );
+  }
+  return $items;
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function eurobill_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  if ($node->type != 'product') {
+    return;
+  }
+
+  switch ($op) {
+    case 'load':
+      eurobill_node_load($node);
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function eurobill_form_alter($form_id, &$form) {
+  if ($form_id == 'store_transaction_form') {
+    $id = db_result(db_query("SELECT billing_id FROM {ec_eurobill} WHERE txnid = %d", $form['txnid']['#value']));
+    $form['overview']['billing_id'] = array(
+      '#type' => 'textfield',
+      '#title' => t('EuroBill Billing ID'),
+      '#default_value' => $id,
+    );
+  }
+}
+
+/**
+ * Implementation of hook_transactionapi()
+ */
+function eurobill_ec_transactionapi(&$txn, $op, $a3 = NULL, $a4 = NULL) {
+  if ($op == 'load') {
+    $items =& $txn->items;
+    if ($items) {
+      foreach  ($items as $key => $val) {
+        eurobill_node_load($items[$key]);
+      }
+    }
+  } else if ($op == 'update' || $op == 'insert') {
+    eurobill_transaction_save($txn);
+  }
+}
+
+/**
+ * Loads the node attributes for EuroBill
+ * 
+ * @param $node
+ *   Reference to the node to load EuroBill attributes into
+ */
+function eurobill_node_load(&$node) {
+  $node->ebid = db_result(db_query("SELECT ebid FROM {ec_eurobill_product} WHERE vid = %d", $node->vid));
+  if ($node->ebid) {
+    $node->hide_cart_link = TRUE;
+  }
+}
+
+function eurobill_transaction_save(&$txn) {
+  if (empty($txn->billing_id)) {
+    return;
+  }
+  
+  if (!db_affected_rows(db_query("UPDATE {ec_eurobill} SET billing_id = %d WHERE txnid = %d", $txn->billing_id, $txn->txnid))) {
+    db_query("INSERT INTO {ec_eurobill} (txnid, billing_id) VALUES (%d, %d)", $txn->txnid, $txn->billing_id);
+  }
+}
+
+function eurobill_link($type, $node = NULL, $teaser = FALSE) {
+  $links = array();
+  if ($type == 'node' && isset($node->type) && $node->type == 'product' && isset($node->ebid) && $node->ebid) {
+    $links[] = l(t('subscribe now'), "eurobill/payment/{$node->nid}/{$node->ebid}");
+  }
+  
+  return $links;
+}
+
+function eurobill_payment_link($text, $ebid) {
+  
+  return l($text, EUROBILL_PAYMENT_URL, array(), eurobill_payment_url_query($ebid));
+}
+
+function eurobill_site_ec_settings() {
+  $form = array();
+  $form[EUROBILL_VAR_USERNAME] = array(
+    '#type' => 'textfield', 
+    '#title' => t('EuroBill username'), 
+    '#default_value' => variable_get(EUROBILL_VAR_USERNAME, ''), 
+    '#desciption' => t('Username that was issued by EuroBill.'),
+    '#required' => true
+   );
+  $form[EUROBILL_VAR_SITEID] = array(
+    '#type' => 'textfield', 
+    '#title' => t('EuroBill site ID'), 
+    '#default_value' => variable_get(EUROBILL_VAR_SITEID, ''), 
+    '#desciption' => t('Site ID to pass to EuroBill. This is usually the domain name of your site.'),
+    '#required' => true
+   );
+  $form[EUROBILL_VAR_KEY] = array(
+    '#type' => 'textfield', 
+    '#title' => t('EuroBill security key'), 
+    '#default_value' => variable_get(EUROBILL_VAR_KEY, ''), 
+    '#desciption' => t('Security key assigned by EuroBill so IPN communications can be validated. See the <b>Account Details &raquo; Security Key</b> section of your EuroBill member area.'),
+    '#required' => true
+   );
+
+  return system_settings_form('eurobill_site_ec_settings_form', $form);
+}
+
+function eurobill_product_settings() {
+  return drupal_get_form('eurobill_product_settings_form', eurobill_product_settings_form());
+}
+
+function eurobill_product_settings_form() {
+  $rows = array();
+  $result = db_query("SELECT p.vid, nr.title, eep.ebid FROM {ec_product} p, {node_revisions} nr LEFT JOIN {ec_eurobill_product} eep ON (nr.vid = eep.vid) WHERE p.vid = nr.vid ORDER BY nr.title");
+  while ($row = db_fetch_array($result)) {
+    $form['ebids'][$row['vid']] = array(
+      '#type' => 'textfield',
+      '#default_value' => empty($row['ebid']) ? '' : $row['ebid'],
+      '#size' => 10,
+      '#maxlength' => 10,
+      '#attributes' => array('style' => 'text-align: right'),
+    );
+    $form['names'][$row['vid']] = array(
+      '#value' => $row['title'],
+    );
+  }
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Save settings'));
+  $form['ebids']['#tree'] = TRUE;
+  return $form;
+}
+
+function theme_eurobill_product_settings_form(&$form) {
+  $rows = array();
+  foreach (element_children($form['ebids']) as $vid) {
+    $version = array('data' => $vid, 'align' => 'right');
+    $rows[] = array(form_render($form['names'][$vid]), $version, form_render($form['ebids'][$vid]));
+  }
+  $output = theme('table', array(t('product name'), t('node version'), t('eurobill ID')), $rows);
+  $output .= form_render($form);
+  return $output;
+}
+
+function eurobill_product_settings_form_validate($form_id, &$fv) {
+  foreach ($fv['ebids'] as $key => $value) {
+    if (!is_numeric($value) && !empty($value)) {
+      form_set_error("ebids][$key", t('Eurobill IDs must either be empty or numeric'));
+    }
+  }
+}
+
+function eurobill_product_settings_form_submit($form_id, &$fv) {
+  $success = TRUE;
+  foreach ($fv['ebids'] as $key => $value) {
+    $success = $success && eurobill_product_save($key, $value);
+  }
+  
+  if ($success) {
+    drupal_set_message(t('Your changes were saved successfully.'));
+  } else {
+    drupal_set_message(t('An error occurred while saving your changes.'), 'error');
+  }
+}
+
+function eurobill_product_save($vid, $ebid) {
+  if (!($na = db_affected_rows(db_query("UPDATE {ec_eurobill_product} SET ebid = %d WHERE vid = %d", $ebid, $vid)))) {
+    $na = db_query("INSERT INTO {ec_eurobill_product} (vid, ebid) VALUES (%d, %d)", $vid, $ebid);
+  }
+  
+  return $na;
+}
+
+function eurobill_payment($nid, $ebid) {
+  if (isset($_SESSION['txnid']) && !empty($_SESSION['txnid']) && is_numeric($_SESSION['txnid'])) {
+    // already been through this step during this session and the payment hasn't been processed.
+    // redirect the user to the payment page.
+    $txn = store_transaction_load($_SESSION['txnid']);
+  } else {
+    $txn = eurobill_create_transaction($nid, $ebid);
+  }
+  
+  if (is_object($txn)) {
+    $vars = eurobill_get_query_vars();
+    $query = eurobill_make_query_string($txn, $ebid, $vars);
+    return drupal_goto(EUROBILL_PAYMENT_URL, $query);
+  } else {
+    drupal_set_message(t('Could not find your transaction. Please contact the store by phone.'), 'error');
+    return '';
+  }
+}
+
+function eurobill_create_transaction($nid, $ebid) {
+  global $user;
+  
+  $vars = eurobill_get_query_vars();
+  
+  // create a transaction
+  $item = node_load(array('nid' => $nid));
+  $item->qty = 1;
+  $txn = array(
+    'uid' => $user->uid ? $user->uid : 0,
+    'type' => 'eurobill',
+    'mail' => !empty($user->mail) ? $user->mail : '',
+    'shipping_cost' => 0,
+    'payment_method' => 'eurobill',
+    'gross' => $item->price,
+    'duedate' => 0,
+    'token' => ec_anon_generate_token(),
+    'items' => array($nid => $item),
+  );
+  
+  $txnid = store_transaction_save((object)$txn);
+  $txn = store_transaction_load($txnid);
+  $_SESSION['txnid'] = $txnid;
+  
+  return $txn;
+}
+
+function eurobill_get_query_vars() {
+  $vars = array(
+    'wmid' => variable_get(EUROBILL_VAR_USERNAME, ''),
+    'siteid' => drupal_urlencode(variable_get(EUROBILL_VAR_SITEID, '')),
+  );
+  
+  $skey = variable_get(EUROBILL_VAR_KEY, '');
+  if (empty($vars['wmid']) || empty($vars['siteid']) || empty($skey)) {
+    drupal_set_message('Eurobill setup is incomplete.', 'error');
+    drupal_goto('admin/store/settings/eurobill');
+  }
+  
+  return $vars;
+}
+
+function eurobill_make_query_string(&$txn, $ebid, &$vars) {
+  $mail = drupal_urlencode($txn->mail);
+  $successurl = drupal_urlencode(url('eurobill/accepted', NULL, NULL, TRUE));
+  $declineurl = drupal_urlencode(url('eurobill/declined', NULL, NULL, TRUE));
+  
+  return "wmid={$vars['wmid']}&siteid={$vars['siteid']}&aid=$ebid&email=$mail&ordernumber={$txn->txnid}&xparam={$txn->token}&loginurl=$successurl&declineurl=$declineurl";
+}
+
+function eurobill_accepted() {
+  if (!isset($_SESSION['txnid']) || empty($_SESSION['txnid']) || !is_numeric($_SESSION['txnid'])) {
+    return drupal_not_found();
+  }
+  
+  $txn = store_transaction_load($_SESSION['txnid']);
+  if ($txn->payment_status == payment_get_status_id('completed')) {
+    unset($_SESSION['txnid']);
+    return t('Thank you for your payment.');
+  } else {
+    return t('We are waiting for notification of your payment please refresh the page in a few minutes.');
+  }
+}
+
+function eurobill_declined() {
+  if (!isset($_SESSION['txnid']) || empty($_SESSION['txnid'])) {
+    return drupal_not_found();
+  }
+  
+  payment_set_status($_SESSION['txnid'], 'denied');
+  unset($_SESSION['txnid']);
+  
+  drupal_set_message(t('Your payment was declined.'), 'error');
+  return '';
+}
+
+function eurobill_ipn() {
+  if (!isset($_REQUEST['action'])
+      || $_REQUEST['action'] != 'activation' 
+      || !isset($_REQUEST['billing_ordernumber']) 
+      || empty($_REQUEST['billing_ordernumber']) 
+      || !is_numeric($_REQUEST['billing_ordernumber'])
+      || !isset($_REQUEST['signature'])) {
+    return drupal_not_found();        
+  }
+  
+  if ($_REQUEST['signature'] != md5($_REQUEST['time'].':'.variable_get(EUROBILL_VAR_KEY, ''))) {
+    watchdog('eurobill', t('Invalid IPN attempt detected'), WATCHDOG_ERROR, l(t('view transaction'), 'admin/store/transaction/edit/'.$txn->txnid));
+    return drupal_not_found();
+  }
+  
+  $txn = store_transaction_load($_REQUEST['billing_ordernumber']);
+  
+  if ($txn->payment_status == payment_get_status_id('completed')) {
+    return drupal_not_found();
+  }
+
+  // check the EuroBill ID matches what we have recorded as the ebid
+  $item = array_shift(array_values($txn->items));
+  if ($item->ebid != $_REQUEST['account_account']) {
+    watchdog('eurobill', t('Payment has been made using the wrong payment ID for transaction %txnid.', array('%txnid' => $txn->txnid)), WATCHDOG_ERROR, l(t('view transaction'), 'admin/store/transaction/edit/'.$txn->txnid));
+    
+    // can refactor the transaction to suit the different payment type.
+    // Erring on the cautious side instead and the admin will need to
+    // intervene.
+    $txn->payment_status = payment_get_status_id('payment received');
+    $txn->workflow = transaction_get_workflow_id('security violation');
+    store_transaction_save($txn);
+  } else {
+    // all good so lets process the payment
+    $txn->payment_status = payment_get_status_id('completed');
+    $txn->workflow = transaction_get_workflow_id('completed');
+    $txn->mail = $_REQUEST['user_email'];
+    $txn->billing_id = $_REQUEST['billing_id'];
+    store_transaction_save($txn);
+    store_send_invoice_email($txn->txnid);
+  }
+  
+  print "SUCCESS";
+  exit(0);
+}
+
+function eurobill_paymentapi(&$txn, $op, $arg = '') {
+  switch ($op) {
+    case 'display name':
+      return t('Credit Card or Direct Debit');
+      break;
+    case 'payment page':
+      if ($txn->gross > 0) {
+        return payment_hosted_goto($txn, EUROBILL_PAYMENT_URL, eurobill_build_querystr($txn));
+      }
+      break;
+  }
+}
+
+function eurobill_build_querystr(&$txn) {
+  $query = array(
+    'wmid' => variable_get()
+  );
+}
+
+/*
+ * Internal Functions
+ */
+
+function eurobill_payment_form2_submit($form_id, &$form_values) {
+  $t =& $form_values['t'];
+  $t->payment_status = payment_get_status_id('completed');
+  $form_values['txnid'] = $t->txnid;
+
+  // check to see if there are any shippable items
+  $has_shippable = false;
+  foreach ($t->items as $p) {
+    if (product_is_shippable($p->nid)) {
+      $has_shippable = true;
+      break;
+    }
+  }
+  if (!$has_shippable) {
+    $t->workflow = 6;
+  }
+
+  store_transaction_save($t);
+  store_send_invoice_email($t->txnid);
+
+  $url = variable_get('eurobill_thanks_url', url(ITRANSACT_DEFAULT_THANKS_URL, null, null, true));
+  drupal_set_message(t('your payment has been accepted, thank you'));
+ 
+  return $url;
+}
+
+/*
+ * Private functions
+ */
+
+function _eurobill_process(&$form_values) {
+  include_once 'modules/ecommerce/contrib/eway/eway.inc';
+  $form_values = array_merge($form_values, payment_cc_split_name($form_values['name'], $matches));
+ 
+  $t =& $form_values['t'];
+
+  $amount = str_replace('.', '', $t->gross);
+  $form_values['clientid'] = variable_get('eurobill_clientid', '');
+  $form_values['clientpass'] = variable_get('eurobill_clientpass', '');
+
+  if (empty($form_values['clientid']) || empty($form_values['clientpass'])) {
+    drupal_set_message('EuroBill requires you to setup your Client ID and Password before using their payment service.');
+    return FALSE;
+  }
+
+  $paymenturl = 'https://secure.paymentclearing.com/cgi-bin/rc/xmltrans.cgi';
+  return xml_payment($form_values, $paymenturl, 'eurobill_build_xml', 'eurobill_decode_xml_response');
+}
+
+function eurobill_build_xml(&$data){
+  $rssData = "xml=<?xml version=\"1.0\"?>\n";
+  $rssData .= "<SaleRequest>\n";
+  $rssData .= "<CustomerData>\n";
+  $rssData .= "<Email>1</Email>\n";
+  $rssData .= "<BillingAddress>\n";
+  $rssData .= "<Address1>1</Address1>\n";
+  $rssData .= "<FirstName>{$data['first_name']}</FirstName>\n";
+  $rssData .= "<LastName>{$data['last_name']}</LastName>\n";
+  $rssData .= "<City>1</City>\n";
+  $rssData .= "<State>1</State>\n";
+  $rssData .= "<Zip>1</Zip>\n";
+  $rssData .= "<Country>1</Country>\n";
+  $rssData .= "<Phone>1</Phone>\n";
+  $rssData .= "</BillingAddress>\n";
+  $rssData .= "<AccountInfo>\n";
+  $rssData .= "<CardInfo>\n";
+  $rssData .= "<CCNum>{$data['cardnumber']}</CCNum>\n";
+  $rssData .= "<CCMo>{$data['expiry']['expmonth']}</CCMo>\n";
+  $rssData .= "<CCYr>20{$data['expiry']['expyear']}</CCYr>\n";
+
+  if (isset($data['cvn']['illegible'])) {
+    $rssData .= "<CVV2Number>{$data['cvn']['number']}</CVV2Number>\n";
+
+    if ($data['cvn']['illegible']) {
+      $rssData .= "<CVV2Illegible>1</CVV2Illegible>\n";
+    }
+  }
+
+  $rssData .= "</CardInfo>\n";
+  $rssData .= "</AccountInfo>\n";
+  $rssData .= "</CustomerData>\n";
+  $rssData .= "<TransactionData>\n";
+
+  // ONLY include AuthCode for force transactions.  Please be careful
+  // with force transactions since accidental usage outside of test mode
+  // even with test card numbers could result in discount rate charges
+  if (!empty($data['auth_code'])) {
+    $rssData .= "<AuthCode>{$data['auth_code']}</AuthCode>\n";
+  }
+  // Enables PreAuth transactions
+  else if (!empty($data['preauth'])) {
+    $rssData .= "<Preauth/>\n";
+  }
+
+  $homepage = url('', NULL, NULL, TRUE);
+  
+  $rssData .= "<VendorId>{$data['clientid']}</VendorId>\n";
+  $rssData .= "<VendorPassword>{$data['clientpass']}</VendorPassword>\n";
+  $rssData .= "<HomePage>$homepage</HomePage>\n";
+  $rssData .= "<OrderItems>\n";
+
+  $rssData .= "<Item>\n";
+  $rssData .= "<Description>$homepage sale</Description>\n";
+  $rssData .= "<Cost>{$data['t']->gross}</Cost>\n";
+  $rssData .= "<Qty>1</Qty>\n";
+  $rssData .= "</Item>\n";
+  
+  $rssData .= "</OrderItems>\n";
+  $rssData .= "</TransactionData>\n";
+  $rssData .= "</SaleRequest>\n";
+
+  return $rssData;
+}
+
+function eurobill_decode_xml_response(&$data, $response) {
+  $t =& $data['t'];
+  /* these left-hand side arguments must be filled in all payment
+   * modules to take advantage of the centralised code. */
+  if ($response['Status'] == 'OK' && $response['AuthCode'] != '') {
+    $t->payment->cc_amount = $response['Total'];
+    $t->payment->cc_refnum = $response['XID'];
+    $t->payment->cc_ordernum = $response['AuthCode'];
+    $t->payment->cc_reason = 'APPROVED';
+    return TRUE;
+  } else {
+    _eurobill_error($response['ErrorCategory']);
+    $t->payment->cc_amount = '0.00';
+    $t->payment->cc_reason = $response['ErrorCategory'];
+    $t->payment->cc_refnum = -1;
+    $t->payment->logmsg = $response['ErrorMessage'];
+    return FALSE;
+  }
+}
+
+/**
+ * Sets the form error appropriate for the message supplied by EuroBill.
+ *
+ * @param $error Error category supplied by EuroBill.
+ * @return Message set in the form.
+ */
+function _eurobill_error($error, $suppress = FALSE) {
+  switch($error) {
+    case 'INTERNAL_ERROR':
+      $msg = t('Payment attempted; Gateway error. Try again in a few minutes and if it still fails contact the system administrator.');
+      $field = 'foo';
+      break;
+    case 'PROCESSOR_ERROR':
+      $msg = t('Card declined');
+      $field = 'cardnumber';
+      break;
+    case 'REQUEST_FORMAT':
+    case 'REQUEST_VALIDATION':
+      $msg = t('Invalid XML Format. Contact the System Administrator. No transactions will be processed until this is fixed. Error code: ').$error;
+      $field = 'clientid';
+      break;
+    case 'AVS_FAILURE':
+      $msg = t('Payment attempted; Invalid address supplied');
+      $field = 'address';
+      break;
+    case 'CVV2_FAILURE':
+      $msg = t('Payment attempted; Invalid CVN provided');
+      $field = 'cvn';
+      break;
+    default:
+      $msg = $error;
+      $field = 'other';
+  }
+
+  form_set_error($field, $msg);
+
+  return $msg;
+}
