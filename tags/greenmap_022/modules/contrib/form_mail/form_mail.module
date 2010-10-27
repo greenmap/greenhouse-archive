@@ -1,0 +1,78 @@
+<?php
+// $Id: form_mail.module,v 1.8.2.2 2006/06/27 20:37:49 heine Exp $
+
+function form_mail_perm() {
+  return array("send form mail");
+}
+
+function form_mail_help($section) {
+  switch ($section) {
+    case 'admin/modules#description':
+      return t('Sends mails based on form submissions.');
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function form_mail_menu($may_cache) {
+  if ($may_cache) {
+    $items = array();
+
+    $items[] = array('path' => 'form_mail', 
+      'title' => t('send form mail'),
+      'access' => user_access('send form mail'),
+      'callback' => 'form_mail_page',
+      'type' => MENU_CALLBACK);
+
+  return $items;  
+  }
+}
+
+function form_mail_page() {
+  $edit = $_POST["edit"];
+  $op = arg(1);
+  
+  if ($edit) {
+    form_mail_send_email($edit);
+    drupal_set_message(t("Thank you for your submission."));
+  }
+
+  print theme("page", '');
+}
+
+function form_mail_send_email($edit) {
+  unset($edit["op"]);
+  foreach ($edit as $key => $value) {
+    if ($key == "to" && variable_get("form_mail_custom_to", 0)) {
+      $to = $value;
+    }
+    elseif ($key == "body") {
+      $body = $value;
+      break;
+    }
+    else {
+      $body .= "$key: $value\n";
+    }
+  }
+  $subject = $edit["subject"] ? $edit["subject"] : t("submission from %s", array ("%s" => variable_get("site_name", "your web site")));
+  $from_email = $edit["from_email"] ? str_replace(array("\r", "\n"), '', $edit["from_email"]) : variable_get("site_mail", ini_get("sendmail_from"));
+  if ($edit["from_name"]) {
+    $name = str_replace(array("\r", "\n"), '', $edit["from_name"]); 
+    $name = mime_header_encode($name,'UTF-8');
+    $headers = "From: $name <$from_email>\n";
+  }
+  else {
+    $headers = "From: $from_email \n";
+  }
+  if (!$to) $to = variable_get("form_mail_email", "");
+  user_mail($to, $subject, $body, $headers);
+}
+
+function form_mail_settings() {
+  $output = form_textfield(t("Email recipient"), "form_mail_email", variable_get("form_mail_email", ""), 80, 300, t("The email address which should receive all form submissions when not otherwise stated in the form."));
+  $output .= form_checkbox(t('Allow custom recipient'), 'form_mail_custom_to', 1, variable_get("form_mail_custom_to", 0), t("Whether to allow setting the recipient of the email from the form."));
+  return $output;
+}  
+
+?>
