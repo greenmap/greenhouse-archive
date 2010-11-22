@@ -1627,6 +1627,44 @@ html.js fieldset.collapsed, html.js fieldset.fakecollapsed {
   margin-bottom: 1em;
 }
 
+#rightcontentpanel strong {
+margin-bottom: 20px;
+}
+
+#rightcontentpanel fieldset ul, #rightcontentpanel fieldset ul li {
+list-style: none;
+padding: 0;
+margin: 0;
+}
+
+#rightcontentpanel fieldset ul li a img {
+float: none;
+}
+
+fieldset.sustainableliving legend, fieldset.sustainableliving fieldset legend, fieldset.sustainableliving legend a {
+color: #2e68b2 !important;
+}
+
+fieldset.nature legend, fieldset.nature fieldset legend, fieldset.nature legend a {
+color: #099848 !important;
+}
+
+fieldset.culture legend, fieldset.culture fieldset legend, fieldset.culture legend a {
+color: #f69938 !important;
+}
+
+fieldset.sustainableliving, fieldset.sustainableliving fieldset {
+border: 1px solid #2e68b2 !important;
+}
+
+fieldset.nature, fieldset.nature fieldset {
+border: 1px solid #099848 !important;
+}
+
+fieldset.culture, fieldset.culture fieldset {
+border: 1px solid #f69938 !important;
+}
+
 /* Tab navigation -  remove from drupal.css when this style goes live ***************************************************/
 ul.primary {
   border-collapse: collapse;
