@@ -571,6 +571,7 @@ display: inline;
 
 .links {
 	text-align: right;
+	clear: both;
 }
 
 .submitted {
