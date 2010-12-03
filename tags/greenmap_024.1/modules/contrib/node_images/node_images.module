@@ -1,0 +1,897 @@
+<?php
+// $Id: node_images.module,v 1.1.2.7 2007/02/03 02:28:37 stefano73 Exp $
+
+/**
+ * @file
+ * This module will add an "Images" tab to nodes, allowing users to upload images and associate them with the current node.
+ * Requires upload.module
+ * The hook_node_images() allows to conditionally disable images for the specific node
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function node_images_help($section) {
+  switch ($section) {
+    case 'admin/help#node_images':
+    case 'admin/modules#description':
+      return t('Allows users to upload images and associate them to nodes.');
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function node_images_perm() {
+  return array('create node images', 'administer node images');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function node_images_menu($may_cache) {
+  $items = array();
+  $access = user_access('create node images');
+  $admin = user_access('administer site configuration');
+
+  if ($may_cache) {
+    $items[] = array('path' => 'admin/settings/node_images',
+      'title' => t('node images'),
+      'description' => t('Control how to upload node images.'),
+      'callback' => 'node_images_admin_settings',
+      'access' => $admin
+    );
+    $items[] = array(
+      'path' => 'node_images/js',
+      'callback' => '_node_images_js',
+      'access' => $access,
+      'type' => MENU_CALLBACK
+    );
+  } else {
+    if (arg(0) == 'node' && is_numeric(arg(1))) {
+      $node = node_load(arg(1));
+      if ($node->nid && variable_get('node_images_position_'.$node->type, 'hide') != 'hide') {
+        $items[] = array(
+          'path' => 'node/' . arg(1) . '/images',
+          'title' => t('images'),
+          'callback' => '_node_images_edit_form',
+          'callback arguments' => array($node),
+          'access' => $access && node_access('update', $node),
+          'type' => MENU_LOCAL_TASK,
+          'weight' => 2
+        );
+        $items[] = array(
+          'path' => 'node/' . arg(1) . '/image_gallery',
+          'title' => t('gallery'),
+          'callback' => '_node_images_gallery',
+	  'callback arguments' => array($node),
+          'access' => node_access('view', $node),
+          'type' => MENU_CALLBACK
+        );
+      }
+    }
+  }
+
+  return $items;
+}
+
+/**
+ * implementation of hook_form_alter()
+ */
+function node_images_form_alter($form_id, &$form) {
+  if (!isset($form['type']) || $form['type'] == 'image') {
+    return;
+  }
+  $type =  $form['type']['#value'];
+
+  if ($form_id == $type .'_node_settings') {
+    // radio button in the node's content type configuration page
+    _node_images_check_settings();
+    $form['node_images'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Node images'),
+      '#collapsible' => TRUE,
+    );
+    $form['node_images']['node_images_position_'. $type] = array(
+      '#type' => 'radios',
+      '#title' => t('Position'),
+      '#default_value' => variable_get('node_images_position_'. $type, 'hide'),
+      '#options' => array('hide' => t('Do not show'), 'above' => t('Show above node body'), 'below' => t('Show below node body'), 
+	'node_template' => t('Manually set in node template by variable $node->node_images')),
+      '#description' => t('The position of images in the node view.'),
+    );
+    $form['node_images']['node_images_gallery_link_'. $type] = array(
+      '#type' => 'radios',
+      '#title' => t('Link to image gallery'),
+      '#default_value' => variable_get('node_images_gallery_link_'. $type, TRUE),
+      '#options' => array(t('Do not show'), t('Show')),
+      '#description' => t('Choose whether to show or not the link to the image gallery.'),
+    );
+    $form['node_images']['node_images_teaser_images_'. $type] = array(
+      '#type' => 'textfield',
+      '#title' => t('Number of images in node teaser'),
+      '#default_value' => variable_get('node_images_teaser_images_'. $type, 2),
+      '#size' => 5,
+      '#maxlength' => 2,
+      '#description' => t('The maximum number of images to show in the node teaser. 0 will not show images. Leave blank to show all images.'),
+    );
+    $form['node_images']['node_images_body_images_'. $type] = array(
+      '#type' => 'textfield',
+      '#title' => t('Number of images in node body'),
+      '#size' => 5,
+      '#maxlength' => 2,
+      '#default_value' => variable_get('node_images_body_images_'. $type, NULL),
+      '#description' => t('The maximum number of images to show in the node body. 0 will not show images. Leave blank to show all images.'),
+    );
+    $form['node_images']['node_images_teaser_format_'. $type] = array(
+      '#type' => 'radios',
+      '#title' => t('Image format in node teaser'),
+      '#default_value' => variable_get('node_images_teaser_format_'.$type, 'thumbs'),
+      '#options' => array('thumbs' => t('Thumbnails'), 'fullsize' => t('Full size images')),
+      '#description' => t('Image format in node teaser.'),
+    );
+    $form['node_images']['node_images_body_format_'. $type] = array(
+      '#type' => 'radios',
+      '#title' => t('Image format in node body'),
+      '#default_value' => variable_get('node_images_body_format_'.$type, 'thumbs'),
+      '#options' => array('thumbs' => t('Thumbnails'), 'fullsize' => t('Full size images')),
+      '#description' => t('Image format in node body.'),
+    );
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function node_images_nodeapi(&$node, $op, $teaser, $page) {
+  // test if images are allowed for this node
+  if ($op == 'load' || $op == 'view') {
+    if (variable_get('node_images_position_'.$node->type, 'hide') == 'hide') return;
+
+    // fire an additional hook for the specific node type
+    // i.e. node images might be a pro feature, so only subscribed users can view them
+    // if the hook is not present in the node type module, images are loaded by default
+    $show = module_invoke($node->type, 'node_images', $op, $node);
+    if ($show === FALSE) return;
+  }
+
+  switch ($op) {
+    case 'load':
+      // load node images for the current node
+      $sql = db_query('SELECT * FROM {node_images} WHERE nid=%d AND status=1 ORDER BY weight', $node->nid);
+      while ($r = db_fetch_object($sql)) {
+        $node->node_images[$r->id] = $r;
+      }
+      break;
+
+    case 'insert':
+      if (user_access('create node images') && node_access('update', $node) &&
+        variable_get('node_images_position_'.$node->type, 'hide') != 'hide') {
+          drupal_set_message(t('Click the <strong>!images</strong> tab to add images to this node.',
+            array('!images' => l(t('images'), 'node/'.$node->nid.'/images'))));
+      }
+      break;
+
+    case 'delete':
+      // Delete image and thumbnail files
+      $sql = db_query('SELECT filepath, thumbpath FROM {node_images} WHERE nid=%d', $node->nid);
+      while ($r = db_fetch_object($sql)) {
+        file_delete($r->filepath);
+	file_delete($r->thumbpath);
+      }
+      // Delete all images associated with the node
+      db_query('DELETE FROM {node_images} WHERE nid=%d', $node->nid);
+      break;
+
+    case 'view':
+      if (empty($node->node_images)) return;
+
+      // search for a themed view for the current node type
+      $nodetype_function = 'theme_'.$node->type.'_node_images_view';
+      if (function_exists($nodetype_function)) {
+        $output = $nodetype_function($node, $teaser, $page);
+      }
+      else {
+        // use the default theme function
+        $output = theme('node_images_view', $node, $teaser, $page);
+      }
+      $node->node_images = $output;
+
+      $output = '<div class="node_images">'.$output.'</div>';
+      $position = variable_get('node_images_position_'.$node->type, 'hide');
+      switch ($position) {
+        case 'node_template':
+        case 'hide':
+          break;
+
+	case 'above':
+          $node->body = $output . $node->body;
+          $node->teaser = $output . $node->teaser;
+          break;
+
+        default:
+          $node->body .= $output;
+          $node->teaser .= $output;
+          break;
+      }
+      break;
+    }
+}
+
+/**
+ * Implementation of hook_link().
+ */
+function node_images_link($type, $node = null, $teaser = false) {
+  $links = array();
+
+  if ($type == 'node' && $node->nid && variable_get('node_images_gallery_position_'.$node->type, 'hide') != 'hide') {
+    if (node_access('update', $node) && user_access('create node images')) {
+      $links[] = l(t('edit node images'), "node/$node->nid/images");
+    }
+    if (count($node->node_images) && variable_get('node_images_gallery_link_'.$node->type, TRUE)) {
+      $links[] = l(t('open the image gallery'), "node/$node->nid/image_gallery");
+    }
+  }
+
+  return $links;
+}
+
+/**
+ * Implementation of hook_user().
+ */
+function node_images_user($type, &$edit, &$user, $category = NULL) {
+  switch ($type) {
+    case 'delete':
+      // Set uid=0 for images uploaded by the deleted user
+      db_query('UPDATE {node_images} SET uid=0 WHERE uid=%d', $user->uid);
+  }
+}
+
+/**
+ * Implementation of hook_file_download().
+ * Find out if an image is accessible when download method is set to private
+ */
+function node_images_file_download($file) {
+  $path = file_create_path($file);
+  $result = db_query("SELECT * FROM {node_images} WHERE filepath='%s' OR thumbpath='%s'", $path, $path);
+  if ($file = db_fetch_object($result)) {
+    $node = node_load($file->nid);
+    if (node_access('view', $node)) {
+      if ($path == $file->thumbpath) {
+        // update header info if thumb is requested
+        $name = mime_header_encode(basename($file->thumbpath));
+        $size = $file->thumbsize;
+      }
+      else {
+        $name = mime_header_encode($file->filename);
+	$size = $file->filesize;
+      }
+      $type = mime_header_encode($file->filemime);
+      return array(
+        'Content-Type: '. $type .'; name='. $name,
+        'Content-Length: '. $size,
+        'Cache-Control: private'
+      );
+    }
+    else {
+      return -1;
+    }
+  }
+}
+
+
+/************************************************************
+ * Node edit functions
+ ************************************************************/
+
+/**
+ * Display the page to edit and upload node images.
+ *
+ * @param $node
+ *    the current node
+ * @return
+ *    the node images page.
+ */
+function _node_images_edit_form($node) {
+  global $user;
+  $output = '<div id="submit-wrapper">';
+
+  // Generate image list
+  $sql = db_query('SELECT * FROM {node_images} WHERE nid=%d ORDER BY weight', $node->nid);
+  if (db_num_rows($sql)>0) $output .= _node_images_list($node, $sql);
+
+  // test if this node can accept new images
+  // i.e. there might be limits to the number of uploaded images for certain node types or user roles
+  // if the hook is not present in the node type module, upload is enabled by default
+  $upload = module_invoke($node->type, 'node_images', 'upload', $node);
+  if ($upload !== FALSE) {
+    $output .= _node_images_edit_form_upload($node);
+  }
+  $output .= '</div>';
+
+  drupal_set_title($node->title);
+  return $output;
+}
+
+function _node_images_edit_form_upload($node) {
+  $path = variable_get('node_images_path', 'files');
+  _node_images_check_directory(NULL, $path);
+  $extensions = variable_get('node_images_extensions', 'jpg jpeg gif png');
+
+  drupal_add_js('misc/progress.js');
+  drupal_add_js('misc/upload.js');
+  
+  // Generate upload form
+  $form['new'] = array(
+    '#type'=>'fieldset',
+    '#title'=>t('Upload a new image'),
+  );
+  $form['new']['description'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Description'),
+    '#size' => 50,
+    '#maxlength' => 255,
+    '#default_value' => $edit['new']['description'],
+    '#description' => t('Enter a description for the new image, max 255 chars.'),
+    '#prefix' => '<div style="float:left; margin-right:20px;">',
+    '#suffix' => '</div>',
+  );
+  $form['new']['weight'] = array(
+    '#type' => 'weight',
+    '#title' => t('Weight'),
+    '#prefix' => '<div style="float:left; margin-right:20px;">',
+    '#suffix' => '</div><div style="clear:both; height:0.1em;"></div>',
+  );
+  $form['new']['upload'] = array(
+    '#type' => 'file',
+    '#title' => t('Image file'),
+    '#size' => 50,
+    '#description' => t('Allowed file types: %extensions', array('%extensions' => $extensions)),
+    '#prefix' => '<div style="clear:both;"></div><div id="submit-hide" style="clear:both;">',
+    '#suffix' => '</div>',
+  );
+  $form['new']['submit'] = array(
+    '#type' => 'button',
+    '#value' => t('Upload'),
+    '#name'=> 'submit',
+    '#attributes' => array('id' => 'submit'),
+  );
+  // The class "upload" triggers the js upload behaviour.
+  $form['submit'] = array(
+    '#type' => 'hidden',
+//    '#value' => url('node_images/js', NULL, NULL, TRUE),
+	'#value' => url('modules/misc/node_images/node_images.js', NULL, NULL, TRUE),
+    '#attributes' => array('class' => 'upload'),
+  );
+  // Needed for JS
+  $form['nid'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->nid,
+  );
+
+  $form['#attributes']['enctype'] = 'multipart/form-data';
+  return drupal_get_form('_node_images_edit_form_upload', $form);
+}
+
+/**
+ * Generate a list of images associated to the current node.
+ *
+ * @param $node
+ *    the current node
+ * @param $result
+ *    SQL result containing the node images
+ * @return
+ *    a form representing the image list.
+ */
+function _node_images_list($node, $result) {
+  global $user;
+  $images = array();
+  $form['rows'] = array('#tree' => TRUE);
+  $delete_access = node_access('delete', $node);
+
+  while ($image = db_fetch_object($result)) {
+    $images[$image->id] = $image;
+    $form['rows'][$image->id]['description'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $image->description,
+      '#size' => 30,
+      '#maxlength' => 255,
+    );
+    $form['rows'][$image->id]['weight'] = array(
+      '#type' => 'weight',
+      '#default_value' => $image->weight,
+    );
+
+    // images can be deleted only by users having delete access or users who uploaded the images
+    $attributes = ($delete_access || $user->uid == $image->uid ? array() : array('disabled' => TRUE));
+    $form['rows'][$image->id]['delete'] = array('#type' => 'checkbox', '#attributes' => $attributes);
+  }
+
+  $form['nid'] = array('#type' => 'value', '#value' => $node->nid);
+  $form['save'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save changes'),
+  );
+  $form['images'] = array(
+    '#type' => 'value',
+    '#value' => $images,
+  );
+  $form['#theme'] = 'node_images_list';
+
+  // action must be set, otherwise it will be replaced by "node_images/js" (current $_GET['q'] on JS uploads)
+  $form['#action'] = url('node/'.$node->nid.'/images');
+
+  return drupal_get_form('_node_images_list', $form);
+}
+
+/**
+ * Theme node images list.
+ */
+function theme_node_images_list($form) {
+  $header = array(t('Thumbnail'), t('Description'), t('Path'), t('Size'), t('Weight'), t('Delete'));
+  
+  $rows = array();
+  foreach($form['images']['#value'] as $id=>$image) {
+    $row = array();
+    $row[] = '<img src="'.file_create_url($image->thumbpath).'" vspace="5" />';
+    $row[] = form_render($form['rows'][$image->id]['description']);
+    $row[] = $image->filepath;
+    $row[] = format_size($image->filesize);
+    $row[] = form_render($form['rows'][$image->id]['weight']);
+    $row[] = array('data' => form_render($form['rows'][$image->id]['delete']), 'align' => 'center');
+    $rows[] = $row;
+  }
+
+  $output = '<fieldset><legend>'.t('Uploaded images').'</legend>';
+  $output .= theme('table', $header, $rows).'<br />';
+  $output .= form_render($form);
+  $output .= '</fieldset>';
+  
+  return $output;
+}
+
+/**
+ * Process result from node images list.
+ */
+function _node_images_list_submit($form_id, $form_values) {
+  global $user;
+  $node = node_load($form_values['nid']);
+  if (!node_access('update', $node)) return;
+  $delete_access = node_access('delete', $node);
+
+  foreach($form_values['rows'] as $id => $edit) {
+    if ($edit['delete']) {
+      $r = db_fetch_object(db_query('SELECT filepath, thumbpath, uid FROM {node_images} WHERE id=%d AND nid=%d',
+        $id, $node->nid));
+
+      // if user has no delete access to the node, he can delete his own images only
+      if (!$delete_access && $user->uid != $r->uid) continue;
+      
+      // delete selected image
+      file_delete($r->filepath);
+      file_delete($r->thumbpath);
+      db_query('DELETE FROM {node_images} WHERE id=%d AND nid=%d', $id, $node->nid);
+    }
+    else {
+      // update image data
+      db_query('UPDATE {node_images} SET description="%s", weight=%d WHERE id=%d AND nid=%d',
+        $edit['description'], $edit['weight'], $id, $node->nid);
+    }
+  }
+  drupal_set_message(t('The changes have been saved.'));
+}
+
+/**
+ * Upload a new image and associate it to the current node.
+ *
+ * @param $edit
+ *    array containing the submitted values
+ * @param $node
+ *    the image file
+ * @return
+ *    the uploaded image file, or FALSE if upload fails
+ */
+function _node_images_upload($edit, $node) {
+  global $user;
+  if (($file = file_check_upload()) && user_access('create node images')) {
+    //Munge the filename as needed for security purposes.
+    $file->filename = upload_munge_filename($file->filename, NULL, 0);
+
+    // Validate file extension
+    $extensions = variable_get('node_images_extensions', 'jpg jpeg gif png');
+    $regex = '/\.('. ereg_replace(' +', '|', preg_quote($extensions)) .')$/i';
+    if (!preg_match($regex, $file->filename)) {
+      form_set_error('upload', t('The selected file %name can not be uploaded, because it is only possible to attach files with the following extensions: %files-allowed.', array('%name' => theme('placeholder', $file->filename), '%files-allowed' => theme('placeholder', $extensions))));
+      return FALSE;
+    }
+
+    // Validate max images for the current node
+    $sql = db_query('SELECT * FROM {node_images} WHERE nid=%d', $node->nid);
+    $max = variable_get('node_images_max_images', 4);
+    $count = db_num_rows($sql);
+    if ($count >= $max) {
+      drupal_set_message(t('The selected file %name can not be uploaded, because it exceeds the maximum limit of %max files.', array('%name' => theme('placeholder', $file->filename), '%max' => theme('placeholder', $max))), 'error');
+      return FALSE;
+    }
+
+    // Scale image
+    $file = _upload_image($file);
+
+    // Validation from upload.module
+    $fid = 'upload_'.$user->uid;
+    $node->files = array($fid => $file);
+    _upload_validate($node);
+    if (!isset($node->files[$fid])) return FALSE;
+
+    // Save uploaded image
+    $dest = _node_images_get_directory();
+    if (variable_get('node_images_md5name', FALSE)) {
+      // set md5 file name
+      $extension = substr($file->filename, strrpos($file->filename, '.') + 1);
+      $file->filename = md5($dest.'/'.$file->filename);
+      if ($extension) $file->filename .= '.'.$extension;
+    }
+    if ($file = file_save_upload($file, $dest.'/'.$file->filename)) {
+      $thumb = _node_images_create_thumbnail($file->filepath);
+      $file->filesize = filesize($file->filepath);
+      db_query("INSERT INTO {node_images} (nid, uid, filename, filepath, filemime, filesize, thumbpath, thumbsize, weight, description)
+        VALUES (%d, %d, '%s', '%s', '%s', %d, '%s', %d, %d, '%s')",
+	$edit['nid'], $user->uid, $file->filename, $file->filepath, $file->filemime, $file->filesize,
+	$thumb->filepath, $thumb->filesize, $edit['weight'], $edit['description']);
+    }
+    return $file;
+  }
+}
+
+
+/************************************************************
+ * Node view functions
+ ************************************************************/
+
+/**
+ * Show node images in the node view.
+ */
+function theme_node_images_view($node, $teaser, $page, $format = NULL) {
+  if (arg(2) == 'image_gallery' || empty($node->node_images)) return;
+
+  $output = '';
+  $i = 0;
+
+  // set maximum number of images for teaser/body
+  $view = ($teaser ? 'teaser' : 'body');
+  $count = variable_get('node_images_'.$view.'_images_'.$node->type, 2);
+  if (isset($count) && $count === 0) return;
+  if (!$format) {
+    $format = variable_get('node_images_'.$view.'_format_'.$node->type, 'thumbs');
+  }
+  
+  foreach((array)$node->node_images as $id=>$image) {
+    $description = check_plain($image->description);
+    $pattern = '<img src="%path" alt="%description" />';
+    $thumb = strtr($pattern, array('%path'=>file_create_url($image->thumbpath), '%description'=>$description));
+    $fullsize = strtr($pattern, array('%path'=>file_create_url($image->filepath), '%description'=>$description));
+
+    if ($info = getimagesize($image->filepath)) {
+      $width = $info[0] + 36;
+      $height = $info[1] + 36;
+    }
+    else {
+      $width = 420;
+      $height = 315;
+    }
+
+    if ($format == 'thumbs') {
+      $output .= '<a href="javascript:void(0);" title="'.$description.'" onclick="window.open(\''.
+        file_create_url($image->filepath).'\', \'\', \'height='.$height.',width='.$width.'\');">'.$thumb.'</a> ';
+    }
+    else {
+      $output .= $fullsize.' ';
+    }
+    if ($count>0 && ++$i >= $count) break;
+  }
+  return $output;
+}
+
+
+/************************************************************
+ * Gallery functions
+ ************************************************************/
+
+function _node_images_gallery($node) {
+  if (empty($node->node_images)) {
+    drupal_set_message(t('No images uploaded for this content.'));
+    if (user_access('create node images') && node_access('update', $node)) {
+      $output = t('Click <a href="!url">here</a> to upload new images.', array('!url' => url('node/'.$node->nid.'/images')));
+    }
+    return '<p>'.$output.'</p>';
+  }
+  
+  $json = array();
+
+  $i = 1;
+  $thumbs = array();
+  $count = count($node->node_images);
+  foreach ($node->node_images as $id=>$image) {
+    $thumb_path = file_create_url($image->thumbpath);
+    $thumbs[$i] = array(
+      'src' => $thumb_path,
+      'title' => $image->description,
+    );
+
+    $path = $image->filepath;
+    $info = image_get_info($path);
+    $json[$i] = array(
+      'src' => file_create_url($path),
+      'title' => $image->description,
+      'description' => $image->description,
+      'width' => $info['width'],
+      'height' => $info['height'],
+      'thumb' => $thumb_path,
+      'total' => $count,
+      'current' => 1,
+      'caption' => t('Image %current of %total', array('%current' => $i, '%total' => $count)),
+    );
+
+    if ($i <= 1) {
+      drupal_set_html_head('<script defer="defer" type="text/javascript">' . "\n/*<![CDATA[*/\n" . 'var gallery = new Array();');
+    }
+    drupal_set_html_head('gallery[' . $i . '] = '. drupal_to_js($json[$i]) . ';');
+    if ($i >= $count) {
+      drupal_set_html_head("\n/*]]>*/\n</script>");
+    }
+    $i++;
+  }
+  $total = count($json);
+
+  if ($total > 0) {
+    $current = (int)$_GET['page'];
+    $current = ($current < 1 || $current > $total) ? 1 : $current;
+
+    $path = drupal_get_path('module', 'node_images');
+    drupal_add_js($path.'/node_images.js');
+    //drupal_add_js(array('slideshow' => array($node->nid => $settings)), 'setting');
+    theme('add_style', $path.'/node_images.css');
+
+    $gallery = array(
+      '#type' => 'node_images_gallery',
+      '#title' => $json[$current]['title'],
+      '#attributes' => array('class' => 'gallery-'. $node->nid),
+      '#status' => array(
+        'current' => $current,
+        'total' => $total,
+        'previous' => $current < 1 ? $total : $current - 1,
+        'next' => $current >= $total ? 1 : $current + 1,
+      ),
+      '#image' => $json[$current],
+      '#weight' => -5,
+    );
+  }
+
+  list($width, $height) = explode('x', variable_get('upload_max_resolution', 0));
+
+  $output = '<table id="slideshow-table"><tr>';
+  $output .= '<td style="width:'.$width.'px;">'.theme('node_images_gallery', $gallery).'</td>';
+  $output .= '<td>'.theme('node_images_gallery_thumbs', $thumbs).'</td>';
+  $output .= '</tr></table>';
+  $output .= '<hr />'.node_view($node);
+
+  $title = t('Photo gallery for %title', array('%title' => $node->title));
+  drupal_set_title($title);
+  return $output;
+}
+
+function theme_node_images_gallery($element) {
+  $output = '<div'. drupal_attributes($element['#attributes']) .'>
+    <div class="header">
+      '. l(t('Previous'), $_GET['q'], array('name' => 'gallery-previous', 'class' => 'previous', 'rel' => 'nofollow'),
+        'page='. $element['#status']['previous']) .' |
+        <span id="gallery-caption">'. t('Image !current of !total', array(
+        '!current' => $element['#status']['current'], '!total' => '<span class="total">'. $element['#status']['total'] .'</span>')) .
+	'</span> | '. l(t('Next'), $_GET['q'], array('name' => 'gallery-next', 'class' => 'next', 'rel' => 'nofollow'),
+        'page='. $element['#status']['next']) .'
+    </div>
+    <img name="gallery-image" src="'. url($element['#image']['src']) .'" class="polaroid" />
+    <p name="gallery-description" class="description">'. $element['#title'] .'</p>';
+  return $output;
+}
+
+function theme_node_images_gallery_thumbs($thumbs, $cols = 2) {
+  $count = count($thumbs);
+  $output = '<table id="thumbs-table">';
+
+  $i = 0;
+  foreach($thumbs as $id => $thumb) {
+    if ($i % $cols == 0) $output .= '<tr>';
+    $description = '<div class="thumb-description">'.truncate_utf8($thumb['title'], 40, FALSE, TRUE).'</div>';
+    $output .= '<td>'.l('<img src="'.$thumb['src'].'" class="slideshow-thumb" name="gallery-thumb" id="thumb-'.$id.'" />', $_GET['q'],
+      array('title' => $thumb['title'], 'rel' => 'nofollow'), 'page='.$id, NULL, FALSE, TRUE).$description.'</td>';
+    if ($i % $cols == $cols - 1 || $n >= $count) $output .= "</tr>";
+    $i++;
+  }
+
+  $output .= '</table>';
+  return $output;
+}
+
+
+/************************************************************
+ * Helper functions - admin settings
+ ************************************************************/
+
+/**
+ * Menu callback; admin settings page.
+ */
+function node_images_admin_settings() {
+  _node_images_check_settings();
+
+  $form['node_images_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Node images path'),
+    '#default_value' => variable_get('node_images_path', 'files'),
+    '#maxlength' => 255,
+    '#description' => t('A file system path where the node images will be stored. This directory has to exist and be writable by Drupal. You can use the following variables: %uid'),
+    '#after_build' => array('_node_images_check_directory'),
+  );
+  $form['node_images_thumb_resolution'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Resolution for thumbnails'),
+    '#default_value' => variable_get('node_images_thumb_resolution', '100x100'),
+    '#size' => 15,
+    '#maxlength' => 7,
+    '#description' => t('The thumbnail size expressed as WIDTHxHEIGHT (e.g. 100x75).'),
+  );
+  $form['node_images_extensions'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default permitted image extensions'),
+    '#default_value' => variable_get('node_images_extensions', 'jpg jpeg gif png'),
+    '#maxlength' => 255,
+    '#description' => t('Default image extensions that users can upload. Separate extensions with a space and do not include the leading dot.'),
+  );
+  $form['node_images_max_images'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum number of images'),
+    '#default_value' => variable_get('node_images_max_images', 4),
+    '#size' => 6,
+    '#maxlength' => 2,
+    '#description' => t('The maximum number of images a user can upload for each node.'),
+  );
+  $form['node_images_md5name'] = array(
+    '#type' => 'checkbox',
+    '#title'=> t('MD5 filenames'),
+    '#description' => t('Override uploaded filenames with the MD5 hash of the file.'),
+    '#default_value' => variable_get('node_images_md5name', FALSE),
+  );
+
+  return system_settings_form('node_images_admin_settings', $form);
+}
+
+/**
+ * Checks if the upload.module is enabled, and the existence of an image toolkit.
+ *
+ * @param $form_element
+ *   The form element containing the name of the directory to check.
+ */
+function _node_images_check_settings() {
+  // Make sure upload module is enabled
+  if (!module_exist('upload')) {
+    drupal_set_message(t('node_images.module require upload.module to be enabled.'), 'error');
+  }
+
+  // Make sure we've got a working toolkit
+  if (!image_get_toolkit()) {
+    drupal_set_message(t('Make sure you have a working image toolkit installed and enabled, for more information see: %settings', array('%settings' => l(t('the settings page'), 'admin/settings/image-toolkit'))), 'error');
+  }
+}
+
+
+/************************************************************
+ * Helper functions - other
+ ************************************************************/
+
+/**
+ * Checks the existence of the destination directory.
+ * The directory can be specified either in $form_element (when called from the admin settings)
+ * or in $path (when called from the node images edit page).
+ *
+ * @param $form_element
+ *   The form element containing the name of the directory to check.
+ */
+ function _node_images_check_directory($form_element = NULL, $path = '') {
+  global $user;
+  $variables = array('%uid' => $user->uid, '%username' => $user->name);
+  if ($form_element) {
+    $path = strtr($form_element['#value'], $variables);
+    _node_images_mkdir_recursive($path, FILE_CREATE_DIRECTORY, $form_element['#parents'][0]);
+    return $form_element;
+  }
+  $path = strtr($path, $variables);
+  _node_images_mkdir_recursive($path, FILE_CREATE_DIRECTORY, $form_element['#parents'][0]);
+}
+
+function _node_images_mkdir_recursive($path, $mode, $form_item) {
+  $folders = explode("/", $path);
+  $dirs = array();
+  foreach($folders as $folder) {
+    $dirs[] = $folder;
+    if (!file_check_directory(implode("/", $dirs), $mode, $form_item)) {
+      mkdir(implode("/", $dirs));
+    }
+  }
+}
+
+/**
+ * Return the destination directory.
+ */
+function _node_images_get_directory() {
+  global $user;
+  $path = variable_get('node_images_path', 'files');
+  return strtr($path, array('%uid' => $user->uid, '%username' => $user->name));
+}
+
+/**
+ * Create the thumbnail for the uploaded image.
+ */
+function _node_images_create_thumbnail($path, $suffix='_tn') {
+  $size = variable_get('node_images_thumb_resolution', '100x100');
+  list($width, $height) = explode('x', $size);
+  $dest_path = preg_replace('!(\.[^/.]+?)?$!', "$suffix\\1", $path, 1);
+    
+  if ($size = getimagesize($path)) {
+   image_scale($path, $dest_path, $width, $height);
+   $info = image_get_info($dest_path);
+   $thumb = new stdClass();
+   $thumb->filename = basename($dest_path);
+   $thumb->filepath = $dest_path;
+   $thumb->filesize = $info['file_size'];
+   $thumb->filemime = $info['mime_type'];
+   return $thumb;
+  }
+  return NULL;
+}
+
+/**
+ * Determine how much disk space is occupied by a user's uploaded files.
+ *
+ * @param $uid
+ *   The integer user id of a user.
+ * @return
+ *   The amount of disk space used by the user in bytes.
+ */
+function _node_images_space_used($uid) {
+  return db_result(db_query('SELECT SUM(filesize+thumbsize) FROM {node_images} WHERE uid=%d', $uid));
+}
+
+/**
+ * Menu-callback for JavaScript-based uploads.
+ */
+function _node_images_js() {
+  $edit = $_POST['edit'];
+  if ($nid = $edit['nid']) {
+    $node = node_load($nid);
+    // upload image
+    _node_images_upload($edit, $node);
+    // generate node images edit page
+    $form = _node_images_edit_form($node);
+  } else {
+    drupal_set_message(t('Unable to attach images to the current node.'));
+  }
+  $output = theme('status_messages');
+  if ($form) $output .= $form;
+
+  // We send the updated file attachments form.
+  print drupal_to_js(array('status' => TRUE, 'data' => $output));
+  exit();
+}
+
+
+/************************************************************
+ * Views API hooks
+ ************************************************************/
+
+/**
+ * Implementation of hook_views_default_views().
+ */
+function node_images_views_tables() {
+  require_once dirname(__FILE__) . '/node_images.views.inc';
+  return _node_images_views_tables();
+}
