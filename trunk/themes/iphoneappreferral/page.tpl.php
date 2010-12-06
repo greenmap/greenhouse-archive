@@ -19,7 +19,7 @@ global $i18n_langpath; ?>
 
 </head>
 <div class="toolbar">
-        <a id="backButton" class="button" href="../index.html" style="display:block;">Back</a>
+<span id="backButton" class="button" ONCLICK="history.go(-1)" style="display:block !important;">Back</span>
     </div>
 
 
