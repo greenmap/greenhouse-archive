@@ -22,186 +22,195 @@ $isOtherTier = $uagent_obj->DetectTierOtherPhones();
 <!--page.tpl.php-->
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-
+<style type="text/css">
+.hiddendiv {
+display: none;
+}
+</style>
 <?php
 
 //Print the variable part of the URL to the HTML source
 
 if ($isIphoneTier == 1) {
 
-echo '<meta name="viewport" content="width=320; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>';
-echo '<script type="text/javascript">
-addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false);
+?>
+<?php 
+global $base_url;
+global $i18n_langpath; ?>
 
-function hideURLbar(){
-window.scrollTo(0,1);
-}
-</script>';
-echo '<style type="text/css">
-#sitename, #ogmlink, #languagelinks, #searchbox, #mainmenu, #rightside, #leftside, #footer_gh, .tabs {display:none;} 
 
-#container {
-display:block !important; width:100% !important;margin:0 !important;background:none !important;text-align:center !important; min-width: none !important;
-}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<!--page.tpl.php-->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<link rel="stylesheet" type="text/css" href="<?php print $base_url ?>/themes/iphoneappreferral/iphonestyle.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="<?php print $base_url ?>/themes/iphoneappreferral/style.css" media="screen" />
+<script type="application/x-javascript" src="<?php print $base_url ?>/themes/iphoneappreferral/iui.js"></script>
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
+<meta name="apple-touch-fullscreen" content="YES" />
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com , Te Baybute - http://tebaybute.net , and Akiko Rokube http://rokube.com / for http://www.greenmap.org" />
 
-#preheader {
-max-height:none !important;height: 80px !important;width:100% !important;max-width:480px;min-width:320px;
-}
 
-#toplogo {
-width:320px;background:none !important;height:75px;text-align: center;margin-left:0 !important;float:none !important;margin:auto !impoartant;
-}
+</head>
+<div class="toolbar">
+<span id="backButton" class="button" ONCLICK="history.go(-1)" style="display:block !important;cursor:pointer">Back</span>
+    </div>
 
-#toplogo img{
-width:120px;
-} 
 
-body {
-background: #ffffff !important;
-width:320px !important;
-max-width:320px !important;
-min-width:320px !important;
-overflow-x:hidden;
-}
+			<div id="content">
+				<?php if ($title) { ?><h1><?php print $title ?></h1><?php } ?>
+				<?php print $help ?>
+				<?php print $messages ?>
+				<?php print $content; ?>
+			
+</div>		
 
-.links {
-font-size:150%;
-text-align:left;
-width:320px;
-margin-top:30px;
-}
 
-#content {
-width:300px !important;
-max-width:320px !important;
-min-width:320px !important;
-padding-top:0px !important;
-margin-left:0px !important;
-float:none !important;
-} 
+	
 
-#wrap {
-width:320px !important;
-max-width:320px !important;
-min-width:320px !important;
-background:none !important;
-margin:0px !important;
+	
+	<?php print $closure ?>
+	<div class="hiddendiv">
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("<script src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'></script>"));
+</script>
+</div>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-418876-2");
+pageTracker._trackPageview();
+} catch(err) {}</script> 
+</body>
+</html>
+<!--/page.tpl.php-->
+
+<?php
 }
 
-#content h1 {
-width:320px;
-text-align: center;
-line-height:25px;
-}
+elseif ($isCssTier == 1) {
 
-.styledbox {
-display:none;
-}
+?>
+<?php 
+global $base_url;
+global $i18n_langpath; ?>
 
-.node .content {
-padding-left:10px;
-}
-</style>';
 
-}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<!--page.tpl.php-->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<link rel="stylesheet" type="text/css" href="<?php print $base_url ?>/themes/iphoneappreferral/iphonestyle.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="<?php print $base_url ?>/themes/iphoneappreferral/style.css" media="screen" />
+<script type="application/x-javascript" src="<?php print $base_url ?>/themes/iphoneappreferral/iui.js"></script>
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
+<meta name="apple-touch-fullscreen" content="YES" />
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com , Te Baybute - http://tebaybute.net , and Akiko Rokube http://rokube.com / for http://www.greenmap.org" />
 
-if ($isCssTier == 1) {
 
-echo '<meta name="viewport" content="width = 320" />';
-echo '<meta name="viewport" content="initial-scale=2.3, user-scalable=yes" />';
-echo '<style type="text/css">
-#container, #rightside, #leftside, #footer_gh, .tabs, .postinfo {
-display:none;
-} 
+</head>
+<div class="toolbar">
+<span id="backButton" class="button" ONCLICK="history.go(-1)" style="display:block !important;">Back</span>
+    </div>
 
-body {
-background: #ffffff !important;
-width:320px !important;
-max-width:320px !important;
-min-width:320px !important;
-}
 
-.links {
-font-size:150%;
-text-align:left;
-width:320px;
-margin-top:30px;
-}
+			<div id="content">
+				<?php if ($title) { ?><h1><?php print $title ?></h1><?php } ?>
+				<?php print $help ?>
+				<?php print $messages ?>
+				<?php print $content; ?>
+			
+</div>		
 
-#content {
-width:300px !important;
-max-width:320px !important;
-min-width:320px !important;
-padding-top:0px !important;
-margin-left:0px !important;
-float:none !important;
-} 
 
-#wrap {
-width:320px !important;
-max-width:320px !important;
-min-width:320px !important;
-background:none !important;
-margin:0px !important;
-}
+	
 
-#content h1 {
-width:320px;
-text-align: center;
-line-height:25px;
-}
-</style>';
+	
+	<?php print $closure ?>
+<div class="hiddendiv">
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("<script src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'></script>"));
+</script>
+</div>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-418876-2");
+pageTracker._trackPageview();
+} catch(err) {}</script> 
+</body>
+</html>
+
+<!--/page.tpl.php-->
+
+<?php
 
 }
 
-if ($isOtherTier == 1) {
+elseif ($isOtherTier == 1) {
 
-echo '<meta name="viewport" content="width = 320" />';
-echo '<meta name="viewport" content="initial-scale=2.3, user-scalable=yes" />';
-echo '<style type="text/css">
-#container, #rightside, #leftside, #footer_gh, .tabs, .postinfo {
-display:none;
-} 
+?>
+<?php 
+global $base_url;
+global $i18n_langpath; ?>
 
-body {
-background: #ffffff !important;
-width:320px !important;
-max-width:320px !important;
-min-width:320px !important;
-}
 
-.links {
-font-size:150%;
-text-align:left;
-width:320px;
-margin-top:30px;
-}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<!--page.tpl.php-->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<link rel="stylesheet" type="text/css" href="<?php print $base_url ?>/themes/iphoneappreferral/iphonestyle.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="<?php print $base_url ?>/themes/iphoneappreferral/style.css" media="screen" />
+<script type="application/x-javascript" src="<?php print $base_url ?>/themes/iphoneappreferral/iui.js"></script>
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
+<meta name="apple-touch-fullscreen" content="YES" />
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<meta name="author" content="Original design by Andreas Viklund - http://andreasviklund.com / Ported by Matt Koglin - http://antinomia.comn / restyled by Thomas Turnbull - http://wwww.thomasturnbull.com , Te Baybute - http://tebaybute.net , and Akiko Rokube http://rokube.com / for http://www.greenmap.org" />
 
-#content {
-width:300px !important;
-max-width:320px !important;
-min-width:320px !important;
-padding-top:0px !important;
-margin-left:0px !important;
-float:none !important;
-} 
 
-#wrap {
-width:320px !important;
-max-width:320px !important;
-min-width:320px !important;
-background:none !important;
-margin:0px !important;
-}
+</head>
+<div class="toolbar">
+<span id="backButton" class="button" ONCLICK="history.go(-1)" style="display:block !important;">Back</span>
+    </div>
 
-#content h1 {
-width:320px;
-text-align: center;
-line-height:25px;
-}
-</style>';
 
-}
+			<div id="content">
+				<?php if ($title) { ?><h1><?php print $title ?></h1><?php } ?>
+				<?php print $help ?>
+				<?php print $messages ?>
+				<?php print $content; ?>
+			
+</div>		
+
+
+	
+
+	
+	<?php print $closure ?>
+<div class="hiddendiv">
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("<script src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'></script>"));
+</script>
+</div>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-418876-2");
+pageTracker._trackPageview();
+} catch(err) {}</script> 
+</body>
+</html>
+
+<!--/page.tpl.php-->
+
+<?php
+
+} else {
 
 
 ?>
@@ -349,4 +358,5 @@ pageTracker._trackPageview();
 } catch(err) {}</script> 
 </body>
 </html>
+<?php } ?>
 <!--/page.tpl.php-->
