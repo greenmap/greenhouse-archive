@@ -1,0 +1,50 @@
+SELECT p.field_photo_alt, n.title, n.nid
+FROM node_content_photo p 
+	INNER JOIN node n on p.nid = n.nid
+WHERE p.field_album_via_computed_value = $current_album_nid  
+ORDER BY n.nid  
+LIMIT 100
+
+
+
+
+
+
+
+SELECT n.created, n.title, n.nid, n.changed 
+FROM node n 
+	INNER JOIN node_content_gallery g ON n.nid = g.nid
+WHERE g.field_associated_map_nid = $currentnid AND n.type = 'content_gallery' AND n.status = 1 
+ORDER BY n.changed DESC 
+
+
+
+
+
+Query for getting all users albums & photos
+
+
+
+SELECT p.field_photo_alt, ng.title, ng.nid
+From node_content_photo p
+	INNER JOIN node np on p.nid = np.nid
+	INNER JOIN node ng on p.field_album_via_computed_value = ng.nid
+WHERE ng.uid = $current_uid
+ORDER BY ng.title, p.nid
+LIMIT 100
+
+
+
+
+Query for getting all albums & photos for a particular map
+
+
+
+SELECT p.field_photo_alt, ng.title, ng.nid
+From node_content_photo p
+	INNER JOIN node np on p.nid = np.nid
+	INNER JOIN node ng on p.field_album_via_computed_value = ng.nid
+	INNER JOIN node_data_field_associated_map am on am.nid = ng.nid
+WHERE am.field_associated_map_nid = $current_map_nid
+ORDER BY ng.title, p.nid
+LIMIT 100
