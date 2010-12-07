@@ -593,7 +593,7 @@ display: none;
 	text-align: right;
 	margin-top: 10px;
 	border: 1px solid #CCCCCC;
-	display: none !important;
+	display: none;
 }	
 
 .postinfo ul, .postinfo li {
