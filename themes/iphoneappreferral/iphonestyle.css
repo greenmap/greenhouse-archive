@@ -1846,3 +1846,8 @@ div.breadcrumb { display: none; }
 .ogm-maps div.item-list ul li a {
   color: #F89938;
 }
+
+.field-type-image img{
+width: 50%;
+height: 50%;
+}
