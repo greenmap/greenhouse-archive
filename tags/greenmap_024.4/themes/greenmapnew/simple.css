@@ -1,0 +1,16 @@
+/* CSS Document */
+
+body {
+background: #fbfdf8;
+text-align: left;
+width: 100%;
+min-width: 200px;
+}
+
+div.postinfo   {
+display: none;
+}
+
+div.links {
+text-align: left;
+}
