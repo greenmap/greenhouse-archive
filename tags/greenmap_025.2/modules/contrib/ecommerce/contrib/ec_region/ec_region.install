@@ -1,0 +1,50 @@
+<?php
+// $Id: ec_region.install,v 1.5.4.3 2007/02/26 05:44:52 sime Exp $
+
+/**
+ * E-Commerce region module schema
+ */
+function ec_region_install() {
+
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {ec_region} (
+        regid INTEGER NOT NULL auto_increment,
+        region_name VARCHAR(255) NOT NULL default '',
+        region_realm VARCHAR(255) NOT NULL default '',
+         PRIMARY KEY  (regid)
+      ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      db_query("CREATE TABLE {ec_region_configuration} (
+        regid INTEGER NOT NULL default '0',
+        geo_type VARCHAR(32) NOT NULL default '',
+        geo_code VARCHAR(32) NOT NULL default '',
+        PRIMARY KEY  (regid, geo_type, geo_code)
+      ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      break;
+    case 'pgsql':
+/*
+      db_query("CREATE TABLE {ec_region} (
+        regid integer NOT NULL auto_increment,
+        region_name varchar(255) NOT NULL default '',
+        region_realm varchar(32) NOT NULL default '',
+        PRIMARY KEY  (regid)
+      )");
+      db_query("CREATE TABLE {ec_region_configuration} (
+        regid tinyint() NOT NULL default '0',
+        geo_type varchar(32) NOT NULL default '',
+        geo_code varchar(32) NOT NULL default '',
+        PRIMARY KEY  (regid, geo_type, geo_code)
+      )");
+*/
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function ec_region_uninstall() {
+  db_query('DROP TABLE {ec_region}');
+  db_query('DROP TABLE {ec_region_configuration}');
+}
