@@ -1,0 +1,14 @@
+
+.styledbox {
+	padding: .3em .5em .3em .5em;
+	margin-bottom: 1em;
+	background-color: #ebf4de;
+	border: none;
+}
+.comment .new {
+  text-align: right;
+  font-weight: bold;
+  font-size: 0.9em;
+  float: right;
+  color: #3489A5;
+}

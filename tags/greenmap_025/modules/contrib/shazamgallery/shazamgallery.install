@@ -1,0 +1,31 @@
+<?php
+// $Id
+
+function shazamgallery_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE IF NOT EXISTS shazamgallery (
+                  nid int(10) UNSIGNED NOT NULL,
+                  tid int(10) UNSIGNED NOT NULL,
+                  gdefault int(10) UNSIGNED NOT NULL,
+                  weight tinyint(3),
+                  PRIMARY KEY (nid, tid)
+                ) ENGINE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      db_query("CREATE TABLE IF NOT EXISTS `relations` (
+                  `rid` int(10) NOT NULL auto_increment,
+                  `left_id` int(10) NOT NULL default '0',
+                  `relationship` text NOT NULL,
+                  `right_id` int(10) NOT NULL default '0',
+                  `weight` tinyint(3) NOT NULL default '0',
+                  KEY `rid` (`rid`)
+                ) ENGINE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      break;
+    case 'pgsql':
+      break;
+  }
+}
+
+function shazamgallery_update_2() {
+  return _system_update_utf8(array('shazamgallery', 'relations'));
+}
