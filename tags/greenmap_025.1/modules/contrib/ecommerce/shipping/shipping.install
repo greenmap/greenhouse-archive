@@ -1,0 +1,139 @@
+<?php
+// $Id: shipping.install,v 1.5.4.7 2007/02/15 05:42:41 sammys Exp $
+
+require_once(drupal_get_path('module', 'store') . '/store.deps.inc');
+
+/**
+ * E-Commerce shipping module schema
+ */
+function shipping_install() {
+  $deps = array('ec_mail');
+  if (!store_deps_install('shipping', $deps)) {
+    return;
+  }
+  
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {ec_shipping_product} (
+        vid int(10) unsigned NOT NULL default '0',
+        nid int(10) unsigned NOT NULL default '0',
+        service varchar(40) NOT NULL default '0',
+        method varchar(40) NOT NULL default '0',
+        KEY (vid),
+        KEY nid (nid),
+        KEY (service),
+        KEY (method)
+      ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      db_query("CREATE TABLE {ec_shipping_transaction} (
+        txnid int(10) unsigned NOT NULL DEFAULT '0',
+        service varchar(255) NOT NULL DEFAULT '',
+        method varchar(255) NOT NULL DEFAULT '',
+        cost decimal(10,2) UNSIGNED NOT NULL DEFAULT '0.00',
+        PRIMARY KEY  (txnid)
+      ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      db_query("CREATE TABLE {ec_shipping_product_attribute} (
+        pid int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+        vid int(10) UNSIGNED NOT NULL DEFAULT '0',
+        nid int(10) UNSIGNED NOT NULL DEFAULT '0',
+        field varchar(255) NOT NULL DEFAULT '',
+        value varchar(255) NOT NULL DEFAULT '',
+        PRIMARY KEY pid (pid),
+        KEY field (field),
+        KEY vid (vid),
+        KEY nid (nid)
+      ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      db_query("CREATE TABLE {ec_shipping_shipfrom} (
+        sid int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+        title varchar(255) NOT NULL DEFAULT '',
+        code varchar(255) NOT NULL DEFAULT '',
+        city varchar(255) NOT NULL DEFAULT '',
+        region varchar(255) NOT NULL DEFAULT '',
+        country varchar(2) NOT NULL DEFAULT '',
+        status int(3) NOT NULL DEFAULT 0,
+        PRIMARY KEY sid (sid),
+        KEY title (title)
+      ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      break;
+    case 'pgsql':
+      db_query("CREATE TABLE {ec_shipping_product} (
+        vid int NOT NULL default '0',
+        nid int NOT NULL default '0',
+        service varchar(40) NOT NULL default '0',
+        method varchar(40) NOT NULL default '0'
+      )");
+      db_query("CREATE INDEX {ec_shipping_product}_vid_idx ON {ec_shipping_product} (vid)");
+      db_query("CREATE INDEX {ec_shipping_product}_nid_idx ON {ec_shipping_product} (nid)");
+      db_query("CREATE INDEX {ec_shipping_product}_service_idx ON {ec_shipping_product} (service)");
+      db_query("CREATE INDEX {ec_shipping_product}_method ON {ec_shipping_product} (method)");
+
+      db_query("CREATE TABLE {ec_shipping_transaction} (
+        txnid int NOT NULL DEFAULT '0' CHECK (txnid >= 0),
+        service varchar(255) NOT NULL DEFAULT '',
+        method varchar(255) NOT NULL DEFAULT '',
+        cost decimal(10,2) NOT NULL DEFAULT '0.00' CHECK (cost >= 0),
+        PRIMARY KEY (txnid)
+      )");
+      
+      db_query("CREATE TABLE {ec_shipping_product_attribute} (
+        pid serial CHECK (pid >= 0),
+        vid int NOT NULL DEFAULT '0' CHECK (vid >= 0),
+        nid int NOT NULL DEFAULT '0' CHECK (nid >= 0),
+        field varchar(255) NOT NULL DEFAULT '',
+        value varchar(255) NOT NULL DEFAULT '',
+        PRIMARY KEY (pid)
+      )");
+      db_query("CREATE INDEX {ec_shipping_product_attribute}_field_idx ON {ec_shipping_product_attribute} (field)");
+      db_query("CREATE INDEX {ec_shipping_product_attribute}_vid_idx ON {ec_shipping_product_attribute} (vid)");
+      db_query("CREATE INDEX {ec_shipping_product_attribute}_nid_idx ON {ec_shipping_product_attribute} (nid)");
+      
+      db_query("CREATE TABLE {ec_shipping_shipfrom} (
+        sid serial CHECK (sid >= 0),
+        title varchar(255) NOT NULL DEFAULT '',
+        code varchar(255) NOT NULL DEFAULT '',
+        city varchar(255) NOT NULL DEFAULT '',
+        region varchar(255) NOT NULL DEFAULT '',
+        country varchar(2) NOT NULL DEFAULT '',
+        status int NOT NULL DEFAULT 0,
+        PRIMARY KEY (sid)
+      )");
+      db_query("CREATE INDEX {ec_shipping_shipfrom}_title_idx ON {ec_shipping_shipfrom} (title)");
+      break;
+  }
+  
+  require_once(drupal_get_path('module', 'shipping') . '/shipping.module');
+  require_once(drupal_get_path('module', 'ec_mail') . '/ec_mail.module');
+  ec_mail_reset_to_defaults(ECMAIL_TYPE_SHIP_NOTICE, 'shipping');
+}
+
+/**
+ * Updates to shipping
+ */
+function shipping_update_1() {
+  if ($subject = variable_get('shipping_subject', FALSE)) {
+    variable_set('shipping_shipping_notification_subject', $subject);
+    variable_del('shipping_subject');
+  }
+  if ($body = variable_get('shipping_new', FALSE)) {
+    variable_set('shipping_shipping_notification_body', $body);
+    variable_del('shipping_new');
+  }
+  return array();
+}
+
+function shipping_update_2() {
+  shipping_install();
+}
+
+/**
+ * Update the coupon mail to the new system.
+ * The ec_mail module becomes mandatory from this update onwards. 
+ */
+function shipping_update_3() {
+  $ret = array();
+  $deps = array('ec_mail');
+  if (store_deps_update($ret, 'shipping', $deps)) {
+    ec_mail_reset_to_defaults(ECMAIL_TYPE_SHIP_NOTICE);
+  }  
+  return $ret;
+}
