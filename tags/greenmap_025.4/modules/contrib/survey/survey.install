@@ -1,0 +1,42 @@
+<?php
+// $Id: survey.install,v 1.1 2006/07/13 04:47:23 walkah Exp $
+
+/**
+ * Implementation of hook_install()
+ */
+function survey_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE IF NOT EXISTS {survey} (
+         nid int(11) unsigned not null,
+         fid int(11) not null,
+         email text,
+         result_page text,
+         primary key(nid)
+         ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
+
+      db_query("CREATE TABLE IF NOT EXISTS {survey_responses} (
+        rid int(11) unsigned not null,
+        nid int(11) unsigned not null,
+        uid int(11) unsigned not null,
+        created int(11) not null,
+        primary key (rid)
+        ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
+
+      db_query("CREATE TABLE IF NOT EXISTS {survey_fields} (
+        rid int(11) unsigned not null,
+        ffid int(11) not null,
+        value text,
+        primary key (rid, ffid)
+        ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      break;
+  }
+}
+
+/**
+ * Updates
+ */
+function survey_update_1() {
+  return _system_update_utf8(array('survey', 'survey_responses', 'survey_fields'));
+}
