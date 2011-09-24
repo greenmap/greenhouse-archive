@@ -1,0 +1,20 @@
+#container{background:#f0f0f0 url(../img/bodybg-red.jpg) repeat-x;}
+#mainmenu a:hover{background:#f0f0f0 url(../img/menuhover-red.jpg) top left repeat-x;}
+#mainmenu a.current{background:#f0f0f0 url(../img/menuhover-red.jpg) top left repeat-x;}
+.links li:before {
+	content: url("../img/square-red.gif");
+	padding-right: 3px;
+}
+.styledbox {
+  border: 1px solid #A63539;
+  padding: .5em;
+  margin-bottom: 1em;
+	background-color: #F7ECED;
+}
+.comment .new {
+  text-align: right;
+  font-weight: bold;
+  font-size: 0.9em;
+  float: right;
+  color: #A63539;
+}
