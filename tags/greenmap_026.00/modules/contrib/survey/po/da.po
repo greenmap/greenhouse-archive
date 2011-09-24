@@ -1,0 +1,157 @@
+# Danish translation of Drupal (survey.module)
+# Copyright 2005 Morten Wulff <wulff@tem.dtu.dk>
+msgid ""
+msgstr ""
+"Project-Id-Version: Danish translation of Drupal (survey.module) $Id: da.po,v 1.2 2006/01/13 15:41:39 wulff Exp $\n"
+"POT-Creation-Date: 2005-07-06 14:44+0200\n"
+"PO-Revision-Date: 2006-01-13 16:41+0100\n"
+"Last-Translator: Morten Wulff <wulff@tem.dtu.dk>\n"
+"Language-Team: Danish <danish@psyke.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Language: Danish\n"
+"X-Poedit-Country: DENMARK\n"
+
+#: survey.module:10
+msgid "Create user defined survey questions"
+msgstr "Opret brugerdefinerede spørgeskemaer"
+
+#: survey.module:13
+msgid "A survey allows you to create a form for use on the site to collect data"
+msgstr "Et spørgeskema gør det muligt at oprette en formular til indsamle data fra brugerne"
+
+#: survey.module:23
+#: ;39;0
+msgid "survey"
+msgstr "spørgeskema"
+
+#: survey.module:41
+msgid "survey submission"
+msgstr "besvar sprøgeskema"
+
+#: survey.module:50
+msgid "form"
+msgstr "formular"
+
+#: survey.module:53
+#: ;65
+msgid "list"
+msgstr "liste"
+
+#: survey.module:55
+msgid "add field"
+msgstr "tilføj felt"
+
+#: survey.module:58
+msgid "delete field"
+msgstr "slet felt"
+
+#: survey.module:62
+msgid "responses"
+msgstr "svar"
+
+#: survey.module:67
+msgid "download to excel"
+msgstr "overfør til excel"
+
+#: survey.module:103
+msgid "Please specify a valid email address, or leave the field blank"
+msgstr "Angiv en gyldig e-mail adresse eller lad feltet være tomt"
+
+#: survey.module:119
+msgid "Intro Text"
+msgstr "Introduktion"
+
+#: survey.module:121
+msgid "Path for \"thank you\" page"
+msgstr "Sti til \"tak\" side"
+
+#: survey.module:121
+msgid "This page is displayed after the form is submitted.  If you are not using clean URLs, specify the part after '?q='.  If unsure, specify nothing."
+msgstr "Denne side vises når svarene indsendes. Hvis du ikke bruger rene URLer, skal du angive indholdet efter '?q='. Lad feltet stå tomt hvis du er usikker."
+
+#: survey.module:122
+msgid "Email address"
+msgstr "E-mail adresse"
+
+#: survey.module:122
+msgid "This email address will receive a copy of each survey submission. Multiple addresses can be specified as a comma-separated list."
+msgstr "Denne e-mail adresse modtager en kopi af svarene hver gang spørgeskemaet udfyldes. Flere adresse kan angives som en kommasepareret liste."
+
+#: survey.module:135
+msgid "Submit"
+msgstr "Indsend"
+
+#: survey.module:177
+msgid "edit"
+msgstr "rediger"
+
+#: survey.module:178
+#: ;224
+msgid "delete"
+msgstr "slet"
+
+#: survey.module:181
+msgid "field"
+msgstr "felt"
+
+#: survey.module:181
+msgid "type"
+msgstr "type"
+
+#: survey.module:184
+msgid "No fields defined"
+msgstr "Ingen felter defineret"
+
+#: survey.module:205
+msgid "Save field"
+msgstr "Gem felt"
+
+#: survey.module:224
+msgid "Really delete %field?"
+msgstr "Ønsker du at slette %field?"
+
+#: survey.module:253
+msgid "%survey submission"
+msgstr "%survey svar"
+
+#: survey.module:259
+msgid "Submitted by %name on %date\n"
+msgstr "Indsendt af %name den %date\n"
+
+#: survey.module:270
+msgid "Thank you for your submission"
+msgstr "Tak for din besvarelse"
+
+#: survey.module:282
+msgid "submitted by"
+msgstr "indsendt af"
+
+#: survey.module:283
+msgid "date"
+msgstr "dato"
+
+#: survey.module:291
+#: ;314
+msgid "Submitted by"
+msgstr "Indsendt af"
+
+#: survey.module:291
+#: ;314
+msgid "Date"
+msgstr "Dato"
+
+#: survey.module:295
+msgid "view"
+msgstr "vis"
+
+#: survey.module:30
+msgid "maintain surveys"
+msgstr "vedligehold spørgeskemaer"
+
+#: survey.module:30
+msgid "submit surveys"
+msgstr "indsend besvarelser"
+

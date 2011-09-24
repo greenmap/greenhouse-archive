@@ -1,0 +1,246 @@
+<?php
+/* $Id: recaptcha.module,v 1.12.2.2 2007/08/01 00:46:06 kthagen Exp $ */
+
+/**
+* Display help and module information
+* @param section which section of the site we're displaying help
+* @return help text for section
+*/
+function recaptcha_help($section = '') {
+  $output = '';
+  switch ($section) {
+    case 'admin/modules#name':
+      $output .= t('reCAPTCHA');
+      break;
+    case 'admin/modules#description':
+      $output .= t('Uses the reCAPTCHA web service to improve the CAPTCHA system and protect email addresses.');
+      break;
+    case 'admin/help#recaptcha':
+      $output .= '<p>' .
+        t('Uses the reCAPTCHA web service to improve the CAPTCHA module and protect email addresses. For more information on what reCAPTCHA is, visit <a href="%url" target="_blank">the official website</a>.', array('%url' => url('http://www.recaptcha.net'))) .
+        '</p><h3>' .
+        t('Configuration') .
+        '</h3><p>' .
+        t('The settings associated with reCAPTCHA can be found in the <a href="%recaptchatab">reCAPTCHA settings</a>. You must set your public and private reCAPTCHA keys in order to use the module. Once the public and private keys are set, visit the <a href="%captchasettings">CAPTCHA settings</a>, where you can choose where reCAPTCHA should be displayed.', array('%recaptchatab' => url('admin/settings/recaptcha'), '%captchasettings' => url('admin/settings/captcha'))) .
+        '</p><h3>' .
+        t('Mailhide Input Format') .
+        '</h3><p>' .
+        t('You can also head over to the <a href="%inputformats">input format settings</a> and add the <a href="%url" target="_blank">reCAPTCHA Mailhide</a> input filter to hide posted emails.', array('%inputformats' => url('admin/filters'), '%url' => url('http://mailhide.recaptcha.net'))) .
+        '</p>';
+      break;
+  }
+  return $output;
+} // function recaptcha_help
+
+/**
+* Valid permissions for this module
+* @return array An array of valid permissions for the onthisdate module
+*/
+function recaptcha_perm() {
+  return array('administer recaptcha');
+} // function recaptcha_perm()
+
+/**
+ * Let the user know that the reCAPTCHA PHP library is not installed
+ */   
+function _recaptcha_library_not_found() {
+  global $calledalready;
+  if(!$calledalready) {
+    $calledalready = TRUE;
+    drupal_set_message(t('The <a href="%url" target="_blank">reCAPTCHA PHP library</a> was not found. Please install it into %recaptchadir.', array('%url' => 'http://recaptcha.net/plugins/php', '%recaptchadir' => drupal_get_path('module', 'recaptcha') . '/recaptcha')), 'error');
+    if(!function_exists('recaptcha_get_signup_url')) {
+      function recaptcha_get_signup_url($domain, $appname) {
+        return 'http://recaptcha.net/api/getkey?domain=' . urlencode($domain) . '&appname=' . urlencode($appname);
+      }
+    }
+    if(!function_exists('recaptcha_get_html')) {
+      function recaptcha_get_html($pubkey, $error = null, $use_ssl = false) {
+        return NULL;
+      }
+    }
+    if(!function_exists('recaptcha_check_answer')) {
+      function recaptcha_check_answer($privkey, $remoteip, $challenge, $response) {
+        return NULL;
+      }
+    }
+    if(!function_exists('recaptcha_mailhide_html')) {
+      function recaptcha_mailhide_html($mailhide_pubkey, $mailhide_privkey, $email) {
+        return $email;
+      }
+    }
+  }
+} // function _recaptcha_library_not_found()
+
+/**
+ * Implementation of hook_settings().
+ */
+function recaptcha_settings() {
+  global $recaptcha_api_server, $recaptcha_api_secure_server, $recaptcha_verify_server;
+  @(include_once('recaptcha/recaptchalib.php')) or _recaptcha_library_not_found();
+  $form = array();
+  $form['recaptcha_public_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Public Key'),
+    '#default_value' => variable_get('recaptcha_public_key', ''),
+    '#maxlength' => 40,
+    '#description' => t('The public key given to you when you <a href="%url" target="_blank">registered at reCAPTCHA.net</a>.', array('%url' => check_plain(url(recaptcha_get_signup_url($_SERVER['SERVER_NAME'], variable_get('site_name', '')))))),
+   );
+  $form['recaptcha_private_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Private Key'),
+    '#default_value' => variable_get('recaptcha_private_key', ''),
+    '#maxlength' => 40,
+    '#description' => t('The private key given to you when you <a href="%url" target="_blank">registered at reCAPTCHA.net</a>.', array('%url' => check_plain(url(recaptcha_get_signup_url($_SERVER['SERVER_NAME'], variable_get('site_name', '')))))),
+   );
+  $form['recaptcha_server_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Server Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['recaptcha_server_settings']['recaptcha_api_server'] = array(
+    '#type' => 'textfield',
+    '#title' => t('API Server'),
+    '#default_value' => variable_get('recaptcha_api_server', isset($recaptcha_api_server) ? $recaptcha_api_server : 'http://api.recaptcha.net'),
+    '#description' => t('The reCAPTCHA API Server to connect to.'),
+  );
+  $form['recaptcha_server_settings']['recaptcha_secure_connection'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Secure Connection'),
+    '#default_value' => variable_get('recaptcha_secure_connection', FALSE),
+    '#description' => t('Connect to the reCAPTCHA server using a secure connection.'),
+  );
+  $form['recaptcha_server_settings']['recaptcha_api_secure_server'] = array(
+    '#type' => 'textfield',
+    '#title' => t('API Secure Server'),
+    '#default_value' => variable_get('recaptcha_api_secure_server', isset($recaptcha_api_secure_server) ? $recaptcha_api_secure_server : 'https://api-secure.recaptcha.net'),
+    '#description' => t('The secure reCAPTCHA API Server to connect to when using a secure connection.'),
+  );
+  $form['recaptcha_server_settings']['recaptcha_verify_server'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Verify Server'),
+    '#default_value' => variable_get('recaptcha_verify_server', isset($recaptcha_verify_server) ? $recaptcha_verify_server : 'api-verify.recaptcha.net'),
+    '#description' => t('The server to use to verify the information.'),
+  );
+
+  return $form;
+} // function recaptcha_settings
+
+/**
+ * reCAPTCHA implementation of hook_captchachallenge
+ */
+function recaptcha_captchachallenge(&$form) {  
+  global $recaptcha_api_server, $recaptcha_api_secure_server, $recaptcha_verify_server;
+  @(include_once('recaptcha/recaptchalib.php')) or _recaptcha_library_not_found();
+  theme_stylesheet_import(drupal_get_path('module', 'recaptcha') . '/recaptcha.css');
+  $recaptcha_api_server = variable_get('recaptcha_api_server',
+    isset($recaptcha_api_server) ? $recaptcha_api_server : 'http://api.recaptcha.net');
+  $recaptcha_api_secure_server = variable_get('recaptcha_api_secure_server',
+    isset($recaptcha_api_secure_server) ? $recaptcha_api_secure_server : 'https://api-secure.recaptcha.net');
+  $recaptcha_verify_server = variable_get('recaptcha_verify_server',
+    isset($recaptcha_verify_server) ? $recaptcha_verify_server : 'api-verify.recaptcha.net');
+  $form['captcha_response'] = array (
+    '#type' => 'item',
+    '#title' => t('Are you a person?'),
+    '#description' => recaptcha_get_html(variable_get('recaptcha_public_key', ''), 
+      NULL,
+      variable_get('recaptcha_secure_connection', FALSE)),
+    '#weight' => -1,
+    '#validate' => array('_captcha_validate' => array()),
+    '#required' => TRUE,
+    );
+  return $form;
+} // function recaptcha_captchachallenge
+
+/**
+ * reCAPTCHA implementation of hook_captchavalidate
+ */
+function recaptcha_captchavalidate(&$captcha_word, &$correct) {
+  global $recaptcha_api_server, $recaptcha_api_secure_server, $recaptcha_verify_server;
+  @(include_once('recaptcha/recaptchalib.php')) or _recaptcha_library_not_found();
+  $resp = recaptcha_check_answer(
+    variable_get('recaptcha_private_key', ''),
+      $_SERVER['REMOTE_ADDR'],
+      $_POST['recaptcha_challenge_field'],
+      $_POST['recaptcha_response_field']
+    );
+  if($resp->is_valid) {
+    $correct = TRUE;
+  }
+  else {
+    if (isset($_POST['recaptcha_response_field'])) {
+      form_set_error('captcha_response', t('The reCAPTCHA code you entered was incorrect.'));
+    }
+    $correct = FALSE;
+  }
+}
+
+/**
+ * reCAPTCHA implementation of hook_filter
+ */ 
+function recaptcha_filter($op, $delta = 0, $format = -1, $text = '') {
+  switch ($op) {
+    case 'list':
+      return array(0 => t('reCAPTCHA Mailhide'));
+
+    case 'description':
+      return recaptcha_filter_tips($delta, $format);
+
+    case 'settings':
+        @(include_once('recaptcha/recaptchalib.php')) or _recaptcha_library_not_found();
+        $form['filter_recaptcha'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('reCAPTCHA Mailhide Keys'),
+          '#collapsible' => TRUE,
+          '#collapsed' => FALSE);
+        $form['filter_recaptcha']["recaptcha_mailhide_public_key_$format"] = array(
+          '#type' => 'textfield',
+          '#title' => t('Public Key'),
+          '#default_value' => variable_get("recaptcha_mailhide_public_key_$format", ''),
+          '#maxlength' => 50,
+          '#description' => t('Your public Mailhide key obtained from <a href="%url" target="_blank">reCAPTCHA</a>.', array('%url' => 'http://mailhide.recaptcha.net/apikey')),
+          );
+        $form['filter_recaptcha']["recaptcha_mailhide_private_key_$format"] = array(
+          '#type' => 'textfield',
+          '#title' => t('Private Key'),
+          '#default_value' => variable_get("recaptcha_mailhide_private_key_$format", ''),
+          '#maxlength' => 50,
+          '#description' => t('Your private Mailhide key obtained from <a href="%url" target="_blank">reCAPTCHA</a>.', array('%url' => 'http://mailhide.recaptcha.net/apikey')),
+          );
+        return $form;
+      break;
+
+    case 'process':
+      global $recaptcha_mailhide_public_key, $recaptcha_mailhide_private_key;
+      @(include_once('recaptcha/recaptchalib.php')) or _recaptcha_library_not_found();
+      $recaptcha_mailhide_public_key = variable_get("recaptcha_mailhide_public_key_$format", '');
+      $recaptcha_mailhide_private_key = variable_get("recaptcha_mailhide_private_key_$format", '');
+      
+      $text   = ' ' . $text . ' ';
+      $text = preg_replace_callback("!(<p>|<li>|<br\s*/?>|[ \n\r\t\(])([A-Za-z0-9._-]+@[A-Za-z0-9._+-]+\.[A-Za-z]{2,4})([.,?]?)(?=(</p>|</li>|<br\s*/?>|[ \n\r\t\)]))!i", '_recaptcha_replace', $text);
+      $text = substr($text, 1, -1);
+      
+      unset($recaptcha_mailhide_public_key);
+      unset($recaptcha_mailhide_private_key);
+      return $text;
+
+    default:
+      return $text;
+  }
+}
+
+/**
+ * reCAPTCHA implementation of hook_filter_tips
+ */
+function recaptcha_filter_tips($delta, $format, $long = false) {
+  return t('E-Mail addresses are hidden with <a href="%url" target="_blank">reCAPTCHA Mailhide</a>.', array('%url' => 'http://mailhide.recaptcha.net/'));
+}
+
+/**
+ * Private reCAPTCHA function to replace an email regex match
+ */ 
+function _recaptcha_replace($match) {
+  global $recaptcha_mailhide_public_key, $recaptcha_mailhide_private_key;
+  $email = recaptcha_mailhide_html($recaptcha_mailhide_public_key, $recaptcha_mailhide_private_key, $match[2]);
+  return $match[1] . $email . $match[3];
+}
