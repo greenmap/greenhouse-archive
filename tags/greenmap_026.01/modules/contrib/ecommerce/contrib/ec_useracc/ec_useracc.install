@@ -1,0 +1,58 @@
+<?php
+/** $Id: ec_useracc.install,v 1.1.2.5 2007/02/15 00:49:05 sime Exp $
+ * @author Sammy Spets thanks to Synerger Pty Ltd
+ */
+
+require_once(drupal_get_path('module', 'store') . '/store.deps.inc');
+
+/**
+ * Installs E-Commerce role module tables into the database
+ */
+function ec_useracc_install() {
+  $deps = array('ec_anon', 'ec_mail');
+  if (!store_deps_install('ec_useracc', $deps)) {
+    return;
+  }
+  
+  switch($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {ec_useracc} (
+        vid int unsigned NOT NULL,
+        creat tinyint NOT NULL,
+        block tinyint NOT NULL,
+        PRIMARY KEY (vid)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
+      db_query("CREATE TABLE {ec_useracc_confirm} (
+        code varchar(32) NOT NULL,
+        uid int unsigned NOT NULL,
+        pass varchar(10) NOT NULL,
+        expiry int NOT NULL,
+        PRIMARY KEY (uid),
+        KEY (code),
+        KEY (expiry)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
+      break;
+    case 'pgsql':
+      db_query("CREATE TABLE {ec_useracc} (
+        vid int NOT NULL CHECK (vid >= 0),
+        creat smallint NOT NULL CHECK (creat in (0, 1)),
+        block smallint NOT NULL CHECK (block in (0, 1)),
+        PRIMARY KEY (vid)
+      )");
+      db_query("CREATE TABLE {ec_useracc_confirm} (
+        code varchar(32) NOT NULL,
+        uid int NOT NULL CHECK (uid >= 0),
+        pass varchar(10) NOT NULL,
+        expiry int NOT NULL,
+        PRIMARY KEY (uid)
+      )");
+      db_query("CREATE INDEX {ec_useracc_confirm}_code_idx ON {ec_useracc_confirm} (code)");
+      db_query("CREATE INDEX {ec_useracc_confirm}_expiry_idx ON {ec_useracc_confirm} (expiry)");
+      break;
+  }
+
+  require_once(drupal_get_path('module', 'ec_useracc') . '/ec_useracc.module');
+  require_once(drupal_get_path('module', 'ec_mail') . '/ec_mail.module');
+  ec_mail_reset_to_defaults(array(ECMAIL_TYPE_EMAIL_CONFIRM, ECMAIL_TYPE_SITE_WELCOME), 'ec_useracc');
+}
