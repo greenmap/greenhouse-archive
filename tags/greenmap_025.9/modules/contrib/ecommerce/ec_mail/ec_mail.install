@@ -1,0 +1,47 @@
+<?php
+/** $Id: ec_mail.install,v 1.1.2.3 2007/02/08 13:38:35 gordon Exp $
+ *
+ * ec_mail.install
+ * @author Sammy Spets thanks to Synerger Pty Ltd
+ */
+
+require_once(drupal_get_path('module', 'store') . '/store.deps.inc');
+
+/**
+ * ec_mail_install()
+ * 
+ * Installs E-Commerce mail support tables into the database
+ */
+function ec_mail_install() {
+  $deps = array('token');
+  if (!store_deps_install('ec_mail', $deps)) {
+    drupal_set_message(t('ec_mail requires the token module to be installed. Please install it now or you will have critical problems.'), 'error');
+  }
+
+  switch($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {ec_mail} (
+        mid int NOT NULL auto_increment,
+        name varchar(255) NOT NULL,
+        subject varchar(255) NOT NULL,
+        type varchar(255) NOT NULL,
+        numrefs int unsigned NOT NULL DEFAULT '0',
+        body text,
+        PRIMARY KEY (mid)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
+      break;
+    case 'pgsql':
+      db_query("CREATE TABLE {ec_mail} (
+        mid serial CHECK (mid >= 0),
+        name varchar(255) NOT NULL,
+        subject varchar(255) NOT NULL,
+        type varchar(255) NOT NULL,
+        numrefs int NOT NULL DEFAULT '0' CHECK (numrefs >= 0),
+        body text,
+        PRIMARY KEY (mid)
+      )");
+      break;
+  }
+}
+
