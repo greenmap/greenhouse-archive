@@ -1,0 +1,627 @@
+<?php
+// $Id: imagecache.module,v 1.9.2.20 2007/01/25 04:02:30 dopry Exp $
+/** 
+ * @file
+ * dynamic image resizer and cache
+ *
+ * imagecache allows you to setup specialized identifiers for dynamic image processing
+ * and caching. It uses the rewrite rules used for drupal's clean urls to provide
+ * dynamic image generation. 
+ *
+ * We don't fuss with the database, and creating data that we have to keep up with in drupal.
+ * We do it on the fly and flush it when we want to, or when a preset changes.
+ * 
+ * $get[q] = files/imagecache/<preset>/pathToFile
+ *
+ */
+
+function imagecache_help($section) {
+  switch($section) {
+    case 'admin/modules#description': return t('enable dynamic image manipulator');
+  }
+}
+
+function imagecache_perm() {
+  return array('administer imagecache','flush imagecache');
+}
+
+
+function imagecache_menu($may_cache) {
+  $items = array();
+  if ($may_cache) {
+    // use file_directory_path in menu callbackk to support multisite installs
+    $items[] = array( 'path' => file_directory_path() .'/imagecache', 
+                      'callback' => 'imagecache_cache',
+                      'access' => TRUE,
+                      'type' => MENU_CALLBACK
+               );     
+    $items[] = array( 'path' => 'admin/imagecache', 
+                      'title' => t('imagecache'),
+                      'access' => user_access('administer imagecache'),
+                      'callback' => 'imagecache_admin_list',
+               );
+  }
+  return $items;
+}
+
+
+function imagecache_cache() {
+  $generated = FALSE;
+  $args = func_get_args();
+  $preset = array_shift($args);
+
+  $preset_id = _imagecache_preset_load_by_name($preset);
+  $actions = _imagecache_actions_get_by_presetid($preset_id);
+
+  $path = implode('/', $args); 
+  // verify that the source exists, if not exit. Maybe display a missing image.
+  $source = file_create_path($path);
+  if (!is_file($source)) { 
+     return check_plain($source) . ' does not exist';
+     // @todo: display placeholder image associated to preset.
+  }
+
+
+  $destination = file_create_path() . '/imagecache/'. $preset .'/'. $path;
+
+  // prepend presetname to tmp file name to prevent namespace clashes when 
+  // multiple presets for the same image are called in rapid succession.
+  $tmpdestination = file_directory_temp() . '/' . $preset . str_replace(dirname($path) . '/', '', $path);
+
+  $dir = dirname($destination);
+  if(!file_check_directory($dir)) {
+    $folders = explode("/",$dir);
+   
+    foreach($folders as $folder) {
+      $tpath[] = $folder;
+      if(!file_check_directory(implode("/", $tpath))) {
+        $p = implode("/", $tpath);
+        if (!file_exists($p)) {
+          mkdir($p);
+        }
+      }
+    }
+  }
+
+  if (!file_check_directory($dir)) {
+    watchdog('imagecache', t('Could not create destination: %dir', array('%dir' => $destination)), WATCHDOG_ERROR);
+    return;
+  }
+
+  // check if file exists to prevent multiple apache children from trying to manipulate
+  // the same file at once. A crude locking mechanism.
+  if (!is_file($tmpdestination)) {
+    $generated = TRUE;
+    file_copy($source, $tmpdestination);
+
+    foreach($actions as $action) {
+      $size = getimagesize($tmpdestination);
+      $new_width = _imagecache_filter('width', $action['data']['width'], $size[0], $size[1]);
+      $new_height = _imagecache_filter('height', $action['data']['height'], $size[0], $size[1]);
+      foreach($action['data'] as $key => $value) {
+        $action['data'][$key] = _imagecache_filter($key, $value, $size[0], $size[1], $new_width, $new_height);
+      }
+      switch($action['data']['function']) {
+        case 'resize':
+          if (!image_resize($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
+            watchdog('imagecache', t('Imagecache resize action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
+          }
+          break;
+      
+        case 'scale':
+          if ($action['data']['fit'] == 'outside' && $action['data']['width'] && $action['data']['height']) {
+            $ratio = $size[0]/$size[1];
+            $new_ratio = $action['data']['width']/$action['data']['height'];
+            $action['data']['width'] = $ratio > $new_ratio ? 0 : $action['data']['width'];
+            $action['data']['height'] = $ratio < $new_ratio ? 0 : $action['data']['height'];
+          }
+          // set width and height to impossibly large values if unset. allows scaling by only 
+          // specifying a single dimension.
+          $action['data']['width'] = $action['data']['width'] ? $action['data']['width'] : 9999999;
+          $action['data']['height'] = $action['data']['height'] ? $action['data']['height'] : 9999999;
+          if (!image_scale($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
+            watchdog('imagecache', t('Imagecache scale action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
+          }
+          break;
+
+        case 'crop':
+          if (!image_crop($tmpdestination, $tmpdestination, $action['data']['xoffset'] , $action['data']['yoffset'],$action['data']['width'],$action['data']['height'])) {
+            watchdog('imagecache', t('Imagecache crop action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
+          }
+          break;
+      }
+    }
+    file_move($tmpdestination, $destination);
+  } 
+
+  if ($generated)  {
+    if (function_exists('mime_content_type')) {
+      $mime = mime_content_type($destination);
+  	} 
+		else {
+		  $size = getimagesize($destination);
+			$mime = $size['mime'];
+	  }
+		file_transfer($destination, array('Content-Type: ' . mime_header_encode($mime), 'Content-Length: ' . filesize($destination)));
+  }
+  else {
+    // Generate an error if image could not generate.
+    watchdog('imagecache', t('There were problems generating an image from %image using imagecache preset %preset.', array('%image' => theme('placeholder', $path), '%preset' => theme('placeholder', $preset['presetname']))), WATCHDOG_ERROR);
+    // @todo: display preset placeholder image.
+  }
+}
+
+function _imagecache_get_presets($reset = FALSE) {
+  static $presets = array();
+ 
+  // Check caches if $reset is FALSE; 
+  if (!$reset) {
+    if (!empty($presets)) {
+      return $presets;
+    }
+
+    // Grab from cache saves building the array. Plus its a frequently used table. 
+    $cache = cache_get('imagecache:presets');
+    $presets = unserialize($cache->data);
+    // If the preset is not an array, cache_clear_all has been called 
+    // there no/invalid data in the cache. Fall through and repopulate cache;
+    if (is_array($presets)) {
+      return $presets;
+    }
+  }
+ 
+  // Load Data from the database on reset or if we get invalid data from the array.
+  $presets = array();
+  $result = db_query('SELECT presetid, presetname FROM {imagecache_preset} ORDER BY presetname');
+  while($row = db_fetch_array($result)) {
+    $presets[$row['presetid']] = $row['presetname'];
+  }
+  cache_set('imagecache:presets', serialize($presets));
+  // Clear the content.module cache (refreshes the list of formatters provided by imagefield.module)
+  content_clear_type_cache();
+  return $presets;
+}
+
+function _imagecache_actions_get_by_presetid($presetid) {
+  $actions = array();
+  $result = db_query('SELECT actionid, weight, data FROM {imagecache_action} where presetid=%d order by weight',$presetid);
+  while($row = db_fetch_array($result)) {
+    $row['data'] = unserialize($row['data']);
+    $actions[$row['actionid']] = $row;
+  }
+  return $actions;
+}
+
+function imagecache_admin_list() {
+  //drupal_set_message('<pre>'. print_r($_POST, TRUE) .'</pre>');
+  
+  drupal_set_title('Imagecache Administration');
+  $form = array();
+  $form['title'] = array('#type' => 'markup', '#value' => t('Imagecache Presets'));
+  $form['presets']['#tree'] = TRUE;
+  
+  $presets = _imagecache_get_presets();
+  foreach($presets as $presetid => $presetname) {
+    $form['presets'][$presetid] = array(
+      '#type' => 'fieldset',
+      '#title' => t($presetname),
+      '#collapsible' => TRUE,
+      '#collapsed' => arg(3) != $presetid,
+    );
+    $form['presets'][$presetid]['name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Preset Namespace'),
+      '#default_value' => $presetname,
+      '#description' => t('String that will be used as an identifier in the url for this set of handlers. Final urls will look like http://example.com/files/imagecache/%namespace/&lt;path to orig&gt;', array('%namespace' => theme('placeholder',$presetname))),
+    );
+    $form['presets'][$presetid]['handlers'] = array (
+      '#type' => 'fieldset',
+      '#title' => t('image handlers'),
+    );
+   
+    $form['presets'][$presetid]['handlers']['#tree'] = FALSE;
+    $form['presets'][$presetid]['handlers'] = _imagecache_actions_form($presetid);
+    $form['presets'][$presetid]['ops']['#tree'] = FALSE;
+    $form['presets'][$presetid]['ops']['update'] = array(
+      '#type' => 'submit',
+      '#name' => 'preset-op['.$presetid.']',
+      '#value' => t('Update Preset'),
+    );
+    $form['presets'][$presetid]['ops']['delete'] = array(
+      '#type' => 'submit',
+      '#name' => 'preset-op['. $presetid .']',
+      '#value' => t('Delete Preset'),
+    );
+    $form['presets'][$presetid]['ops']['flush'] = array(
+      '#type' => 'submit',
+      '#name' => 'preset-op['. $presetid .']',
+      '#value' => ('Flush Preset Images'),
+    );
+  }
+  
+  $form['presets']['new'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('New Preset'),
+    '#tree' => TRUE,
+  );
+  $form['presets']['new']['name'] = array(
+    '#type' => 'textfield',
+    '#size' => '64',
+    '#title' => t('Preset Namespace'),
+    '#default_value' => '',
+    '#description' => t('The namespace of an imagecache preset. It represents a series of actions to be performed when imagecache dynamically generates an image. This will also be used in the url for images. Please no spaces.'),
+  );
+  $form['presets']['new']['create'] = array(
+    '#type' => 'submit',
+    '#name' => 'preset-op[new]',
+    '#value' => 'Create Preset',
+    '#weight' => 10,
+  );
+  return drupal_get_form('imagecache_admin', $form);
+}
+
+function imagecache_admin_validate($form_id, $form_values) {
+  if (is_array($_POST['preset-op'])) {
+    foreach($_POST['preset-op'] as $presetid => $op) {
+      // Check for illegal characters in preset names
+      if (preg_match('/[^0-9a-zA-Z_\-]/',$form_values['presets'][$presetid]['name'])) {
+        form_set_error('presets]['.$presetid.'][name',t('Please only use alphanumic characters, underscores (_), and hyphens (-) for preset names.'));
+      }
+    }
+  }
+}
+
+function imagecache_admin_submit($form_id, $form_values) {
+  if (is_array($_POST['preset-op'])) {
+    foreach($_POST['preset-op'] as $presetid => $op) {
+      $presetid = check_plain($presetid);
+      switch($op) {
+        case t('Create Preset'):
+          _imagecache_preset_create($form_values['presets']['new']['name']);
+          break;
+        case t('Update Preset'):
+          // Add new actions
+          $newaction = $form_values['presets'][$presetid]['handlers']['newaction'];
+          if ($newaction) {
+            $action = array();
+            $action['data'] = array('function' => $newaction);
+            $action['presetid'] = $presetid;
+            $action['weight'] = 0;
+            _imagecache_action_create($action);
+          }
+          // Update existing actions
+          foreach($form_values['presets'][$presetid]['handlers'] as $actionid => $action) {
+            if ($actionid != 'newaction') {
+              $action['actionid'] = $actionid;
+              $action['presetid'] = $presetid;
+              $remove = $action['remove'];
+              unset($action['remove']);
+              $remove ? _imagecache_action_delete($action) : _imagecache_action_update($action);
+            }
+          }
+          // Update the entire preset
+          _imagecache_preset_update($presetid, $form_values['presets'][$presetid]['name']);
+          break;
+        case t('Delete Preset'):  
+          _imagecache_preset_delete($presetid, $form_values['presets'][$presetid]['name']);
+          break;
+        case t('Flush Preset Images'):   
+          _imagecache_preset_flush($presetid);
+          break;
+      }
+    }
+  }
+}
+
+/** 
+ * load a preset by id.
+ * @param id
+ *    preset id.
+ */
+function _imagecache_preset_load($id) {
+  $presets = _imagecache_get_presets();
+  return $presets[$id];
+}
+
+/** 
+ * load a preset by name
+ *  @param name
+ *    preset name
+ */
+function _imagecache_preset_load_by_name($name) {
+  $presets = array_flip(_imagecache_get_presets());
+  return $presets[$name];
+}
+
+/** 
+ * create a preset 
+ * @param name
+ *    name of the preset to be created.
+ */
+function _imagecache_preset_create($name) {
+  $next_id = db_next_id('{imagecache_preset}_presetid');
+  db_query('INSERT INTO {imagecache_preset} (presetid, presetname) VALUES (%d, \'%s\')', $next_id, $name);
+  // reset presets cache.
+  _imagecache_get_presets(TRUE);
+  $_REQUEST['destination'] = 'admin/imagecache/preset/'.$next_id;
+}
+
+/**
+ * update a preset
+ * @param id
+ *    preset id 
+ * @param name
+ *    new name for the preset
+ */
+function _imagecache_preset_update($id, $name) {
+  $name = check_plain($name);
+  $id = (int)$id;
+  _imagecache_preset_flush($id);
+  db_query('UPDATE {imagecache_preset} SET presetname =\'%s\' WHERE presetid = %d', $name, $id);
+  drupal_set_message(t('Updated preset "%name" (ID: @id)', array('%name' => $name, '@id' => $id)));
+  // reset presets cache.
+  _imagecache_get_presets(TRUE);
+  $_REQUEST['destination'] = 'admin/imagecache/preset/'.$id;
+}
+
+function _imagecache_preset_delete($id, $name) {
+  _imagecache_preset_flush($id);
+  db_query('DELETE FROM {imagecache_action} where presetid = %d', $id);
+  db_query('DELETE FROM {imagecache_preset} where presetid = %d', $id);
+  drupal_set_message(t('Preset "%name" (ID: @id) deleted.', array('%name' => $name, '@id' => $id)));
+  // reset presets cache.
+  _imagecache_get_presets(TRUE);
+}
+
+/**
+ * flush cached media for a preset.
+ * @param id
+ *   a preset id.
+ */
+function _imagecache_preset_flush($id) {
+  if (user_access('flush imagecache')) {
+    drupal_set_message(t('Flushed Preset Images (ID: @id)', array('@id' => $id)));
+    $preset = _imagecache_preset_load($id);
+    $presetdir = realpath(file_directory_path() .'/imagecache/'. $preset);
+    if (is_dir($presetdir)) {
+      _imagecache_recursive_delete($presetdir);
+    }
+  }
+}
+
+/**
+ * Recursively delete all files and folders in the specified filepath, then delete the containing folder
+ * Note that this only deletes visible files with write permission
+ *
+ * @param string $path
+ *   An absolute filepath (relative to the filesystem) to delete
+ */
+function _imagecache_recursive_delete($path) {
+  $listing = $path . "/*";
+  foreach(glob($listing) as $file) {
+    if(is_file($file) === true) {
+      @unlink($file);
+    }
+    elseif(is_dir($file) === true) {
+      _imagecache_recursive_delete($file);
+    }
+  }
+  @rmdir($path);
+}
+
+function _imagecache_action_create($action) {
+  //debug_msg($action, 'action@create: ');
+  $next_id = db_next_id('{imagecache_action}_actionid');
+  db_query('INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, %d, \'%s\')', $next_id, $action['presetid'], $action['weight'], serialize($action['data']));
+}
+
+function _imagecache_action_update($action) {
+  //debug_msg($action, 'action@update');
+  db_query('UPDATE {imagecache_action} SET weight = %d, data = \'%s\' WHERE actionid = %d', $action['weight'], serialize($action['data']), $action['actionid']);
+}
+
+function _imagecache_action_delete($action) {
+  _imagecache_preset_flush($action['presetid']);
+  db_query('DELETE FROM {imagecache_action} WHERE actionid = %d', $action['actionid']);
+}
+
+function _imagecache_actions_form($presetid) { 
+  $form = array();
+  $actions = _imagecache_actions_get_by_presetid($presetid);
+  foreach($actions as $actionid => $action) {
+    //debug_msg($action);
+    $form[$actionid] = array (
+      '#type' => 'fieldset',
+      '#title' => t($action['data']['function']),
+    );
+
+    $form[$actionid]['data']['function'] = array(
+      '#type' => 'hidden',
+      '#value' => $action['data']['function'],
+    );
+    $form[$actionid]['weight'] = array(
+      '#type' => 'weight',
+      '#title' => t('Weight'),
+      '#default_value' => $action['weight'],
+    );
+
+      switch($action['data']['function']) {
+        case 'scale':
+          $helptext = array();
+          $helptext['inside'] = t('<strong>Inside dimensions</strong>: Final dimensions will be less than or equal to the entered width and height. Useful for ensuring a maximum height and/or width.');
+          $helptext['outside'] = t('<strong>Outside dimensions</strong>: Final dimensions will be greater than or equal to the entered width and height. Ideal for cropping the result to a square.');
+          $description = '<ul><li>' . implode('</li><li>',$helptext) . '</li><ul>';
+          
+          $form[$actionid]['data']['fit'] = array(
+            '#type' => 'select',
+            '#title' => t('Scale to fit'),
+            '#options' => array('inside' => t('Inside dimensions'), 'outside' => t('Outside dimensions')),
+            '#default_value' => $action['data']['fit'],
+            '#weight' => 1,
+            '#description' => $description,
+          );
+        case 'resize':
+          $form[$actionid]['data']['width'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Width'),
+            '#default_value' => $action['data']['width'],
+            '#description' => t('Enter a width in pixels or as a percentage. i.e. 500 or 80%.'),
+          );
+          $form[$actionid]['data']['height'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Height'),
+            '#default_value' => $action['data']['height'],
+            '#description' => t('Enter a height in pixels or as a percentage. i.e. 500 or 80%.'),
+          );
+          break;
+        
+        case 'crop':
+          $form[$actionid]['data']['width'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Width'),
+            '#default_value' => $action['data']['width'],
+            '#description' => t('Enter a width in pixels or as a percentage. i.e. 500 or 80%.'),
+          );
+          $form[$actionid]['data']['height'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Height'),
+            '#default_value' => $action['data']['height'],
+            '#description' => t('Enter a height in pixels or as a percentage. i.e. 500 or 80%.'),
+          );
+          $form[$actionid]['data']['xoffset'] = array(
+            '#type' => 'textfield',
+            '#title' => t('X Offset'),
+            '#default_value' => $action['data']['xoffset'],
+            '#description' => t('Enter an offset in pixels or use a keyword: <em>left</em>, <em>center</em>, or <em>right</em>.'),
+          );
+          $form[$actionid]['data']['yoffset'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Y Offset'),
+            '#default_value' => $action['data']['yoffset'],
+            '#description' => t('Enter an offset in pixels or use a keyword: <em>top</em>, <em>center</em>, or <em>bottom</em>.'),
+          );
+          break;
+
+      case 'watermark':
+        //Think about this one...        
+    }
+    $form[$actionid]['remove'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Remove this Action'),
+    );
+
+  }
+
+  $helptext = array();
+  $helptext['scale']  = t('<strong>Scale</strong>: Resize an image maintaining the original aspect-ratio (only one value necessary).');
+  $helptext['resize'] = t('<strong>Resize</strong>: Resize an image to an exact set of dimensions, ignoring aspect ratio.');
+  $helptext['crop']   = t('<strong>Crop</strong>: Crop an image to the rectangle specified by the given offsets and dimensions.');
+  $description = '<ul><li>' . implode('</li><li>',$helptext) . '</li><ul>';
+  
+  $form['newaction'] = array(
+    '#type' => 'select',
+    '#options' => array('' => t('select...'), 'scale' => t('Scale'), 'resize' => t('Resize'), 'crop' => t('Crop')),
+    '#title' => t('Add a New Action'),
+    '#description' => $description,
+  );
+  return $form;
+}
+
+
+/**
+  * Theme an img tag for displaying the image.
+  */
+function theme_imagecache_display($node, $label, $url, $attributes) {
+  return '<img src="'. check_url($url) .'" alt="'. check_plain($node->title) .'" title="'. check_plain($node->title) .'" '. drupal_attributes($attributes) .' />';
+}
+
+/**
+ * Verify the image module and toolkit settings.
+ */
+function _imagecache_check_settings() {
+  // Sanity check : make sure we've got a working toolkit
+  if (!image_get_toolkit()) {
+    drupal_set_message(t('Make sure you have a working image toolkit installed and enabled, for more information see: %settings', array('%settings' => l(t('the settings page'), 'admin/settings'))), 'error');
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Filter key word values such as 'top', 'right', 'center', and also percentages.
+ * All returned values are in pixels relative to the passed in height and width
+ */
+function _imagecache_filter($key, $value, $current_width, $current_height, $new_width = NULL, $new_height = NULL) {
+  switch ($key) {
+    case 'width':
+      $value = _imagecache_percent_filter($value, $current_width);
+      break;
+    case 'height':
+      $value = _imagecache_percent_filter($value, $current_height);
+      break;
+    case 'xoffset':
+      $value = _imagecache_keyword_filter($value, $current_width, $new_width);
+      break;
+    case 'yoffset':
+      $value = _imagecache_keyword_filter($value, $current_height, $new_height);
+      break;
+  }
+  return $value;
+}
+
+/**
+ * Accept a percentage and return it in pixels
+ */
+function _imagecache_percent_filter($value, $current_pixels) {
+  if (strpos($value, '%') !== FALSE) {
+    $value = str_replace('%', '', $value) * 0.01 * $current_pixels;
+  }
+  return $value;
+}
+
+/**
+ * Accept a keyword (center, top, left, etc) and return it as an offset in pixels
+ */
+function _imagecache_keyword_filter($value, $current_pixels, $new_pixels) {
+  switch ($value) {
+    case 'top':
+    case 'left':
+      $value = 0;
+      break;
+    case 'bottom':
+    case 'right':
+      $value = $current_pixels - $new_pixels;
+      break;
+    case 'center':
+      $value = $current_pixels/2 - $new_pixels/2;
+      break;
+  }
+  return $value;
+}
+
+function theme_imagecache_admin($form) {
+  $output = '';
+  $output .= '<p class="cvs-version">$Id: imagecache.module,v 1.9.2.20 2007/01/25 04:02:30 dopry Exp $</p>';
+  $output .= '<h2>'.form_render($form['title']).'</h2>';
+  $output .= form_render($form);
+  return $output;
+}
+
+function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes = NULL) {
+  $attributes = drupal_attributes($attributes);
+  $imagecache_path =  file_create_url(file_directory_path() .'/imagecache/'. $namespace .'/'. $path);
+  return '<img src="'. $imagecache_path .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. $attributes .' />';
+}
+
+/**
+ * Clear cached versions of a specific file in all presets
+ * @param $path
+ *   The Drupal file path to the original image
+ */
+function imagecache_image_flush($path) {
+  $presets = _imagecache_get_presets();
+  foreach($presets as $presetid => $presetname) {
+    $path = file_directory_path() .'/imagecache/'. $presetname .'/'. $path;
+    file_delete($preset_image);
+  }
+}

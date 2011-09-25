@@ -1,0 +1,7 @@
+HOWTO.txt
+==========
+
+See online documentation at http://drupal.org/node/67817
+
+====================================================================
+Jose A. Reyero, http://www.reyero.net
