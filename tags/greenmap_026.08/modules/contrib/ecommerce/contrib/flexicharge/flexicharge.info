@@ -1,0 +1,9 @@
+; $Id: flexicharge.info,v 1.2 2006/10/10 07:07:29 sime Exp $
+name = Flexicharge
+description = Misc custom price adjustments for E-Commerce.
+package = "E-Commerce Other"
+dependencies = payment
+; Information added by drupal.org packaging script on 2007-03-10
+version = "4.7.x-3.0"
+project = "ecommerce"
+
