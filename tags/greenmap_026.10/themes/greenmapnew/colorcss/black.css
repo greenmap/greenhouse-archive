@@ -1,0 +1,20 @@
+#container{background:#f0f0f0 url(../img/bodybg-black.jpg) repeat-x;}
+#mainmenu a:hover{background:#f0f0f0 url(../img/menuhover-black.jpg) top left repeat-x;}
+#mainmenu a.current{background:#f0f0f0 url(../img/menuhover-black.jpg) top left repeat-x;}
+.links li:before {
+	content: url("../img/square-black.gif");
+	padding-right: 3px;
+}
+.styledbox {
+  border: 1px solid #6D6D6D;
+  padding: .5em;
+  margin-bottom: 1em;
+	background-color: #F3F3F3;
+}
+.comment .new {
+  text-align: right;
+  font-weight: bold;
+  font-size: 0.9em;
+  float: right;
+  color: #6D6D6D;
+}

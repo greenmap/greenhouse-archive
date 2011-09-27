@@ -1,0 +1,308 @@
+# Traducción al español del módulo Image.
+# Esta traducción ha sido financiada por interactors. <http://interactors.coop>.
+# Gerard Farràs <gerard.farras@km103.com>, 2005.
+# Interactors <info@interactors.coop>, 2005.
+#
+# Actualizada a la versin de Drupal 4.7 por:
+# Juan Ramón González <jrgonzalez@gmail.com>, 2006-05-11
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: drupal 4.7\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-08-04 13:23+0200\n"
+"PO-Revision-Date: 2006-05-11 16:35+0100\n"
+"Last-Translator: Juan Ramón González <jrgonzalez@gmail.com>\n"
+"Language-Team: Spanish <info@interactors.coop>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3);\n"
+
+#: image.imagemagick.inc:19
+msgid "%file does not exist or is not executable."
+msgstr "%file no existe o no es ejecutable."
+
+#: image.imagemagick.inc:22
+msgid "Location of the \"convert\" binary"
+msgstr "Localización del binario de \"convert\""
+
+#: image.module:10
+msgid "The image module is used to create and administer images for your site. Each image is stored as a post, with thumbnails of the original generated automatically. There are two default thumbnail sizes, thumbnail and preview. The thumbnail size is shown as the preview for image posts and when browsing image galleries. The preview is the default size when first displaying an image node."
+msgstr "El módulo image se usa para crear y administrar imágenes para su sitio web. Cada imagen se almacena como un nodo, con miniaturas del original generadas automáticamente. Hay dos tamaños de miniaturas por defecto, miniaturas y vistas previas. El tamaño de la miniatura se muestra como la vista previa para nodos de imagen y cuando se navega por galerías de imágenes. La vista previa es el tamaño por defecto la primera vez que se muestra un nodo de imagen."
+
+#: image.module:11
+msgid ""
+"Image administration allows the image directory and the image sizes to be set.</p><p>\n"
+"Image galleries are used to organize and display images in galleries.   The list tab allows users to edit existing image gallery names, descriptions, parents and relative position, known as a weight.  The add galleries tab allows you to create a new image gallery defining name, description, parent and weight."
+msgstr ""
+"La administración de imágenes permite establecer el directorio de imágenes y sus tamaños.</p><p>\n"
+"Las galerías de imágenes se usan para organizar y mostrar imágenes en galerías.   La pestaña de listado permite a los usuarios editar los nombres, descripciones, padres y posición relativa (conocida como peso) de las galerías de imágenes existentes.  La pestaña para añadir galerías permite crear una nueva galería de imágenes definiendo su nombre, descripción, padre y peso."
+
+#: image.module:13
+msgid ""
+"<p>You can</p>\n"
+"<ul>\n"
+"<li>view image handling messages in <a href=\"%admin-settings\">administer &gt;&gt; settings</a>.</li>\n"
+"<li>configure image sizes and file directories at <a href=\"%admin-settings-image\">administer &gt;&gt; settings &gt;&gt; image</a>.</li>\n"
+"<li>use the <a href=\"%external-http-drupal-org-project-img_assist\">image assist module</a> to upload and insert images into posts.</li>\n"
+msgstr ""
+"<p>Usted puede</p>\n"
+"<ul>\n"
+"<li>ver mensajes de manejo de imágenes en <a href=\"%admin-settings\">administrar &gt;&gt; opciones</a>.</li>\n"
+"<li>configurar tamaños de imágenes y directorios de ficheros en <a href=\"%admin-settings-image\">administrar &gt;&gt; opciones &gt;&gt; image</a>.</li>\n"
+"<li>usar el <a href=\"%external-http-drupal-org-project-img_assist\">módulo Img_assist</a> para cargar e insertar imágenes en los nodos.</li>\n"
+
+#: image.module:19
+msgid "For more information please read the configuration and customization handbook <a href=\"%image\">Image page</a>."
+msgstr "Para más información, por favor lea la <a href=\"%image\">página de Image</a> en el manual de configuración y personalización."
+
+#: image.module:22
+msgid "Allows uploading of images."
+msgstr "Permite la carga de imágenes."
+
+#: image.module:24
+msgid "An image (with thumbnail). This is ideal for publishing photographs or screenshots."
+msgstr "Una imagen (con miniatura). Ideal para la publicación de fotografías o de capturas de pantalla."
+
+#: image.module:32
+#: ;121;123;0
+msgid "image"
+msgstr "image"
+
+#: image.module:69
+msgid "File paths"
+msgstr "Ubicación de los ficheros"
+
+#: image.module:70
+msgid "Default image path"
+msgstr "Ubicación por defecto de las imágenes"
+
+#: image.module:70
+msgid "Subdirectory in the directory \"%dir\" where pictures will be stored. Do not include trailing slash."
+msgstr "Subdirectorio en el directorio \"%dir\" donde se guardarán las imágenes. No incluir la barra final."
+
+#: image.module:72
+msgid "Image sizes"
+msgstr "Dimensiones de la imagen"
+
+#: image.module:82
+msgid "Select various pixel dimensions, \"thumbnail\" and \"preview\" are required."
+msgstr "Seleccionar distintas dimensiones en píxeles, \"thumbnail\" y \"preview\" son obligatorias."
+
+#: image.module:99
+msgid "Label"
+msgstr "Etiqueta"
+
+#: image.module:99
+msgid "Width"
+msgstr "Anchura"
+
+#: image.module:99
+msgid "Height"
+msgstr "Altura"
+
+#: image.module:156
+msgid "Uploaded file is not a valid image"
+msgstr "El fichero cargado no es una imagen válida"
+
+#: image.module:194
+msgid "original"
+msgstr "original"
+
+#: image.module:209
+#: ;218
+msgid "Latest image"
+msgstr "Última imagen"
+
+#: image.module:210
+#: ;223
+msgid "Random image"
+msgstr "Imagen aleatoria"
+
+#: image.module:235
+msgid "Thumbnail"
+msgstr "Miniatura"
+
+#: image.module:247
+msgid "Title"
+msgstr "Título"
+
+#: image.module:268
+msgid "Image"
+msgstr "Imagen"
+
+#: image.module:268
+msgid "Click \"Browse...\" to select an image to upload."
+msgstr "Hacer clic en \"Examinar...\" para seleccionar una imagen para cargar."
+
+#: image.module:269
+msgid "Body"
+msgstr "Cuerpo"
+
+#: image.module:450
+msgid "Make sure you have a working image toolkit installed and enabled, for more information see: %settings"
+msgstr "Asegúrese de que tiene un paquete de manejo de imágenes instalado y habilitado, para más información vea: %settings"
+
+#: image.module:450
+msgid "the settings page"
+msgstr "la página de opciones"
+
+#: image.module:475
+msgid "Unable to create %label image"
+msgstr "No ha sido posible crear la imagen %label"
+
+#: image.module:39
+msgid "create images"
+msgstr "crear imágenes"
+
+#: image.module:39
+msgid "view original images"
+msgstr "ver imágenes originales"
+
+#: contrib/image_gallery/image_gallery.module:7
+msgid "Allows sorting and displaying of image galleries based on categories"
+msgstr "Permite ordenar y mostrar galerías de imágenes basadas en categorías."
+
+#: contrib/image_gallery/image_gallery.module:9
+msgid "Image galleries can be used to organize and present groups of images. Galleries may be nested. To add a new gallery click the \"add gallery\" tab."
+msgstr "Las galerías de imágenes se pueden utilizar para organizar y presentar grupos de imágenes. Las galerías se pueden anidar. Para añadir una nueva galería hacer clic en la pestaña \"añadir galería\"."
+
+#: contrib/image_gallery/image_gallery.module:21
+msgid "Gallery settings"
+msgstr "Parámetros de galería"
+
+#: contrib/image_gallery/image_gallery.module:22
+msgid "Images per page"
+msgstr "Imágenes por página"
+
+#: contrib/image_gallery/image_gallery.module:22
+msgid "Sets the number of images to be displayed in a gallery page."
+msgstr "Define el número de imágenes que se mostrarán en una página de galería."
+
+#: contrib/image_gallery/image_gallery.module:31
+#: ;35
+msgid "image galleries"
+msgstr "galerías de imágenes"
+
+#: contrib/image_gallery/image_gallery.module:38
+msgid "list"
+msgstr "listado"
+
+#: contrib/image_gallery/image_gallery.module:41
+msgid "add gallery"
+msgstr "añadir galería"
+
+#: contrib/image_gallery/image_gallery.module:103
+msgid "Image galleries"
+msgstr "Galerías de imágenes"
+
+#: contrib/image_gallery/image_gallery.module:138
+#: ;145;202
+msgid "Delete"
+msgstr "Borrar"
+
+#: contrib/image_gallery/image_gallery.module:144
+msgid "Are you sure you want to delete the gallery %name?"
+msgstr "¿Está seguro de querer eliminar la galería %name?"
+
+#: contrib/image_gallery/image_gallery.module:145
+msgid "Deleting a gallery will delete all sub-forums as well. However, the images will not be deleted. This action cannot be undone."
+msgstr "Borrar una galería eliminará también todos los sub-foros. Sin embargo, las imágenes no serán borradas. Esta acción no puede deshacerse."
+
+#: contrib/image_gallery/image_gallery.module:145
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: contrib/image_gallery/image_gallery.module:153
+#: ;200
+msgid "Submit"
+msgstr "Enviar"
+
+#: contrib/image_gallery/image_gallery.module:157
+msgid "Created new gallery %term."
+msgstr "Creada nueva galería %term."
+
+#: contrib/image_gallery/image_gallery.module:160
+msgid "The gallery %term has been updated."
+msgstr "La galería %term ha sido actualizada."
+
+#: contrib/image_gallery/image_gallery.module:163
+msgid "The gallery %term has been deleted."
+msgstr "La galería %term ha sido eliminada."
+
+#: contrib/image_gallery/image_gallery.module:174
+msgid "Name"
+msgstr "Nombre"
+
+#: contrib/image_gallery/image_gallery.module:174
+msgid "Operations"
+msgstr "Operaciones"
+
+#: contrib/image_gallery/image_gallery.module:179
+msgid "edit gallery"
+msgstr "editar galería"
+
+#: contrib/image_gallery/image_gallery.module:184
+msgid "No galleries available"
+msgstr "No hay galerías disponibles"
+
+#: contrib/image_gallery/image_gallery.module:193
+msgid "Gallery name"
+msgstr "Nombre de la galería"
+
+#: contrib/image_gallery/image_gallery.module:193
+msgid "The name is used to identify the gallery."
+msgstr "El nombre se utiliza para identificar la galería."
+
+#: contrib/image_gallery/image_gallery.module:194
+msgid "Description"
+msgstr "Descripción"
+
+#: contrib/image_gallery/image_gallery.module:196
+msgid "Parent"
+msgstr "Padre"
+
+#: contrib/image_gallery/image_gallery.module:197
+msgid "Weight"
+msgstr "Peso"
+
+#: contrib/image_gallery/image_gallery.module:197
+msgid "When listing galleries, those with with light (small) weights get listed before containers with heavier (larger) weights. Galleries with equal weights are sorted alphabetically."
+msgstr "Al listar galerías, aquellas con pesos ligeros (pequeños) se muestran antes que los contenedores con pesos pesados (grandes). Las galerías con igual peso se ordenan alfabéticamente."
+
+#: contrib/image_gallery/image_gallery.module:229
+msgid "root"
+msgstr "raíz"
+
+#: contrib/image_gallery/image_gallery.module:238
+msgid "Image galleries may be nested below other galleries."
+msgstr "Las galerías de imágenes pueden estar anidadas bajo otras galerías."
+
+#: contrib/image_gallery/image_gallery.module:265
+msgid "Last updated: %date"
+msgstr "Última modificación: %date"
+
+#: contrib/image_gallery/image_gallery.module:285
+msgid "Posted by: %name"
+msgstr "Enviado por: %name"
+
+#: contrib/image_gallery/image_gallery.module:315
+msgid "Image Galleries"
+msgstr "Galerías de imágenes"
+
+#: contrib/image_gallery/image_gallery.module:263
+#: ;300
+msgid "There is 1 image in this gallery"
+msgid_plural "There are %count images in this gallery"
+msgstr[0] "Hay %count imagen en esta galería"
+msgstr[1] "Hay %count imágenes en esta galería"
+
+#: contrib/image_gallery/image_gallery.module:15
+msgid "administer images"
+msgstr "administrar imágenes"
+
+#: contrib/image_gallery/image_gallery.module:0
+msgid "image_gallery"
+msgstr "image_gallery"
+
