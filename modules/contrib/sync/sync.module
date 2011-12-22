@@ -613,8 +613,18 @@ function sync_fetch_ogm_maps($uid = 0) {
   $ogm_maps = array();
   $greenhouse_profile_fields_fid = 97; // the place in the greenhouse that the OGM UID is stored
 
-  $result = db_query("SELECT u.uid, u.name, pv.value AS ogm_uid, ogm_nid, title, alias FROM users u INNER JOIN profile_values pv ON pv.uid=u.uid INNER JOIN sync_ogm_green_maps s_o_g_m ON s_o_g_m.ogm_uid = pv.value WHERE u.uid = %d AND pv.fid = %d", $uid, $greenhouse_profile_fields_fid);
 
+  //  $result = db_query("SELECT u.uid, u.name, pv.value AS ogm_uid, ogm_nid, title, alias FROM users u INNER JOIN profile_values pv ON pv.uid=u.uid INNER JOIN sync_ogm_green_maps s_o_g_m ON s_o_g_m.ogm_uid = pv.value WHERE u.uid = %d AND pv.fid = %d", $uid, $greenhouse_profile_fields_fid);
+
+  
+  $query = 
+    "SELECT u.uid, u.name, pv.value AS ogm_uid, ogm_nid, title, alias 
+     FROM users u INNER JOIN profile_values pv ON pv.uid=u.uid 
+     INNER JOIN sync_ogm_green_maps s_o_g_m ON s_o_g_m.ogm_uid = pv.value 
+     WHERE u.uid = %d AND pv.fid = %d group by ogm_nid";
+
+  $result = db_query($query, $uid, $greenhouse_profile_fields_fid);
+  
   while ($ogm_map = db_fetch_object($result)) {
     $ogm_maps[] = $ogm_map;
   }
